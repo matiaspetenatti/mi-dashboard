@@ -22,6 +22,20 @@
       "when": 1792607378139,
       "tag": "0002_worthless_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792614439921,
+      "tag": "0003_gray_marten_broadcloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792617027050,
+      "tag": "0004_dapper_thor_girl",
+      "breakpoints": true
     }
   ]
 }

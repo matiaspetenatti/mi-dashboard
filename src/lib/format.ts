@@ -32,3 +32,22 @@ export function textoDias(dias: number) {
   if (dias === 1) return "mañana";
   return `en ${dias} días`;
 }
+
+// suma N unidades a una fecha "YYYY-MM-DD"
+// (mes/año: si el día no existe en el destino, usa el último del mes; ej. 31 ene + 1 mes = 28/29 feb)
+export function sumarFecha(
+  fecha: string,
+  unidad: "dia" | "semana" | "mes" | "anio",
+  cada = 1,
+) {
+  const [y, m, d] = fecha.split("-").map(Number);
+  if (unidad === "dia" || unidad === "semana") {
+    const dias = (unidad === "dia" ? 1 : 7) * cada;
+    return new Date(Date.UTC(y, m - 1, d + dias)).toISOString().slice(0, 10);
+  }
+  const destino = m - 1 + (unidad === "mes" ? 1 : 12) * cada; // índice de mes, puede pasar de 11
+  const ultimoDia = new Date(Date.UTC(y, destino + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, destino, Math.min(d, ultimoDia)))
+    .toISOString()
+    .slice(0, 10);
+}
