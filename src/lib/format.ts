@@ -51,3 +51,27 @@ export function sumarFecha(
     .toISOString()
     .slice(0, 10);
 }
+
+export function mesAnterior(mes: string = mesActual()) {
+  return sumarFecha(`${mes}-01`, "mes", -1).slice(0, 7);
+}
+
+export function nombreMes(mesStr: string, conAnio = false) {
+  // mesStr: "YYYY-MM"
+  const [y, m] = mesStr.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, 15));
+  const mes = new Intl.DateTimeFormat("es-AR", { month: "long" }).format(date);
+  const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
+  return conAnio ? `${mesCapitalizado} ${y}` : mesCapitalizado;
+}
+
+export function formatMontoCompacto(pesos: number) {
+  if (Math.abs(pesos) >= 1_000_000) {
+    return `$ ${(pesos / 1_000_000).toLocaleString("es-AR", { maximumFractionDigits: 1 })}M`;
+  }
+  if (Math.abs(pesos) >= 1_000) {
+    return `$ ${(pesos / 1_000).toLocaleString("es-AR", { maximumFractionDigits: 1 })}k`;
+  }
+  return `$ ${pesos.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
+}
+

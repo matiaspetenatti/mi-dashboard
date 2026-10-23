@@ -1,0 +1,362 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { Calendar, Check, Edit3, Film, Loader2, Minus, Plus, RotateCcw, Star, X } from "lucide-react";
+import { actualizarProgresoAnime } from "./actions";
+import { ModalEditarAnime } from "./modal-editar";
+import type { AnimeVisto } from "./schema";
+import {
+  CRITERIOS_ANIME,
+  extraerPuntajes,
+  contarCriteriosCalificados,
+  PUNTAJE_MAXIMO_CRITERIO,
+} from "./criterios";
+
+const estadoLabel: Record<string, string> = {
+  viendo: "Viendo",
+  completado: "Completado",
+  en_pausa: "En pausa",
+  abandonado: "Abandonado",
+};
+
+const estadoColor: Record<string, string> = {
+  viendo: "bg-emerald-100 text-emerald-700",
+  completado: "bg-blue-100 text-blue-700",
+  en_pausa: "bg-amber-100 text-amber-700",
+  abandonado: "bg-neutral-200 text-neutral-600",
+};
+
+export function ModalDetalleAnime({
+  open,
+  onClose,
+  anime,
+  cargandoDescripcion = false,
+  onActualizar,
+  onEliminado,
+}: {
+  open: boolean;
+  onClose: () => void;
+  anime: AnimeVisto;
+  cargandoDescripcion?: boolean;
+  onActualizar?: (cambios: Partial<AnimeVisto> & { id: number }) => void;
+  onEliminado?: (id: number) => void;
+}) {
+  const [mostrarEditar, setMostrarEditar] = useState(false);
+  const descripcion = anime.descripcion || null;
+  const [vistos, setVistos] = useState(anime.episodiosVistos || 0);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const generos = Array.isArray(anime.generos) ? anime.generos : [];
+  const titulo = anime.tituloIngles || anime.titulo;
+  const total = anime.episodios ?? null;
+  const porcentaje = total && total > 0 ? Math.min(100, Math.round((vistos / total) * 100)) : 0;
+  const puntajes = extraerPuntajes(anime);
+  const criteriosCalificados = contarCriteriosCalificados(puntajes);
+
+  useEffect(() => {
+    if (!open || mostrarEditar) return;
+    const alPresionar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", alPresionar);
+    return () => window.removeEventListener("keydown", alPresionar);
+  }, [open, mostrarEditar, onClose]);
+
+  if (!open) return null;
+
+  const guardarProgreso = (siguiente: number) => {
+    const anterior = vistos;
+    const nuevo = total ? Math.max(0, Math.min(siguiente, total)) : Math.max(0, siguiente);
+    if (nuevo === anterior) return;
+
+    setError(null);
+    setVistos(nuevo);
+    onActualizar?.({ id: anime.id, episodiosVistos: nuevo });
+
+    startTransition(async () => {
+      const res = await actualizarProgresoAnime(anime.id, nuevo);
+      if (res?.error) {
+        setError(res.error);
+        setVistos(anterior);
+        onActualizar?.({ id: anime.id, episodiosVistos: anterior });
+      }
+    });
+  };
+
+  const alEditar = (cambios: Partial<AnimeVisto> & { id: number }) => {
+    onActualizar?.(cambios);
+    if (typeof cambios.episodiosVistos === "number") setVistos(cambios.episodiosVistos);
+  };
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        onClick={onClose}
+        role="presentation"
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Detalle de ${titulo}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl"
+        >
+          <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="truncate text-lg font-semibold">{titulo}</h3>
+              {anime.tituloIngles && anime.tituloIngles !== anime.titulo && (
+                <p className="truncate text-xs text-neutral-500">{anime.titulo}</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="shrink-0 rounded-lg p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+              aria-label="Cerrar"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="flex-1 space-y-5 overflow-y-auto p-5">
+            <div className="grid gap-5 sm:grid-cols-[190px_1fr]">
+              <img
+                src={anime.imagen}
+                alt={titulo}
+                className="h-[270px] w-full rounded-xl object-cover shadow-sm sm:w-[190px]"
+              />
+
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {anime.estado && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        estadoColor[anime.estado] || "bg-neutral-100 text-neutral-600"
+                      }`}
+                    >
+                      {estadoLabel[anime.estado] || anime.estado}
+                    </span>
+                  )}
+                  {anime.tipo && (
+                    <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600">
+                      <Film size={11} />
+                      {anime.tipo}
+                    </span>
+                  )}
+                  {anime.ano && (
+                    <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600">
+                      <Calendar size={11} />
+                      {anime.ano}
+                    </span>
+                  )}
+                  {anime.rewatch && (
+                    <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] text-violet-700">
+                      <RotateCcw size={11} />
+                      Rewatch
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  {anime.miPuntaje !== null && anime.miPuntaje !== undefined && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-neutral-400">Mi puntaje</p>
+                      <p className="flex items-center gap-1 text-lg font-semibold text-amber-500">
+                        <Star size={16} fill="currentColor" />
+                        {anime.miPuntaje}
+                        <span className="text-xs font-normal text-neutral-400">/ 100</span>
+                      </p>
+                    </div>
+                  )}
+                  {anime.scoreMal !== null && anime.scoreMal !== undefined && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-neutral-400">Score MAL</p>
+                      <p className="flex items-center gap-1 text-lg font-semibold text-neutral-700">
+                        <Star size={14} />
+                        {anime.scoreMal.toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-neutral-400">Episodios</p>
+                    <p className="text-lg font-semibold text-neutral-700">
+                      {vistos}
+                      {total ? <span className="text-xs font-normal text-neutral-400"> / {total}</span> : null}
+                    </p>
+                  </div>
+                </div>
+
+                {generos.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {generos.map((g) => (
+                      <span
+                        key={g}
+                        className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600"
+                      >
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-neutral-50 p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-neutral-800">Progreso de episodios</h4>
+                <span className="text-xs font-medium text-neutral-500">
+                  {vistos}
+                  {total ? ` / ${total}` : ""} vistos
+                </span>
+              </div>
+
+              {total ? (
+                <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+                  <div
+                    className="h-full rounded-full bg-neutral-900 transition-all"
+                    style={{ width: `${porcentaje}%` }}
+                  />
+                </div>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => guardarProgreso(vistos - 1)}
+                  disabled={isPending || vistos <= 0}
+                  className="flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40"
+                >
+                  <Minus size={13} />
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  max={total ?? undefined}
+                  value={vistos}
+                  onChange={(e) => setVistos(Number(e.target.value) || 0)}
+                  onBlur={(e) => guardarProgreso(Number(e.target.value) || 0)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  }}
+                  className="w-16 rounded-lg border px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                />
+                <button
+                  onClick={() => guardarProgreso(vistos + 1)}
+                  disabled={isPending || (!!total && vistos >= total)}
+                  className="flex items-center gap-1 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-neutral-800 disabled:opacity-40"
+                >
+                  <Plus size={13} />
+                </button>
+                {total && vistos >= total ? (
+                  <span className="flex items-center gap-1 text-[11px] text-emerald-600">
+                    <Check size={12} />
+                    Completado
+                  </span>
+                ) : null}
+                {isPending && <Loader2 size={13} className="animate-spin text-neutral-400" />}
+              </div>
+
+              {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+            </div>
+
+            {criteriosCalificados > 0 && (
+              <div className="rounded-xl border bg-white p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-neutral-800">
+                    Desglose del puntaje
+                  </h4>
+                  <span className="text-xs text-neutral-500">
+                    {criteriosCalificados} / {CRITERIOS_ANIME.length} criterios calificados
+                  </span>
+                </div>
+                <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                  {CRITERIOS_ANIME.map((criterio) => {
+                    const valor = puntajes[criterio.key];
+                    return (
+                      <div key={criterio.key} className="space-y-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span
+                            className={`text-xs ${
+                              valor === null ? "text-neutral-400" : "text-neutral-600"
+                            }`}
+                            title={criterio.descripcion}
+                          >
+                            {criterio.etiqueta}
+                          </span>
+                          <span className="shrink-0 text-xs font-semibold tabular-nums text-neutral-700">
+                            {valor ?? "—"}
+                            <span className="font-normal text-neutral-400">
+                              /{PUNTAJE_MAXIMO_CRITERIO}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                          <div
+                            className="h-full rounded-full bg-neutral-900 transition-all"
+                            style={{ width: `${((valor ?? 0) / PUNTAJE_MAXIMO_CRITERIO) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h4 className="mb-1 text-sm font-semibold text-neutral-800">Sinopsis</h4>
+              {descripcion ? (
+                <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-600">{descripcion}</p>
+              ) : cargandoDescripcion ? (
+                <div className="flex items-center gap-2 text-sm text-neutral-400">
+                  <Loader2 size={14} className="animate-spin" />
+                  Buscando descripción...
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-400">Sin descripción disponible.</p>
+              )}
+            </div>
+
+            {anime.notas && (
+              <div>
+                <h4 className="mb-1 text-sm font-semibold text-neutral-800">Mis notas</h4>
+                <p className="whitespace-pre-line rounded-lg bg-neutral-50 p-3 text-sm text-neutral-600">
+                  {anime.notas}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t bg-white px-5 py-3">
+            <button
+              onClick={onClose}
+              className="rounded-lg border px-3 py-1.5 text-sm text-neutral-700 transition hover:bg-neutral-50"
+            >
+              Cerrar
+            </button>
+            <button
+              onClick={() => setMostrarEditar(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-1.5 text-sm text-white transition hover:bg-neutral-800"
+            >
+              <Edit3 size={14} />
+              Editar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {mostrarEditar && (
+        <ModalEditarAnime
+          open
+          onClose={() => setMostrarEditar(false)}
+          anime={anime}
+          onActualizado={alEditar}
+          onEliminado={(id) => {
+            onEliminado?.(id);
+            onClose();
+          }}
+        />
+      )}
+    </>
+  );
+}

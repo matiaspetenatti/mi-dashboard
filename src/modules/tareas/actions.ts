@@ -1,5 +1,7 @@
 "use server";
 
+import { requireAuthorizedUser } from "@/lib/auth";
+
 import { db } from "@/db";
 import { tareas, tags, tareasTags } from "./schema";
 import { and, eq, inArray } from "drizzle-orm";
@@ -72,6 +74,7 @@ function leerCampos(formData: FormData) {
 }
 
 export async function crearTarea(formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = leerCampos(formData);
   if (!parsed.success) return;
 
@@ -97,6 +100,7 @@ export async function crearTarea(formData: FormData) {
 const estadoSchema = z.enum(["pendiente", "en_curso", "hecha"]);
 
 export async function actualizarTarea(id: number, formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = leerCampos(formData);
   const estado = estadoSchema.safeParse(formData.get("estado"));
   if (!parsed.success || !estado.success) return;
@@ -126,6 +130,7 @@ export async function actualizarTarea(id: number, formData: FormData) {
 }
 
 export async function crearSubtarea(parentId: number, formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = z
     .string()
     .trim()
@@ -199,6 +204,7 @@ async function cambiarEstado(id: number, destino: Columna) {
 }
 
 export async function alternarTarea(id: number) {
+  await requireAuthorizedUser();
   const [tarea] = await db.select().from(tareas).where(eq(tareas.id, id));
   if (!tarea) return;
   await cambiarEstado(id, tarea.completada ? "pendiente" : "hecha");
@@ -206,6 +212,7 @@ export async function alternarTarea(id: number) {
 }
 
 export async function moverTarea(id: number, columna: Columna) {
+  await requireAuthorizedUser();
   const parsed = estadoSchema.safeParse(columna);
   if (!parsed.success) return;
   await cambiarEstado(id, parsed.data);
@@ -213,6 +220,7 @@ export async function moverTarea(id: number, columna: Columna) {
 }
 
 export async function borrarTarea(id: number) {
+  await requireAuthorizedUser();
   // primero tags y subtareas, para no dejar filas huérfanas
   const subs = await db
     .select({ id: tareas.id })
@@ -228,11 +236,13 @@ export async function borrarTarea(id: number) {
 }
 
 export async function agregarTags(tareaId: number, formData: FormData) {
+  await requireAuthorizedUser();
   await asignarTags(tareaId, parseTags(formData.get("tags")));
   refrescar();
 }
 
 export async function quitarTag(tareaId: number, nombre: string) {
+  await requireAuthorizedUser();
   const [tag] = await db
     .select({ id: tags.id })
     .from(tags)

@@ -6,5 +6,10 @@ export const categorias = [
   "Salud",
   "Estudio",
   "Sueldo",
+  "Rendimientos",
+  "Transferencia",
+  "Ajuste",
   "Otros",
 ] as const;
+
+export type Categoria = (typeof categorias)[number];

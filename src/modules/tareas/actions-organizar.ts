@@ -1,5 +1,7 @@
 "use server";
 
+import { requireAuthorizedUser } from "@/lib/auth";
+
 import { db } from "@/db";
 import { tareas, tags, tareasTags, grupos } from "./schema";
 import { eq } from "drizzle-orm";
@@ -29,6 +31,7 @@ const tagSchema = z.object({
 });
 
 export async function actualizarTag(id: number, formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = tagSchema.safeParse({
     nombre: formData.get("nombre"),
     color: formData.get("color"),
@@ -44,6 +47,7 @@ export async function actualizarTag(id: number, formData: FormData) {
 }
 
 export async function borrarTag(id: number) {
+  await requireAuthorizedUser();
   await db.batch([
     db.delete(tareasTags).where(eq(tareasTags.tagId, id)),
     db.delete(tags).where(eq(tags.id, id)),
@@ -57,6 +61,7 @@ const grupoSchema = z.object({
 });
 
 export async function crearGrupo(formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = grupoSchema.safeParse({
     nombre: formData.get("nombre"),
     color: formData.get("color"),
@@ -67,6 +72,7 @@ export async function crearGrupo(formData: FormData) {
 }
 
 export async function actualizarGrupo(id: number, formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = grupoSchema.safeParse({
     nombre: formData.get("nombre"),
     color: formData.get("color"),
@@ -77,6 +83,7 @@ export async function actualizarGrupo(id: number, formData: FormData) {
 }
 
 export async function borrarGrupo(id: number) {
+  await requireAuthorizedUser();
   // las tareas del grupo quedan "sin grupo"
   await db.batch([
     db.update(tareas).set({ grupoId: null }).where(eq(tareas.grupoId, id)),

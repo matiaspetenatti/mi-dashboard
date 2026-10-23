@@ -1,5 +1,7 @@
 "use server";
 
+import { requireAuthorizedUser } from "@/lib/auth";
+
 import { db } from "@/db";
 import { examenes, materias } from "./schema";
 import { eq } from "drizzle-orm";
@@ -12,6 +14,7 @@ function refrescar() {
 }
 
 export async function crearMateria(formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = z
     .string()
     .trim()
@@ -24,6 +27,7 @@ export async function crearMateria(formData: FormData) {
 }
 
 export async function borrarMateria(id: number) {
+  await requireAuthorizedUser();
   // borramos primero sus exámenes para no dejar filas huérfanas
   await db.batch([
     db.delete(examenes).where(eq(examenes.materiaId, id)),
@@ -39,6 +43,7 @@ const examenSchema = z.object({
 });
 
 export async function crearExamen(formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = examenSchema.safeParse({
     materiaId: formData.get("materiaId"),
     tipo: formData.get("tipo"),
@@ -50,6 +55,7 @@ export async function crearExamen(formData: FormData) {
 }
 
 export async function borrarExamen(id: number) {
+  await requireAuthorizedUser();
   await db.delete(examenes).where(eq(examenes.id, id));
   refrescar();
 }
@@ -61,6 +67,7 @@ const notaSchema = z
   .pipe(z.number().min(0).max(10));
 
 export async function guardarNota(id: number, formData: FormData) {
+  await requireAuthorizedUser();
   const parsed = notaSchema.safeParse(formData.get("nota"));
   if (!parsed.success) return;
   await db

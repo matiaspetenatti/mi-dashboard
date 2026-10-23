@@ -4,6 +4,22 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "media.kitsu.app",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.myanimelist.net",
+      },
+      {
+        protocol: "https",
+        hostname: "s4.anilist.co",
+      },
+    ],
+  },
   turbopack: {
     rules: {
       "*.css": {
