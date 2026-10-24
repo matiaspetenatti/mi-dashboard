@@ -2,15 +2,15 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Calendar, Check, Edit3, Film, Loader2, Minus, Plus, RotateCcw, Star, X } from "lucide-react";
-import { actualizarProgresoAnime } from "./actions";
-import { ModalEditarAnime } from "./modal-editar";
-import type { AnimeVisto } from "./schema";
+import { actualizarProgresoAnime } from "@/modules/animes/actions/progreso";
+import { ModalEditarAnime } from "@/modules/animes/components/modal/editar";
+import type { AnimeVisto } from "@/modules/animes/schema";
 import {
   CRITERIOS_ANIME,
   extraerPuntajes,
   contarCriteriosCalificados,
   PUNTAJE_MAXIMO_CRITERIO,
-} from "./criterios";
+} from "@/modules/animes/lib/criterios";
 
 const estadoLabel: Record<string, string> = {
   viendo: "Viendo",
@@ -63,8 +63,6 @@ export function ModalDetalleAnime({
     return () => window.removeEventListener("keydown", alPresionar);
   }, [open, mostrarEditar, onClose]);
 
-  if (!open) return null;
-
   const guardarProgreso = (siguiente: number) => {
     const anterior = vistos;
     const nuevo = total ? Math.max(0, Math.min(siguiente, total)) : Math.max(0, siguiente);
@@ -88,6 +86,8 @@ export function ModalDetalleAnime({
     onActualizar?.(cambios);
     if (typeof cambios.episodiosVistos === "number") setVistos(cambios.episodiosVistos);
   };
+
+  if (!open) return null;
 
   return (
     <>
@@ -186,19 +186,6 @@ export function ModalDetalleAnime({
                     </p>
                   </div>
                 </div>
-
-                {generos.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {generos.map((g) => (
-                      <span
-                        key={g}
-                        className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600"
-                      >
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -212,114 +199,38 @@ export function ModalDetalleAnime({
               </div>
 
               {total ? (
-                <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+                <div className="w-full bg-neutral-200 rounded-full h-2">
                   <div
-                    className="h-full rounded-full bg-neutral-900 transition-all"
+                    className="bg-blue-600 h-2 rounded-full transition-all"
                     style={{ width: `${porcentaje}%` }}
                   />
                 </div>
               ) : null}
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => guardarProgreso(vistos - 1)}
-                  disabled={isPending || vistos <= 0}
-                  className="flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40"
-                >
-                  <Minus size={13} />
-                </button>
-                <input
-                  type="number"
-                  min={0}
-                  max={total ?? undefined}
-                  value={vistos}
-                  onChange={(e) => setVistos(Number(e.target.value) || 0)}
-                  onBlur={(e) => guardarProgreso(Number(e.target.value) || 0)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                  }}
-                  className="w-16 rounded-lg border px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                />
-                <button
-                  onClick={() => guardarProgreso(vistos + 1)}
-                  disabled={isPending || (!!total && vistos >= total)}
-                  className="flex items-center gap-1 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-neutral-800 disabled:opacity-40"
-                >
-                  <Plus size={13} />
-                </button>
-                {total && vistos >= total ? (
-                  <span className="flex items-center gap-1 text-[11px] text-emerald-600">
-                    <Check size={12} />
-                    Completado
-                  </span>
-                ) : null}
-                {isPending && <Loader2 size={13} className="animate-spin text-neutral-400" />}
-              </div>
-
-              {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
             </div>
-
-            {criteriosCalificados > 0 && (
-              <div className="rounded-xl border bg-white p-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-neutral-800">
-                    Desglose del puntaje
-                  </h4>
-                  <span className="text-xs text-neutral-500">
-                    {criteriosCalificados} / {CRITERIOS_ANIME.length} criterios calificados
-                  </span>
-                </div>
-                <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-                  {CRITERIOS_ANIME.map((criterio) => {
-                    const valor = puntajes[criterio.key];
-                    return (
-                      <div key={criterio.key} className="space-y-1">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span
-                            className={`text-xs ${
-                              valor === null ? "text-neutral-400" : "text-neutral-600"
-                            }`}
-                            title={criterio.descripcion}
-                          >
-                            {criterio.etiqueta}
-                          </span>
-                          <span className="shrink-0 text-xs font-semibold tabular-nums text-neutral-700">
-                            {valor ?? "—"}
-                            <span className="font-normal text-neutral-400">
-                              /{PUNTAJE_MAXIMO_CRITERIO}
-                            </span>
-                          </span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
-                          <div
-                            className="h-full rounded-full bg-neutral-900 transition-all"
-                            style={{ width: `${((valor ?? 0) / PUNTAJE_MAXIMO_CRITERIO) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             <div>
               <h4 className="mb-1 text-sm font-semibold text-neutral-800">Sinopsis</h4>
               {descripcion ? (
-                <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-600">{descripcion}</p>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-600">
+                  {descripcion}
+                </p>
               ) : cargandoDescripcion ? (
                 <div className="flex items-center gap-2 text-sm text-neutral-400">
                   <Loader2 size={14} className="animate-spin" />
                   Buscando descripción...
                 </div>
               ) : (
-                <p className="text-sm text-neutral-400">Sin descripción disponible.</p>
+                <p className="text-sm text-neutral-400">
+                  Sin descripción disponible.
+                </p>
               )}
             </div>
 
             {anime.notas && (
               <div>
-                <h4 className="mb-1 text-sm font-semibold text-neutral-800">Mis notas</h4>
+                <h4 className="mb-1 text-sm font-semibold text-neutral-800">
+                  Mis notas
+                </h4>
                 <p className="whitespace-pre-line rounded-lg bg-neutral-50 p-3 text-sm text-neutral-600">
                   {anime.notas}
                 </p>

@@ -4,6 +4,7 @@ import {
   CheckSquare,
   GraduationCap,
   Tv,
+  CloudSun,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +47,13 @@ export const modules: AppModule[] = [
     href: "/animes",
     icon: Tv,
     accent: "primary",
+  },
+  {
+    slug: "clima",
+    label: "Clima",
+    href: "/clima",
+    icon: CloudSun,
+    accent: "secondary",
   },
 ];
 

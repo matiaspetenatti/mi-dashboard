@@ -3,15 +3,15 @@
 import { useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, SlidersHorizontal, X, Calendar } from "lucide-react";
-import { ModalAgregarAnime } from "./modal-agregar";
-import { PaginacionAnimes as BarraPaginacion } from "./paginacion";
-import { TarjetaAnime } from "./tarjeta-anime";
+import { ModalAgregarAnime } from "@/modules/animes/components/modal/agregar";
+import { PaginacionAnimes as BarraPaginacion } from "@/modules/animes/components/paginacion";
+import { TarjetaAnime } from "@/modules/animes/components/tarjeta-anime";
 import Link from "next/link";
 import type {
   AnimeMetadatos,
   AnimeVisto,
   PaginacionAnimes,
-} from "./schema";
+} from "@/modules/animes/schema";
 
 export function AnimesCatalogo({
   animes,
@@ -221,75 +221,72 @@ export function AnimesCatalogo({
               onChange={(e) => actualizarFiltro("ordenar", e.target.value)}
               className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
             >
-              <option value="puntaje_desc">Mi puntaje (mayor a menor)</option>
-              <option value="puntaje_asc">Mi puntaje (menor a mayor)</option>
-              <option value="fecha_emision_desc">Fecha emisión (más reciente)</option>
-              <option value="fecha_emision_asc">Fecha emisión (más antiguo)</option>
-              <option value="agregado_desc">Agregado (más reciente)</option>
-              <option value="agregado_asc">Agregado (más antiguo)</option>
-              <option value="titulo_asc">Título A-Z</option>
+              <option value="puntaje_desc">Mayor puntaje</option>
+              <option value="puntaje_asc">Menor puntaje</option>
+              <option value="fecha_desc">Más recientes</option>
+              <option value="fecha_asc">Más antiguos</option>
+              <option value="titulo_asc">Título A–Z</option>
+              <option value="titulo_desc">Título Z–A</option>
             </select>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-neutral-500">Filtrar por fecha de emisión:</span>
-            <input
-              type="date"
-              value={fechaDesde}
-              onChange={(e) => actualizarFiltro("fechaDesde", e.target.value)}
-              className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
-            />
-            <span className="text-xs text-neutral-400">a</span>
-            <input
-              type="date"
-              value={fechaHasta}
-              onChange={(e) => actualizarFiltro("fechaHasta", e.target.value)}
-              className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
-            />
+            <div className="flex items-center gap-1.5">
+              <Calendar size={13} className="text-neutral-400" />
+              <input
+                type="date"
+                value={fechaDesde}
+                onChange={(e) => actualizarFiltro("fechaDesde", e.target.value)}
+                className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs"
+              />
+              <span className="text-xs text-neutral-400">–</span>
+              <input
+                type="date"
+                value={fechaHasta}
+                onChange={(e) => actualizarFiltro("fechaHasta", e.target.value)}
+                className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs"
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {animes.length === 0 ? (
-        <div className="rounded-xl border bg-white p-10 text-center">
-          <p className="text-sm text-neutral-500">
-            {hayFiltrosActivos
-              ? "No hay animes que coincidan con los filtros"
-              : "Todavía no agregaste ningún anime. Empezá con el botón \"Agregar anime\"."}
-          </p>
-        </div>
-      ) : (
-        <div
-          ref={gridRef}
-          aria-busy={cargando}
-          className={`grid scroll-mt-6 grid-cols-2 gap-4 transition-opacity sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 ${
-            cargando ? "pointer-events-none opacity-60" : ""
-          }`}
-        >
-          {animes.map((anime) => (
+      <div
+        ref={gridRef}
+        className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 transition-opacity ${
+          cargando || isPending ? "opacity-50 pointer-events-none" : "opacity-100"
+        }`}
+      >
+        {animes.length === 0 ? (
+          <div className="col-span-full py-16 text-center text-sm text-neutral-400">
+            No se encontraron animes con los filtros seleccionados.
+          </div>
+        ) : (
+          animes.map((anime) => (
             <TarjetaAnime
               key={anime.id}
               anime={anime}
               onActualizar={onActualizar}
               onEliminado={onEliminado}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
-      {paginacion && (
+      {paginacion && paginacion.totalPaginas > 1 && (
         <BarraPaginacion
           paginacion={paginacion}
-          cargando={cargando}
           onCambiarPagina={cambiarPagina}
         />
       )}
 
-      <ModalAgregarAnime
-        open={mostrarAgregar}
-        onClose={() => setMostrarAgregar(false)}
-        onAgregado={onAgregado}
-      />
+      {mostrarAgregar && (
+        <ModalAgregarAnime
+          onCerrar={() => setMostrarAgregar(false)}
+          onAgregado={() => {
+            setMostrarAgregar(false);
+            onAgregado?.();
+          }}
+        />
+      )}
     </div>
   );
 }

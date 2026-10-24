@@ -10,7 +10,7 @@ import {
   contarCriteriosCalificados,
   type CriterioAnimeKey,
   type PuntajesCriterios,
-} from "./criterios";
+} from "@/modules/animes/lib/criterios";
 
 export function PuntajeCriterios({
   puntajes,

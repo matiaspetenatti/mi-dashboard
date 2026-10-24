@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import type { PaginacionAnimes as Paginacion } from "./schema";
+import type { PaginacionAnimes as Paginacion } from "@/modules/animes/schema";
 
 function generarPaginasVisibles(
   actual: number,

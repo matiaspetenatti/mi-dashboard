@@ -3,6 +3,7 @@ import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 const authorizedEmails = (process.env.AUTHORIZED_EMAILS ?? "")
   .split(",")
@@ -15,6 +16,21 @@ export type AccessResult =
   | { status: "forbidden"; email: string | null };
 
 /**
+ * Versión cacheada de currentUser() para deduplicar llamadas concurrentes
+ * dentro del mismo render tree y evitar errores de "operation aborted".
+ */
+const getCachedCurrentUser = cache(async () => {
+  try {
+    return await currentUser();
+  } catch (err) {
+    // Si la request fue abortada (navegación, timeout, etc.) devolvemos null
+    // en lugar de explotar. El caller tratará esto como "not found".
+    console.warn("[auth] currentUser() falló, tratando como null:", err);
+    return null;
+  }
+});
+
+/**
  * Resuelve el acceso del request actual.
  * No se cachea porque auth() lee headers/cookies.
  */
@@ -23,7 +39,8 @@ export async function getAccess(): Promise<AccessResult> {
 
   if (!userId) return { status: "signed-out" };
 
-  const user = await currentUser();
+  const user = await getCachedCurrentUser();
+  if (!user) return { status: "signed-out" };
   const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
 
   const emailIsAuthorized =

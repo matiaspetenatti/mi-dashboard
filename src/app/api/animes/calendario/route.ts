@@ -113,7 +113,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(animesVistos)
       .where(eq(animesVistos.estado, "viendo"));
-    
+  
     if (animesViendo.length === 0) {
       return NextResponse.json({
         semana: obtenerRangoSemana(),
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
               Media(search: "${anime.titulo.replace(/"/g, '\\"')}", type: ANIME, status: RELEASING) {
                 id
                 title { romaji english }
-                airingSchedule(notYetAired: true) {
+                airingSchedule {
                   nodes {
                     airingAt
                     episode
@@ -165,6 +165,7 @@ export async function GET(req: NextRequest) {
           if (!media) return;
           
           const schedules = media.airingSchedule?.nodes || [];
+          const ahoraUnix = Math.floor(Date.now() / 1000);
           
           for (const schedule of schedules) {
             if (schedule.airingAt < inicio || schedule.airingAt > fin) continue;
@@ -184,6 +185,7 @@ export async function GET(req: NextRequest) {
               fecha: "",
               airingAt: new Date(schedule.airingAt * 1000).toISOString(),
               estado: anime.estado,
+              emitido: schedule.airingAt < ahoraUnix,
             };
             
             if (!diasMap.has(diaSemana)) {
@@ -216,7 +218,7 @@ export async function GET(req: NextRequest) {
         imagen: a.imagen,
         estado: a.estado,
       }));
-    
+  
     const diasNombres = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
     const dias = [];
     

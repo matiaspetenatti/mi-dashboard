@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { X, Search, Loader2, Star } from "lucide-react";
-import { agregarAnime } from "./actions";
+import { agregarAnime } from "@/modules/animes/actions/agregar";
 import {
   CRITERIOS_ANIME,
   crearPuntajesVacios,
   type CriterioAnimeKey,
   type PuntajesCriterios,
-} from "./criterios";
-import { PuntajeCriterios } from "./puntaje-criterios";
+} from "@/modules/animes/lib/criterios";
+import { PuntajeCriterios } from "@/modules/animes/components/puntaje-criterios";
 
 type ResultadoKitsu = {
   kitsu_id: number;
@@ -28,12 +28,10 @@ type ResultadoKitsu = {
 type EstadoAnime = "viendo" | "completado" | "en_pausa" | "abandonado";
 
 export function ModalAgregarAnime({
-  open,
-  onClose,
+  onCerrar,
   onAgregado,
 }: {
-  open: boolean;
-  onClose: () => void;
+  onCerrar: () => void;
   onAgregado?: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -80,6 +78,18 @@ export function ModalAgregarAnime({
     setPuntajes((prev) => ({ ...prev, [criterio]: valor }));
   };
 
+  const cerrarModal = () => {
+    setQuery("");
+    setResultados([]);
+    setSeleccionado(null);
+    setEpisodiosVistos("0");
+    setPuntajes(crearPuntajesVacios());
+    setNotas("");
+    setEstado("completado");
+    setError(null);
+    onCerrar();
+  };
+
   const guardar = () => {
     if (!seleccionado) return;
     setError(null);
@@ -112,20 +122,6 @@ export function ModalAgregarAnime({
       onAgregado?.();
       cerrarModal();
     });
-  };
-
-  if (!open) return null;
-
-  const cerrarModal = () => {
-    setQuery("");
-    setResultados([]);
-    setSeleccionado(null);
-    setEpisodiosVistos("0");
-    setPuntajes(crearPuntajesVacios());
-    setNotas("");
-    setEstado("completado");
-    setError(null);
-    onClose();
   };
 
   return (
@@ -200,83 +196,91 @@ export function ModalAgregarAnime({
               <img
                 src={seleccionado.images.webp.large_image_url || seleccionado.images.jpg.large_image_url}
                 alt={seleccionado.title}
-                className="h-36 w-26 rounded-lg object-cover shadow-sm"
+                className="h-36 w-26 rounded-lg object-cover shadow-sm shrink-0"
               />
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <p className="font-semibold">{seleccionado.title_english || seleccionado.title}</p>
                 <p className="text-sm text-neutral-500">
-                  {[seleccionado.type, seleccionado.episodes ? `${seleccionado.episodes} eps` : null, seleccionado.year].filter(Boolean).join(" • ")}
+                  {[seleccionado.type, seleccionado.episodes ? `${seleccionado.episodes} eps` : null, seleccionado.year]
+                    .filter(Boolean)
+                    .join(" • ")}
                 </p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {(seleccionado.genres || []).map((g) => (
-                    <span key={g.name} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600">
-                      {g.name}
-                    </span>
-                  ))}
-                </div>
+                {seleccionado.genres?.length > 0 && (
+                  <p className="text-xs text-neutral-400">
+                    {seleccionado.genres.map((g) => g.name).join(", ")}
+                  </p>
+                )}
                 {seleccionado.score && (
-                  <p className="text-xs text-neutral-500 flex items-center gap-1 mt-1">
-                    <Star size={10} /> {seleccionado.score.toFixed(2)}
+                  <p className="text-xs text-neutral-400 flex items-center gap-1">
+                    <Star size={10} /> {seleccionado.score.toFixed(2)} (score global)
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <label className="space-y-1">
-                <span className="text-xs font-medium text-neutral-600">Estado</span>
-                <select
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value as EstadoAnime)}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                >
-                  <option value="completado">Completado</option>
-                  <option value="viendo">Viendo</option>
-                  <option value="en_pausa">En pausa</option>
-                  <option value="abandonado">Abandonado</option>
-                </select>
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs font-medium text-neutral-600">
-                  Episodios vistos
-                  {seleccionado.episodes ? ` (de ${seleccionado.episodes})` : ""}
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={seleccionado.episodes ?? undefined}
-                  value={episodiosVistos}
-                  onChange={(e) => setEpisodiosVistos(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                />
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-neutral-700">Estado</label>
+              <div className="flex flex-wrap gap-1.5">
+                {(["viendo", "completado", "en_pausa", "abandonado"] as EstadoAnime[]).map((e) => (
+                  <button
+                    key={e}
+                    onClick={() => setEstado(e)}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium border ${
+                      estado === e
+                        ? "bg-neutral-900 text-white border-neutral-900"
+                        : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
+                    }`}
+                  >
+                    {e === "viendo" ? "Viendo" : e === "completado" ? "Completado" : e === "en_pausa" ? "En pausa" : "Abandonado"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-neutral-700">Episodios vistos</label>
+              <input
+                type="number"
+                min={0}
+                max={seleccionado.episodes ?? undefined}
+                value={episodiosVistos}
+                onChange={(e) => setEpisodiosVistos(e.target.value)}
+                className="w-32 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              />
+              {seleccionado.episodes && (
+                <p className="text-xs text-neutral-400">de {seleccionado.episodes} episodios</p>
+              )}
             </div>
 
             <PuntajeCriterios puntajes={puntajes} onChange={cambiarPuntaje} />
 
-            <label className="block space-y-1">
-              <span className="text-xs font-medium text-neutral-600">Notas (opcional)</span>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-neutral-700">Notas</label>
               <textarea
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border px-3 py-2 text-sm resize-none"
-                placeholder="Impresiones, recomendaciones, etc."
+                placeholder="Notas personales..."
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
               />
-            </label>
+            </div>
 
             {error && <p className="text-xs text-red-600">{error}</p>}
 
-            <div className="flex justify-end gap-2">
-              <button onClick={volver} className="px-3 py-1.5 text-sm rounded-lg border">
-                Volver
+            <div className="flex items-center justify-between pt-2 border-t">
+              <button
+                onClick={volver}
+                className="text-sm text-neutral-500 hover:text-neutral-700"
+              >
+                ← Volver
               </button>
               <button
                 onClick={guardar}
                 disabled={isPending}
-                className="px-3 py-1.5 text-sm rounded-lg bg-neutral-900 text-white disabled:opacity-50"
+                className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50 flex items-center gap-2"
               >
-                {isPending ? "Guardando..." : "Agregar al catálogo"}
+                {isPending && <Loader2 size={14} className="animate-spin" />}
+                Guardar
               </button>
             </div>
           </div>

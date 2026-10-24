@@ -1,4 +1,4 @@
-import type { AnimeVisto } from "./schema";
+import type { AnimeVisto } from "@/modules/animes/schema";
 
 export const CRITERIOS_ANIME = [
   {

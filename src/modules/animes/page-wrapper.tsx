@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AnimesCatalogo } from "./catalogo";
+import { AnimesCatalogo } from "./components/catalogo";
 import type { AnimeMetadatos, AnimeVisto, PaginacionAnimes } from "./schema";
 
 const CACHE_KEY = "animes-catalogo-cache-v2";

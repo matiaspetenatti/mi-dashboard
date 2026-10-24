@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { X } from "lucide-react";
-import { actualizarAnimeVisto, eliminarAnimeVisto } from "./actions";
-import type { AnimeVisto } from "./schema";
+import {
+  actualizarAnimeVisto,
+  eliminarAnimeVisto,
+} from "@/modules/animes/actions/actualizar";
+import type { AnimeVisto } from "@/modules/animes/schema";
 import {
   CRITERIOS_ANIME,
   aColumnasPuntaje,
@@ -11,8 +14,8 @@ import {
   extraerPuntajes,
   type CriterioAnimeKey,
   type PuntajesCriterios,
-} from "./criterios";
-import { PuntajeCriterios } from "./puntaje-criterios";
+} from "@/modules/animes/lib/criterios";
+import { PuntajeCriterios } from "@/modules/animes/components/puntaje-criterios";
 
 export function ModalEditarAnime({
   open,
@@ -63,7 +66,7 @@ export function ModalEditarAnime({
       : Number(episodiosVistos) || 0;
 
     startTransition(async () => {
-      const res = await actualizarAnimeVisto(fd);
+      const res = await actualizarAnimeVisto(fd, CRITERIOS_ANIME);
       if (res?.error) {
         setError(res.error);
         return;

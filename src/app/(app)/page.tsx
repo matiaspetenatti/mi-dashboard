@@ -16,10 +16,12 @@ import {
   EstudioWidget,
   EstudioWidgetSkeleton,
 } from "@/modules/estudio/widget";
-import { requireAuthorizedUser } from "@/lib/auth";
+import {
+  ClimaWidget,
+  ClimaWidgetSkeleton,
+} from "@/modules/clima/widget";
 
-export default async function HubPage() {
-  await requireAuthorizedUser();
+export default function HubPage() {
 
   return (
     <div className="space-y-8">
@@ -66,6 +68,14 @@ export default async function HubPage() {
           <HoverLift className="h-full">
             <Suspense fallback={<EstudioWidgetSkeleton />}>
               <EstudioWidget />
+            </Suspense>
+          </HoverLift>
+        </StaggerItem>
+
+        <StaggerItem className="h-full">
+          <HoverLift className="h-full">
+            <Suspense fallback={<ClimaWidgetSkeleton />}>
+              <ClimaWidget />
             </Suspense>
           </HoverLift>
         </StaggerItem>

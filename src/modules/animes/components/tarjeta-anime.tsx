@@ -2,11 +2,11 @@
 
 import { useRef, useState } from "react";
 import { Star, Film, Edit3, Calendar } from "lucide-react";
-import type { AnimeVisto } from "./schema";
-import { ModalEditarAnime } from "./modal-editar";
-import { ModalDetalleAnime } from "./modal-detalle";
-import { obtenerDescripcionAnime } from "./actions";
-import { obtenerTemporadaAnime } from "./utils";
+import type { AnimeVisto } from "@/modules/animes/schema";
+import { ModalEditarAnime } from "@/modules/animes/components/modal/editar";
+import { ModalDetalleAnime } from "@/modules/animes/components/modal/detalle";
+import { obtenerDescripcionAnime } from "@/modules/animes/actions/descripcion";
+import { obtenerTemporadaAnime } from "@/modules/animes/lib/utils";
 
 const estadoLabel: Record<string, string> = {
   viendo: "Viendo",
@@ -181,7 +181,7 @@ export function TarjetaAnime({
           anime={anime}
           cargandoDescripcion={cargandoDescripcion}
           onActualizar={onActualizar}
-          onEliminado={(id) => {
+          onEliminado={(id: number) => {
             onEliminado?.(id);
             setMostrarDetalle(false);
           }}
@@ -194,9 +194,9 @@ export function TarjetaAnime({
           onClose={() => setMostrarEditar(false)}
           anime={anime}
           onActualizado={onActualizar}
-          onEliminado={(id) => {
+          onEliminado={(id: number) => {
             onEliminado?.(id);
-            setMostrarDetalle(false);
+            setMostrarEditar(false);
           }}
         />
       )}
