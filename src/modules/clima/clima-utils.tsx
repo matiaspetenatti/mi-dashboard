@@ -48,3 +48,20 @@ export function formatDateLabel(dateStr: string): string {
   const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
   return date.toLocaleDateString('es-AR', options);
 }
+
+export function windDirectionCardinal(degrees: number): string {
+  const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
+  const index = Math.round(((degrees % 360) / 360) * directions.length) % directions.length;
+  return directions[index];
+}
+
+export function formatVisibility(meters: number): string {
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)} km`;
+  }
+  return `${Math.round(meters)} m`;
+}
+
+export function formatPressure(hPa: number): string {
+  return `${hPa} hPa`;
+}

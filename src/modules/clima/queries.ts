@@ -10,9 +10,16 @@ export type ClimaData = {
     time: string[];
     temperature_2m: number[];
     relativehumidity_2m: number[];
+    dewpoint_2m: number[];
     apparent_temperature: number[];
     precipitation_probability: number[];
+    precipitation: number[];
+    pressure_msl: number[];
+    cloudcover: number[];
+    visibility: number[];
     windspeed_10m: number[];
+    winddirection_10m: number[];
+    windgusts_10m: number[];
     uv_index: number[];
   };
   timezone: string;
@@ -23,7 +30,7 @@ export async function getClimaData(): Promise<ClimaData> {
   const latitude = -33.14787323266141;
   const longitude = -64.3562331031547;
   
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,precipitation_probability,windspeed_10m,uv_index&forecast_days=16&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&hourly=temperature_2m,relativehumidity_2m,dewpoint_2m,apparent_temperature,precipitation_probability,precipitation,pressure_msl,cloudcover,visibility,windspeed_10m,winddirection_10m,windgusts_10m,uv_index&forecast_days=16&timezone=auto`;
 
   try {
     // Next.js fetch with revalidate every 1 hour (3600 seconds) or matching the top of the hour

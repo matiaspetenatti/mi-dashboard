@@ -38,6 +38,7 @@ export function ClimaGraficoCombinado({
       dateStr,
       label: formatDateLabel(dateStr),
       shortLabel: index === 0 ? "Hoy" : formatDateLabel(dateStr).split(",")[0],
+      xLabel: index === 0 ? "Hoy" : formatDateLabel(dateStr).replace(/,/g, "").trim(),
       maxTemp,
       minTemp,
       precipitation,
@@ -77,7 +78,7 @@ export function ClimaGraficoCombinado({
         </div>
       </div>
 
-      <div className="h-[350px] w-full pt-4">
+      <div className="relative w-full h-[360px] min-w-0 overflow-hidden pt-4">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}
@@ -87,15 +88,16 @@ export function ClimaGraficoCombinado({
                 onSelectDay(clickedIndex);
               }
             }}
-            margin={{ top: 10, right: 30, left: -10, bottom: 0 }}
+            margin={{ top: 20, right: 30, left: 40, bottom: 36 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e2d6f0" vertical={false} />
             <XAxis 
-              dataKey="shortLabel" 
+              dataKey="xLabel" 
               stroke="#a095c2" 
-              fontSize={12} 
+              fontSize={11} 
               tickLine={false} 
               axisLine={{ stroke: "#e2d6f0" }}
+              tick={{ fontSize: 11 }}
             />
             <YAxis 
               yAxisId="temp" 

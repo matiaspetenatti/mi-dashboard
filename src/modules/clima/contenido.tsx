@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ClimaData } from "./queries";
-import { getWeatherInfo, formatDateLabel } from "./clima-utils";
+import { getWeatherInfo, formatDateLabel, windDirectionCardinal, formatVisibility, formatPressure } from "./clima-utils";
 import { ClimaGraficoCombinado } from "./clima-grafico-combinado";
-import { Sun, CloudSun, Cloud, CloudFog, CloudRain, Snowflake, CloudLightning, Wind, SunMedium, Calendar, Clock } from "lucide-react";
+import { Sun, CloudSun, Cloud, CloudFog, CloudRain, Snowflake, CloudLightning, Wind, Clock, Thermometer, Droplets, Gauge, Eye, Compass, ArrowUp, ArrowDown } from "lucide-react";
 
 export function ClimaContenido({ data }: { data: ClimaData }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
@@ -25,96 +25,176 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
         fullTimeStr: timeStr,
         temperature: hourly.temperature_2m[index],
         humidity: hourly.relativehumidity_2m[index],
+        dewpoint: hourly.dewpoint_2m[index],
         apparentTemperature: hourly.apparent_temperature[index],
         precipitationProb: hourly.precipitation_probability[index],
+        precipitation: hourly.precipitation[index],
+        pressure: hourly.pressure_msl[index],
+        cloudcover: hourly.cloudcover[index],
+        visibility: hourly.visibility[index],
         windSpeed: hourly.windspeed_10m[index],
+        windDirection: hourly.winddirection_10m[index],
+        windGusts: hourly.windgusts_10m[index],
         uv_index: hourly.uv_index[index],
       };
     })
     .filter((item) => item.datePart === selectedDateStr);
 
-  // Find current temperature if selectedDayIndex is 0 (Today)
-  let currentTemp: number | null = null;
-  if (selectedDayIndex === 0) {
-    const now = new Date();
-    // Format current hour as YYYY-MM-DDTHH:00 to match Open-Meteo hourly format
-    const currentHourStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:00`;
-    const currentHourItem = hourly.time.findIndex(t => t.startsWith(currentHourStr.slice(0, 13)));
-    if (currentHourItem !== -1) {
-      currentTemp = hourly.temperature_2m[currentHourItem];
-    } else if (hourlyItems.length > 0) {
-      // Fallback to the closest hourly item if exact match not found
-      currentTemp = hourlyItems[0].temperature;
-    }
-  }
+  // Datos de la primera hora del día seleccionado (para el bento grid)
+  const dayData = hourlyItems[0] ?? null;
 
   return (
     <div className="space-y-8">
-      {/* Current/Selected Day Highlight Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-50/30 via-peach-50/30 to-surface-container-high/70 p-6 md:p-8 border border-outline-variant/30 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-surface/60 px-3 py-1 text-xs font-medium text-neutral-600 border border-outline-variant/20 shadow-sm">
-              <Calendar className="h-3.5 w-3.5 text-rose-300" />
-              <span>{formatDateLabel(selectedDateStr)}</span>
-              {selectedDayIndex === 0 && <span className="text-rose-300 font-bold">(Hoy)</span>}
+      {/* Bento grid con información del día seleccionado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Temperatura (2m)",
+            value: dayData?.temperature ?? "--",
+            unit: "°C",
+            Icon: Thermometer,
+            color: "text-rose-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+            span: true,
+          },
+          {
+            label: "Sensación térmica",
+            value: dayData?.apparentTemperature ?? "--",
+            unit: "°C",
+            Icon: Thermometer,
+            color: "text-orange-500",
+            bg: "bg-orange-50/60",
+            border: "border-orange-100",
+            span: true,
+          },
+          {
+            label: "Punto de rocio (2m)",
+            value: dayData?.dewpoint ?? "--",
+            unit: "°C",
+            Icon: Droplets,
+            color: "text-sky-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Humedad relativa (2m)",
+            value: dayData?.humidity ?? "--",
+            unit: "%",
+            Icon: Droplets,
+            color: "text-blue-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Prob. precipitación",
+            value: dayData?.precipitationProb ?? "--",
+            unit: "%",
+            Icon: CloudRain,
+            color: "text-sky-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Precipitación",
+            value: dayData?.precipitation ?? "--",
+            unit: "mm",
+            Icon: Droplets,
+            color: "text-blue-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Presión atmosférica",
+            value: dayData?.pressure ?? "--",
+            unit: "hPa",
+            Icon: Gauge,
+            color: "text-neutral-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Cobertura de nubes",
+            value: dayData?.cloudcover ?? "--",
+            unit: "%",
+            Icon: Cloud,
+            color: "text-slate-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Visibilidad",
+            value: formatVisibility(dayData?.visibility ?? 0),
+            unit: "",
+            Icon: Eye,
+            color: "text-indigo-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Velocidad del viento",
+            value: dayData?.windSpeed ?? "--",
+            unit: "km/h",
+            Icon: Wind,
+            color: "text-teal-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Dirección del viento",
+            value: dayData?.windDirection !== undefined ? windDirectionCardinal(dayData.windDirection) : "--",
+            unit: "",
+            Icon: Compass,
+            color: "text-purple-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Ráfagas",
+            value: dayData?.windGusts ?? "--",
+            unit: "km/h",
+            Icon: Gauge,
+            color: "text-rose-500",
+            bg: "bg-surface-container-low",
+            border: "border-outline-variant/20",
+          },
+          {
+            label: "Temperatura máxima",
+            value: daily.temperature_2m_max[selectedDayIndex] ?? "--",
+            unit: "°C",
+            Icon: ArrowUp,
+            color: "text-rose-500",
+            bg: "bg-rose-50/60",
+            border: "border-rose-100",
+          },
+          {
+            label: "Temperatura mínima",
+            value: daily.temperature_2m_min[selectedDayIndex] ?? "--",
+            unit: "°C",
+            Icon: ArrowDown,
+            color: "text-sky-500",
+            bg: "bg-sky-50/60",
+            border: "border-sky-100",
+          },
+        ].map((card, i) => (
+          <div
+            key={i}
+            className={`rounded-3xl p-4 shadow-sm border ${card.bg} ${card.border} ${
+              card.span ? "col-span-2 sm:col-span-1 lg:col-span-2" : ""
+            } flex flex-col justify-between group`}
+          >
+            <div className="flex items-end gap-1">
+              <span className="text-3xl font-bold text-neutral-900">{card.value}</span>
+              {card.unit && <span className="text-sm font-medium text-neutral-500">{card.unit}</span>}
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 flex items-baseline gap-3 flex-wrap">
-              {selectedDayIndex === 0 && currentTemp !== null ? (
-                <span className="text-rose-300">
-                  {currentTemp}°C <span className="text-xs font-normal uppercase text-neutral-500 bg-surface/60 px-2 py-0.5 rounded-full border border-outline-variant/20 inline-block align-middle">Actual</span>
-                </span>
-              ) : null}
-              <span>
-                Máx: {daily.temperature_2m_max[selectedDayIndex]}°C{" "}
-                <span className="text-xl md:text-2xl font-normal text-neutral-500">
-                  / Mín: {daily.temperature_2m_min[selectedDayIndex]}°C
-                </span>
+            <div className="flex items-center gap-2 mt-2">
+              <card.Icon className={`h-4 w-4 ${card.color}`} />
+              <span className="text-xs font-medium text-neutral-600 uppercase tracking-wider">
+                {card.label}
               </span>
-            </h2>
-            <div className="flex items-center gap-2 text-neutral-700 font-medium">
-              {(() => { const WeatherIcon = selectedWeather.icon; return <WeatherIcon className={`h-5 w-5 ${selectedWeather.color}`} />; })()}
-              <span>{selectedWeather.label}</span>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-surface/60 backdrop-blur-md p-4 rounded-2xl border border-outline-variant/20 shadow-inner">
-            <div className="space-y-1">
-              <span className="text-xs text-neutral-500 flex items-center gap-1">
-                <CloudRain className="h-3.5 w-3.5 text-sky-300" /> Humedad prom
-              </span>
-              <p className="text-sm font-semibold text-neutral-800">
-                {hourlyItems.length > 0 
-                  ? Math.round(hourlyItems.reduce((acc, curr) => acc + curr.humidity, 0) / hourlyItems.length) 
-                  : 0}%
-              </p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs text-neutral-500 flex items-center gap-1">
-                <CloudRain className="h-3.5 w-3.5 text-sky-300" /> Lluvia máx
-              </span>
-              <p className="text-sm font-semibold text-neutral-800">
-                {hourlyItems.length > 0 ? Math.max(...hourlyItems.map(i => i.precipitationProb)) : 0}%
-              </p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs text-neutral-500 flex items-center gap-1">
-                <Wind className="h-3.5 w-3.5 text-teal-400" /> Viento máx
-              </span>
-              <p className="text-sm font-semibold text-neutral-800">
-                {hourlyItems.length > 0 ? Math.max(...hourlyItems.map(i => i.windSpeed)) : 0} km/h
-              </p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs text-neutral-500 flex items-center gap-1">
-                <SunMedium className="h-3.5 w-3.5 text-peach-300" /> UV máx
-              </span>
-              <p className="text-sm font-semibold text-neutral-800">
-                {hourlyItems.length > 0 ? Math.max(...hourlyItems.map(i => i.uv_index)) : 0}
-              </p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Combined Recharts Graph for 16 Days */}
