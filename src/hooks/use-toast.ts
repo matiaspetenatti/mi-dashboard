@@ -4,59 +4,58 @@ import { Toast } from "@base-ui/react/toast";
 
 type ToastType = "success" | "error" | "warning" | "info" | "destructive";
 
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface ToastOptions {
   title?: string;
   description?: string;
   timeout?: number;
-}
-
-function createToast(manager: ReturnType<typeof Toast.useToastManager>) {
-  return {
-    show: (options: ToastOptions & { type?: ToastType }) => {
-      return manager.add({
-        title: options.title,
-        description: options.description,
-        type: options.type ?? "info",
-        timeout: options.timeout ?? 4000,
-      } as any);
-    },
-    success: (title: string, options?: Omit<ToastOptions, "title">) => {
-      return manager.add({
-        title,
-        description: options?.description,
-        type: "success",
-        timeout: options?.timeout ?? 4000,
-      } as any);
-    },
-    error: (title: string, options?: Omit<ToastOptions, "title">) => {
-      return manager.add({
-        title,
-        description: options?.description,
-        type: "error",
-        timeout: options?.timeout ?? 5000,
-      } as any);
-    },
-    warning: (title: string, options?: Omit<ToastOptions, "title">) => {
-      return manager.add({
-        title,
-        description: options?.description,
-        type: "warning",
-        timeout: options?.timeout ?? 4000,
-      } as any);
-    },
-    info: (title: string, options?: Omit<ToastOptions, "title">) => {
-      return manager.add({
-        title,
-        description: options?.description,
-        type: "info",
-        timeout: options?.timeout ?? 4000,
-      } as any);
-    },
-    dismiss: (id?: string) => manager.close(id),
-  };
+  action?: ToastAction;
 }
 
 export function useToast() {
   const manager = Toast.useToastManager();
-  return createToast(manager);
+
+  function agregar(
+    type: ToastType,
+    options: ToastOptions,
+    timeoutPorDefecto: number,
+  ) {
+    let id = "";
+
+    id = manager.add({
+      title: options.title,
+      description: options.description,
+      type,
+      timeout: options.timeout ?? (options.action ? 8000 : timeoutPorDefecto),
+      actionProps: options.action
+        ? {
+            children: options.action.label,
+            onClick: () => {
+              options.action?.onClick();
+              manager.close(id);
+            },
+          }
+        : undefined,
+    });
+
+    return id;
+  }
+
+  return {
+    show: (options: ToastOptions & { type?: ToastType }) =>
+      agregar(options.type ?? "info", options, 4000),
+    success: (title: string, options?: Omit<ToastOptions, "title">) =>
+      agregar("success", { ...options, title }, 4000),
+    error: (title: string, options?: Omit<ToastOptions, "title">) =>
+      agregar("error", { ...options, title }, 5000),
+    warning: (title: string, options?: Omit<ToastOptions, "title">) =>
+      agregar("warning", { ...options, title }, 4000),
+    info: (title: string, options?: Omit<ToastOptions, "title">) =>
+      agregar("info", { ...options, title }, 4000),
+    dismiss: (id?: string) => manager.close(id),
+  };
 }

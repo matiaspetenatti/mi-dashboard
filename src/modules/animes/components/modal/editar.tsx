@@ -49,10 +49,16 @@ export function ModalEditarAnime({
 
   const guardar = () => {
     setError(null);
+
+    const total = calcularTotalPuntajes(puntajes);
+    const episodiosVistosFinal = totalEpisodios
+      ? Math.min(Number(episodiosVistos) || 0, totalEpisodios)
+      : Number(episodiosVistos) || 0;
+
     const fd = new FormData();
     fd.append("id", String(anime.id));
     fd.append("estado", estado);
-    fd.append("episodiosVistos", episodiosVistos);
+    fd.append("episodiosVistos", String(episodiosVistosFinal));
     fd.append("notas", notas);
     fd.append("rewatch", rewatch ? "true" : "false");
     for (const criterio of CRITERIOS_ANIME) {
@@ -60,13 +66,8 @@ export function ModalEditarAnime({
       fd.append(criterio.campo, valor === null ? "" : String(valor));
     }
 
-    const total = calcularTotalPuntajes(puntajes);
-    const episodiosVistosFinal = totalEpisodios
-      ? Math.min(Number(episodiosVistos) || 0, totalEpisodios)
-      : Number(episodiosVistos) || 0;
-
     startTransition(async () => {
-      const res = await actualizarAnimeVisto(fd, CRITERIOS_ANIME);
+      const res = await actualizarAnimeVisto(fd);
       if (res?.error) {
         setError(res.error);
         return;

@@ -49,6 +49,10 @@
   --color-on-warning: var(--on-warning);
   --color-warning-container: var(--warning-container);
   --color-on-warning-container: var(--on-warning-container);
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
 
   /* shadcn compatibility roles */
   --color-sidebar-ring: var(--sidebar-ring);

@@ -1,215 +1,124 @@
 "use client";
 
-import { useState } from "react";
-import { ClimaData } from "./queries";
-import { getWeatherInfo, formatDateLabel, windDirectionCardinal, formatVisibility, formatPressure } from "./clima-utils";
+import { useMemo, useState } from "react";
+import { ChevronDown, Clock, CloudRain } from "lucide-react";
+import { cn } from "cn";
+import type { ClimaData, ClimaHora } from "./types";
+import { formatDateLabel, getWeatherInfo } from "./clima-utils";
 import { ClimaGraficoCombinado } from "./clima-grafico-combinado";
-import { Sun, CloudSun, Cloud, CloudFog, CloudRain, Snowflake, CloudLightning, Wind, Clock, Thermometer, Droplets, Gauge, Eye, Compass, ArrowUp, ArrowDown } from "lucide-react";
+import { BentoClima } from "./components/bento-clima";
+
+const entero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+const unDecimal = new Intl.NumberFormat("es-AR", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+function numero(valor?: number | null, formato = entero): string {
+  return valor === undefined || valor === null || !Number.isFinite(valor)
+    ? "--"
+    : formato.format(valor);
+}
+
+function grados(valor?: number | null): string {
+  return `${numero(valor)}°`;
+}
+
+/** Colores del índice UV alineados con el medidor del bento. */
+function claseUv(indice: number): string {
+  if (indice >= 8) return "bg-error-container text-on-error-container";
+  if (indice >= 3) return "bg-warning-container text-on-warning-container";
+  return "bg-success-container text-on-success-container";
+}
+
+function buscarHora<T extends { fullTimeStr: string }>(
+  items: T[],
+  referencia: string,
+): T | null {
+  if (items.length === 0) return null;
+
+  const prefijo = referencia.slice(0, 13);
+  return (
+    items.findLast((item) => item.fullTimeStr.slice(0, 13) <= prefijo) ??
+    items[0]
+  );
+}
 
 export function ClimaContenido({ data }: { data: ClimaData }) {
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [detalleAbierto, setDetalleAbierto] = useState(false);
 
-  const { daily, hourly } = data;
+  const { daily, hourly, current } = data;
 
-  // Selected date string (YYYY-MM-DD)
-  const selectedDateStr = daily.time[selectedDayIndex];
-  const selectedWeather = getWeatherInfo(daily.weathercode[selectedDayIndex]);
+  const fechaActual = current.time.slice(0, 10);
+  const horaActual = current.time.slice(11, 13);
+  const indiceHoy = Math.max(daily.time.indexOf(fechaActual), 0);
+  const esDiaActual = selectedDayIndex === indiceHoy;
+  const selectedDateStr = daily.time[selectedDayIndex] ?? fechaActual;
 
-  // Filter hourly data for the selected day
-  const hourlyItems = hourly.time
-    .map((timeStr, index) => {
-      const [datePart, timePart] = timeStr.split("T");
-      return {
-        datePart,
-        timePart,
-        fullTimeStr: timeStr,
-        temperature: hourly.temperature_2m[index],
-        humidity: hourly.relativehumidity_2m[index],
-        dewpoint: hourly.dewpoint_2m[index],
-        apparentTemperature: hourly.apparent_temperature[index],
-        precipitationProb: hourly.precipitation_probability[index],
-        precipitation: hourly.precipitation[index],
-        pressure: hourly.pressure_msl[index],
-        cloudcover: hourly.cloudcover[index],
-        visibility: hourly.visibility[index],
-        windSpeed: hourly.windspeed_10m[index],
-        windDirection: hourly.winddirection_10m[index],
-        windGusts: hourly.windgusts_10m[index],
-        uv_index: hourly.uv_index[index],
-      };
-    })
-    .filter((item) => item.datePart === selectedDateStr);
+  const hourlyItems = useMemo(
+    () =>
+      hourly.time
+        .map((timeStr, index) => {
+          const [datePart, timePart] = timeStr.split("T");
+          return {
+            datePart,
+            timePart,
+            fullTimeStr: timeStr,
+            temperature: hourly.temperature_2m[index],
+            humidity: hourly.relativehumidity_2m[index],
+            dewpoint: hourly.dewpoint_2m[index],
+            apparentTemperature: hourly.apparent_temperature[index],
+            precipitationProb: hourly.precipitation_probability[index],
+            precipitation: hourly.precipitation[index],
+            pressure: hourly.pressure_msl[index],
+            cloudcover: hourly.cloudcover[index],
+            visibility: hourly.visibility[index],
+            windSpeed: hourly.windspeed_10m[index],
+            windDirection: hourly.winddirection_10m[index],
+            windGusts: hourly.windgusts_10m[index],
+            uvIndex: hourly.uv_index[index],
+          };
+        })
+        .filter((item) => item.datePart === selectedDateStr),
+    [hourly, selectedDateStr],
+  );
 
-  // Datos de la primera hora del día seleccionado (para el bento grid)
-  const dayData = hourlyItems[0] ?? null;
+  // Hoy mostramos la hora en curso; los días futuros, el mediodía.
+  const referenciaHora = esDiaActual
+    ? `${selectedDateStr}T${horaActual}:00`
+    : `${selectedDateStr}T12:00`;
+  const dayData: ClimaHora | null = buscarHora(hourlyItems, referenciaHora);
+  const horaReferencia =
+    dayData?.timePart ?? (esDiaActual ? `${horaActual}:00` : "12:00");
 
   return (
     <div className="space-y-8">
-      {/* Bento grid con información del día seleccionado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: "Temperatura (2m)",
-            value: dayData?.temperature ?? "--",
-            unit: "°C",
-            Icon: Thermometer,
-            color: "text-rose-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-            span: true,
-          },
-          {
-            label: "Sensación térmica",
-            value: dayData?.apparentTemperature ?? "--",
-            unit: "°C",
-            Icon: Thermometer,
-            color: "text-orange-500",
-            bg: "bg-orange-50/60",
-            border: "border-orange-100",
-            span: true,
-          },
-          {
-            label: "Punto de rocio (2m)",
-            value: dayData?.dewpoint ?? "--",
-            unit: "°C",
-            Icon: Droplets,
-            color: "text-sky-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Humedad relativa (2m)",
-            value: dayData?.humidity ?? "--",
-            unit: "%",
-            Icon: Droplets,
-            color: "text-blue-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Prob. precipitación",
-            value: dayData?.precipitationProb ?? "--",
-            unit: "%",
-            Icon: CloudRain,
-            color: "text-sky-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Precipitación",
-            value: dayData?.precipitation ?? "--",
-            unit: "mm",
-            Icon: Droplets,
-            color: "text-blue-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Presión atmosférica",
-            value: dayData?.pressure ?? "--",
-            unit: "hPa",
-            Icon: Gauge,
-            color: "text-neutral-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Cobertura de nubes",
-            value: dayData?.cloudcover ?? "--",
-            unit: "%",
-            Icon: Cloud,
-            color: "text-slate-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Visibilidad",
-            value: formatVisibility(dayData?.visibility ?? 0),
-            unit: "",
-            Icon: Eye,
-            color: "text-indigo-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Velocidad del viento",
-            value: dayData?.windSpeed ?? "--",
-            unit: "km/h",
-            Icon: Wind,
-            color: "text-teal-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Dirección del viento",
-            value: dayData?.windDirection !== undefined ? windDirectionCardinal(dayData.windDirection) : "--",
-            unit: "",
-            Icon: Compass,
-            color: "text-purple-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Ráfagas",
-            value: dayData?.windGusts ?? "--",
-            unit: "km/h",
-            Icon: Gauge,
-            color: "text-rose-500",
-            bg: "bg-surface-container-low",
-            border: "border-outline-variant/20",
-          },
-          {
-            label: "Temperatura máxima",
-            value: daily.temperature_2m_max[selectedDayIndex] ?? "--",
-            unit: "°C",
-            Icon: ArrowUp,
-            color: "text-rose-500",
-            bg: "bg-rose-50/60",
-            border: "border-rose-100",
-          },
-          {
-            label: "Temperatura mínima",
-            value: daily.temperature_2m_min[selectedDayIndex] ?? "--",
-            unit: "°C",
-            Icon: ArrowDown,
-            color: "text-sky-500",
-            bg: "bg-sky-50/60",
-            border: "border-sky-100",
-          },
-        ].map((card, i) => (
-          <div
-            key={i}
-            className={`rounded-3xl p-4 shadow-sm border ${card.bg} ${card.border} ${
-              card.span ? "col-span-2 sm:col-span-1 lg:col-span-2" : ""
-            } flex flex-col justify-between group`}
-          >
-            <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-neutral-900">{card.value}</span>
-              {card.unit && <span className="text-sm font-medium text-neutral-500">{card.unit}</span>}
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <card.Icon className={`h-4 w-4 ${card.color}`} />
-              <span className="text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                {card.label}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Combined Recharts Graph for 16 Days */}
-      <ClimaGraficoCombinado 
-        data={data} 
-        selectedIndex={selectedDayIndex} 
-        onSelectDay={setSelectedDayIndex} 
+      <BentoClima
+        data={data}
+        selectedDayIndex={selectedDayIndex}
+        dayData={dayData}
+        esDiaActual={esDiaActual}
+        horaReferencia={horaReferencia}
       />
 
-      {/* 16 Days Selection Grid */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-bold tracking-tight text-neutral-900">
-          Seleccionar día (16 días de pronóstico)
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 max-h-[320px] overflow-y-auto pr-1">
+      {/* Selector de día: control principal, justo debajo del resumen. */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-on-surface">
+              Pronóstico por día
+            </h2>
+            <p className="text-xs text-on-surface-variant">
+              Elegí un día para actualizar el resumen y el detalle por hora.
+            </p>
+          </div>
+          <span className="rounded-full bg-surface-container-high px-2.5 py-1 text-[11px] font-medium text-on-surface-variant">
+            {daily.time.length} días
+          </span>
+        </div>
+
+        <div className="grid max-h-[320px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-4 lg:grid-cols-8">
           {daily.time.map((dateStr, index) => {
             const weather = getWeatherInfo(daily.weathercode[index]);
             const DayIcon = weather.icon;
@@ -218,121 +127,241 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
             return (
               <button
                 key={dateStr}
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedDayIndex(index)}
-                className={`flex flex-col items-center justify-between p-2 rounded-2xl border transition-all text-left ${
+                className={cn(
+                  "flex flex-col gap-2 rounded-2xl border p-2.5 text-left transition-colors",
                   isSelected
-                    ? "bg-gradient-to-br from-rose-100 to-peach-100 text-rose-600 border-rose-200 shadow-md hover:scale-[1.02]"
-                    : "bg-surface-container-low hover:bg-surface/50 border-outline-variant/30 text-neutral-700 hover:text-neutral-900 transition-colors"
-                }`}
+                    ? "border-primary/40 bg-primary-container text-on-primary-container shadow-elevation-1"
+                    : "border-outline-variant/40 bg-surface-container-low text-on-surface hover:border-outline-variant hover:bg-surface-container",
+                )}
               >
-                <div className="w-full flex justify-between items-center text-xs">
-                  <span className={`font-medium ${isSelected ? "text-rose-600/90" : "text-neutral-500"}`}>
-                    {index === 0 ? "Hoy" : formatDateLabel(dateStr).split(",")[0]}
+                <div className="flex w-full items-start justify-between gap-1">
+                  <span
+                    className={cn(
+                      "text-[11px] font-semibold",
+                      isSelected
+                        ? "text-on-primary-container"
+                        : "text-on-surface",
+                    )}
+                  >
+                    {index === indiceHoy
+                      ? "Hoy"
+                      : formatDateLabel(dateStr).split(",")[0]}
                   </span>
-                  <span className={`text-[10px] ${isSelected ? "text-rose-600/80" : "text-neutral-400"}`}>
+                  <span
+                    className={cn(
+                      "text-[10px] tabular-nums",
+                      isSelected
+                        ? "text-on-primary-container/70"
+                        : "text-on-surface-variant",
+                    )}
+                  >
                     {dateStr.split("-").slice(1).join("/")}
                   </span>
                 </div>
 
-                <div className="my-2">
-                  <DayIcon className={`h-6 w-6 ${isSelected ? "text-rose-600" : weather.color}`} />
-                </div>
-
-                <div className="w-full text-center space-y-0.5">
-                  <div className={`text-sm font-bold ${isSelected ? "text-rose-600" : "text-neutral-900"}`}>
-                    {daily.temperature_2m_max[index]}°
-                  </div>
-                  <div className={`text-xs ${isSelected ? "text-rose-600/80" : "text-neutral-500"}`}>
-                    {daily.temperature_2m_min[index]}°
+                <div className="flex items-center justify-between gap-1">
+                  <DayIcon
+                    aria-hidden="true"
+                    className={cn(
+                      "size-5 shrink-0",
+                      isSelected
+                        ? "text-on-primary-container"
+                        : weather.color,
+                    )}
+                  />
+                  <div className="text-right leading-tight">
+                    <div
+                      className={cn(
+                        "text-sm font-semibold tabular-nums",
+                        isSelected
+                          ? "text-on-primary-container"
+                          : "text-on-surface",
+                      )}
+                    >
+                      {grados(daily.temperature_2m_max[index])}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-[11px] tabular-nums",
+                        isSelected
+                          ? "text-on-primary-container/70"
+                          : "text-on-surface-variant",
+                      )}
+                    >
+                      {grados(daily.temperature_2m_min[index])}
+                    </div>
                   </div>
                 </div>
               </button>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Hourly Breakdown for Selected Day */}
-      <div className="space-y-4 pt-4 border-t border-outline-variant/30">
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-rose-300" />
-          <h3 className="text-xl font-bold tracking-tight text-neutral-900">
-            Desagregado por horas ({formatDateLabel(selectedDateStr)})
-          </h3>
-        </div>
+      <ClimaGraficoCombinado
+        data={data}
+        selectedIndex={selectedDayIndex}
+        onSelectDay={setSelectedDayIndex}
+      />
 
-        <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low overflow-hidden shadow-sm">
+      {/* Detalle por hora del día seleccionado: cerrado por defecto. */}
+      <section className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setDetalleAbierto((valor) => !valor)}
+          aria-expanded={detalleAbierto}
+          aria-controls="detalle-hora-clima"
+          className="flex w-full items-center gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-3 text-left transition-colors hover:bg-surface-container focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-container text-on-primary-container">
+            <Clock size={15} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-lg font-semibold tracking-tight text-on-surface">
+              Detalle por hora
+            </span>
+            <span className="block text-xs text-on-surface-variant">
+              {formatDateLabel(selectedDateStr)}
+              <span aria-hidden="true"> · </span>
+              <span className="tabular-nums">
+                {hourlyItems.length} h
+              </span>
+              <span aria-hidden="true"> · </span>
+              <span className="font-medium text-on-surface">
+                {esDiaActual ? "ahora" : "mediodía"}{" "}
+                {grados(dayData?.temperature)}
+              </span>
+            </span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className={cn(
+              "size-4 shrink-0 text-on-surface-variant transition-transform",
+              detalleAbierto && "rotate-180",
+            )}
+          />
+        </button>
+
+        <div
+          id="detalle-hora-clima"
+          className={cn(
+            "overflow-hidden rounded-3xl border border-outline-variant/40 bg-surface-container-lowest shadow-elevation-1",
+            !detalleAbierto && "hidden",
+          )}
+        >
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-outline-variant/20 bg-surface text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Hora</th>
-                  <th className="py-3 px-4">Temp</th>
-                  <th className="py-3 px-4">Sensación</th>
-                  <th className="py-3 px-4">Lluvia</th>
-                  <th className="py-3 px-4">Viento</th>
-                  <th className="py-3 px-4">Humedad</th>
-                  <th className="py-3 px-4">Índice UV</th>
+                <tr className="border-b border-outline-variant/40 bg-surface-container text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
+                  <th className="px-4 py-3">Hora</th>
+                  <th className="px-4 py-3">Temp</th>
+                  <th className="px-4 py-3">Sensación</th>
+                  <th className="px-4 py-3">Lluvia</th>
+                  <th className="px-4 py-3">Viento</th>
+                  <th className="px-4 py-3">Humedad</th>
+                  <th className="px-4 py-3">Índice UV</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/10 text-sm">
-                {hourlyItems.map((item) => (
-                  <tr key={item.timePart} className="hover:bg-surface/50 transition-colors">
-                    <td className="py-3 px-4 font-medium text-neutral-900 flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-neutral-400" />
-                      {item.timePart} hs
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-neutral-900">
-                      {item.temperature}°C
-                    </td>
-                    <td className="py-3 px-4 text-neutral-600">
-                      {item.apparentTemperature}°C
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        item.precipitationProb > 30 ? "bg-sky-100 text-sky-700" : "bg-surface/80 text-neutral-600"
-                      }`}>
-                        <CloudRain className="h-3 w-3" />
-                        {item.precipitationProb}%
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-neutral-600">
-                      {item.windSpeed} km/h
-                    </td>
-                    <td className="py-3 px-4 text-neutral-600">
-                      {item.humidity}%
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold ${
-                        item.uv_index >= 8 ? "bg-rose-100 text-rose-600" :
-                        item.uv_index >= 6 ? "bg-peach-100 text-peach-600" :
-                        item.uv_index >= 3 ? "bg-peach-100 text-peach-600" : "bg-sky-100 text-sky-600"
-                      }`}>
-                        {item.uv_index}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {hourlyItems.map((item) => {
+                  const esHoraActual =
+                    esDiaActual &&
+                    item.fullTimeStr.slice(0, 13) ===
+                      `${fechaActual}T${horaActual}`;
+
+                  return (
+                    <tr
+                      key={item.fullTimeStr}
+                      className={cn(
+                        "border-b border-outline-variant/20 transition-colors last:border-0",
+                        esHoraActual
+                          ? "bg-primary-container/25 hover:bg-primary-container/30"
+                          : "hover:bg-surface-container/60",
+                      )}
+                    >
+                      <td className="flex items-center gap-1.5 px-4 py-2.5 font-medium text-on-surface">
+                        <Clock
+                          size={13}
+                          aria-hidden="true"
+                          className="text-on-surface-variant"
+                        />
+                        {item.timePart} hs
+                        {esHoraActual && (
+                          <span className="rounded-full bg-primary-container px-1.5 py-0.5 text-[10px] font-semibold text-on-primary-container">
+                            Ahora
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 font-semibold tabular-nums text-on-surface">
+                        {grados(item.temperature)}
+                      </td>
+                      <td className="px-4 py-2.5 tabular-nums text-on-surface-variant">
+                        {grados(item.apparentTemperature)}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums",
+                            item.precipitationProb >= 30
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-surface-container text-on-surface-variant",
+                          )}
+                        >
+                          <CloudRain size={11} aria-hidden="true" />
+                          {numero(item.precipitationProb)}%
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 tabular-nums text-on-surface-variant">
+                        {numero(item.windSpeed)} km/h
+                      </td>
+                      <td className="px-4 py-2.5 tabular-nums text-on-surface-variant">
+                        {numero(item.humidity)}%
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span
+                          className={cn(
+                            "inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+                            claseUv(item.uvIndex),
+                          )}
+                        >
+                          {numero(item.uvIndex, unDecimal)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
 
 export function ClimaSkeleton() {
   return (
-    <div className="space-y-8 animate-pulse">
-      <div className="h-48 rounded-3xl bg-surface-container-high" />
-      <div className="h-96 rounded-3xl bg-surface-container-high" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-        {Array.from({ length: 16 }).map((_, i) => (
-          <div key={i} className="h-28 rounded-2xl bg-surface-container-high" />
+    <div className="animate-pulse space-y-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="col-span-2 min-h-[252px] rounded-3xl bg-surface-container-high lg:row-span-2" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="min-h-[136px] rounded-3xl bg-surface-container-high"
+          />
+        ))}
+        <div className="col-span-2 h-24 rounded-3xl bg-surface-container-high lg:col-span-4" />
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-20 rounded-2xl bg-surface-container-high" />
         ))}
       </div>
-      <div className="h-64 rounded-2xl bg-surface-container-high" />
+      <div className="h-96 rounded-3xl bg-surface-container-high" />
+      <div className="h-[68px] rounded-2xl bg-surface-container-high" />
     </div>
   );
 }

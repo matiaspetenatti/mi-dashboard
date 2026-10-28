@@ -8,6 +8,11 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { updateTag } from "next/cache";
 import { z } from "zod";
+import {
+  aColumnasPuntaje,
+  calcularTotalPuntajes,
+} from "@/modules/animes/lib/criterios";
+import { leerPuntajesFormData } from "./_puntajes";
 
 const ANIMES_TAG = "animes";
 
@@ -21,30 +26,15 @@ const parseNumero = (raw: FormDataEntryValue | null): number | null => {
   return Number.isFinite(numero) ? numero : Number.NaN;
 };
 
-const leerPuntajes = (
-  formData: FormData,
-  criterios: readonly any[],
-) => {
-  const puntajes: Record<string, number | null> = {};
-  for (const criterio of criterios) {
-    const valor = formData.get(criterio.campo);
-    puntajes[criterio.key] = valor !== null && valor !== "" ? Number(valor) : null;
-  }
-  return puntajes;
-};
-
 const actualizarSchema = z.object({
   id: z.coerce.number().int().positive(),
   estado: z.enum(["viendo", "completado", "en_pausa", "abandonado"]),
-  notas: z.string().optional().nullable(),
-  rewatch: z.coerce.boolean().optional(),
+  notas: z.string().nullable(),
+  rewatch: z.boolean(),
   episodiosVistos: z.number().int().min(0).optional(),
 });
 
-export async function actualizarAnimeVisto(
-  formData: FormData,
-  criterios: readonly any[],
-) {
+export async function actualizarAnimeVisto(formData: FormData) {
   await requireAuthorizedUser();
   const id = formData.get("id");
 
@@ -54,7 +44,8 @@ export async function actualizarAnimeVisto(
     notas: formData.get("notas") || null,
     rewatch: formData.get("rewatch") === "true",
     episodiosVistos:
-      formData.get("episodiosVistos") === null || formData.get("episodiosVistos") === ""
+      formData.get("episodiosVistos") === null ||
+      formData.get("episodiosVistos") === ""
         ? undefined
         : parseNumero(formData.get("episodiosVistos")),
   });
@@ -63,11 +54,12 @@ export async function actualizarAnimeVisto(
     return { error: "Datos inválidos" };
   }
 
+  const puntajes = leerPuntajesFormData(formData);
+  if (!puntajes) {
+    return { error: "Puntajes inválidos" };
+  }
+
   const data = parsed.data;
-  const puntajes = leerPuntajes(formData, criterios);
-  const hayPuntajes = criterios.some(
-    (c) => puntajes[c.key] !== null,
-  );
 
   const [anime] = await db
     .select()
@@ -81,21 +73,29 @@ export async function actualizarAnimeVisto(
 
   let episodiosVistos = anime.episodiosVistos;
   if (data.episodiosVistos !== undefined) {
-    // Would need total episodes to clamp
-    episodiosVistos = data.episodiosVistos;
+    const tope =
+      anime.episodios && anime.episodios > 0
+        ? anime.episodios
+        : data.episodiosVistos;
+    episodiosVistos = Math.max(0, Math.min(data.episodiosVistos, tope));
   }
 
   const cambios: Partial<typeof animesVistos.$inferInsert> = {
     estado: data.estado,
     notas: data.notas,
-    rewatch: data.rewatch ?? false,
+    rewatch: data.rewatch,
     episodiosVistos,
     actualizadoEn: new Date().toISOString(),
   };
 
+  // Si no hay ningún criterio calificado, no pisamos un puntaje anterior
+  // sin desglose (los animes viejos guardaban solo el total).
+  const hayPuntajes = Object.values(puntajes).some(
+    (valor) => valor !== null,
+  );
   if (hayPuntajes) {
-    // Would calculate total scores
-    cambios.miPuntaje = 0; // placeholder
+    Object.assign(cambios, aColumnasPuntaje(puntajes));
+    cambios.miPuntaje = calcularTotalPuntajes(puntajes);
   }
 
   await db

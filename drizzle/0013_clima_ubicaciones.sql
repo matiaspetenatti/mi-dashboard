@@ -1,0 +1,2 @@
+ALTER TABLE `clima_ubicacion` ADD `es_activa` integer DEFAULT true NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX `clima_ubicacion_activa_unica` ON `clima_ubicacion` (`es_activa`) WHERE "clima_ubicacion"."es_activa" = 1;

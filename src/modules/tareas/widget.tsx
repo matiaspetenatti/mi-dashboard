@@ -1,8 +1,11 @@
 import { CheckSquare } from "lucide-react";
+import { connection } from "next/server";
 import { WidgetCard } from "@/components/widget-card";
 import { CountUp } from "@/components/motion/count-up";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fechaHoy } from "@/lib/format";
 import { getPendientesCount, getProximasTareas } from "./queries";
+import { textoVencimiento } from "./constantes";
 
 export function TareasWidgetSkeleton() {
   return (
@@ -30,6 +33,8 @@ export async function TareasWidget() {
     getPendientesCount(),
     getProximasTareas(3),
   ]);
+  await connection();
+  const hoy = fechaHoy();
 
   return (
     <WidgetCard
@@ -59,10 +64,22 @@ export async function TareasWidget() {
               key={tarea.id}
               className="flex items-center justify-between gap-3 rounded-2xl bg-surface-container-low px-3 py-2 text-sm transition-colors duration-200 hover:bg-surface-container"
             >
-              <span className="truncate text-on-surface">{tarea.titulo}</span>
+              <span className="min-w-0">
+                <span className="block truncate text-on-surface">
+                  {tarea.titulo}
+                </span>
+                <span className="flex items-center gap-1 text-[10px] text-on-surface-variant">
+                  <span
+                    aria-hidden="true"
+                    className="size-1.5 rounded-full"
+                    style={{ backgroundColor: tarea.proyectoColor }}
+                  />
+                  {tarea.proyectoNombre}
+                </span>
+              </span>
               {tarea.fechaLimite && (
                 <span className="shrink-0 text-[11px] font-medium text-on-surface-variant">
-                  {tarea.fechaLimite}
+                  {textoVencimiento(tarea.fechaLimite, hoy)}
                 </span>
               )}
             </li>

@@ -33,7 +33,7 @@ export default function RootLayout({
       <body className="min-h-screen">
         <ClerkProvider>
           <div aria-hidden="true" className="app-backdrop" />
-          <Toast.Provider>
+          <Toast.Provider timeout={4000} limit={4}>
             {children}
             <Toaster />
           </Toast.Provider>

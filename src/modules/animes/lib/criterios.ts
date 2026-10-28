@@ -126,3 +126,20 @@ export function validarPuntajes(puntajes: PuntajesCriterios): boolean {
     );
   });
 }
+
+/**
+ * Total que conviene mostrar en la UI:
+ * 1. La suma de los criterios, si hay desglose.
+ * 2. El total guardado, para animes viejos sin desglose.
+ * 3. `null` cuando no hay puntaje (incluye los `0` sin desglose).
+ */
+export function puntajeMostrable(
+  anime: Pick<AnimeVisto, "miPuntaje"> & ColumnasPuntaje,
+): number | null {
+  const total = calcularTotalPuntajes(extraerPuntajes(anime));
+  if (total !== null) return total;
+
+  return typeof anime.miPuntaje === "number" && anime.miPuntaje > 0
+    ? anime.miPuntaje
+    : null;
+}

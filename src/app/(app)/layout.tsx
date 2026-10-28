@@ -33,7 +33,7 @@ export default async function AppLayout({
           </Suspense>
 
           <main className="flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-10">
-            <div className="mx-auto w-full max-w-6xl">{children}</div>
+            <div className="mx-auto w-full max-w-7xl">{children}</div>
           </main>
         </div>
 

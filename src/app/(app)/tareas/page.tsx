@@ -1,26 +1,118 @@
 import { Suspense } from "react";
-import { NuevaTarea } from "@/modules/tareas/nueva-tarea";
-import { TareasContenido } from "@/modules/tareas/tareas-contenido";
+import { connection } from "next/server";
 import { requireAuthorizedUser } from "@/lib/auth";
+import { fechaHoy } from "@/lib/format";
+import {
+  getEtiquetas,
+  getProyectosConResumen,
+  getResumenGlobal,
+  getTareasGlobales,
+} from "@/modules/tareas/queries";
+import { TareasOverview } from "@/modules/tareas/components/overview";
+import {
+  ListaInteligente,
+  type ListaInteligenteSlug,
+} from "@/modules/tareas/components/lista-inteligente";
+
+const listasValidas: ListaInteligenteSlug[] = [
+  "hoy",
+  "proximas",
+  "vencidas",
+  "sin-fecha",
+  "completadas",
+  "todas",
+];
+
+type Params = {
+  lista?: string;
+  tarea?: string;
+  nuevo?: string;
+};
+
+function listaValida(valor: string | undefined): ListaInteligenteSlug | null {
+  return listasValidas.find((lista) => lista === valor) ?? null;
+}
+
+function idValido(valor: string | undefined) {
+  const numero = Number(valor);
+  return Number.isInteger(numero) && numero > 0 ? numero : null;
+}
 
 export default async function TareasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; grupo?: string; vista?: string; mes?: string }>;
+  searchParams: Promise<Params>;
 }) {
   await requireAuthorizedUser();
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <h1 className="text-2xl font-semibold">Tareas</h1>
+    <Suspense fallback={<CargandoTareas />}>
+      <Contenido searchParams={searchParams} />
+    </Suspense>
+  );
+}
 
-      <Suspense fallback={<div className="h-10 animate-pulse rounded-md bg-neutral-100" />}>
-        <NuevaTarea />
-      </Suspense>
+async function Contenido({ searchParams }: { searchParams: Promise<Params> }) {
+  await connection();
+  const params = await searchParams;
+  const lista = listaValida(params.lista);
+  const tareaAbierta = idValido(params.tarea);
+  const hoy = fechaHoy();
 
-      <Suspense fallback={<p className="text-sm text-neutral-500">Cargando tareas...</p>}>
-        <TareasContenido searchParams={searchParams} />
-      </Suspense>
+  if (lista) {
+    const [tareas, proyectos, etiquetas] = await Promise.all([
+      getTareasGlobales(),
+      getProyectosConResumen(),
+      getEtiquetas(),
+    ]);
+
+    return (
+      <ListaInteligente
+        key={lista}
+        lista={lista}
+        tareas={tareas}
+        proyectos={proyectos}
+        etiquetas={etiquetas}
+        tareaAbierta={tareaAbierta}
+        hoy={hoy}
+      />
+    );
+  }
+
+  const [proyectos, resumen] = await Promise.all([
+    getProyectosConResumen(),
+    getResumenGlobal(),
+  ]);
+
+  return (
+    <TareasOverview
+      proyectos={proyectos}
+      resumen={resumen}
+      abrirNuevo={params.nuevo === "1"}
+    />
+  );
+}
+
+function CargandoTareas() {
+  return (
+    <div className="space-y-6">
+      <div className="h-24 animate-pulse rounded-3xl bg-surface-container-low" />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, indice) => (
+          <div
+            key={indice}
+            className="h-24 animate-pulse rounded-2xl bg-surface-container-low"
+          />
+        ))}
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, indice) => (
+          <div
+            key={indice}
+            className="h-40 animate-pulse rounded-2xl bg-surface-container-low"
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -4,9 +4,6 @@ import { Toast } from "@base-ui/react/toast";
 import { cn } from "cn";
 import { AlertCircle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 
-const TOAST_LIMIT = 4;
-const TOAST_TIMEOUT = 4000;
-
 function ToastIcon({ type }: { type?: string }) {
   if (type === "success") {
     return <CheckCircle2 className="size-4 text-[var(--success)]" />;
@@ -20,8 +17,12 @@ function ToastIcon({ type }: { type?: string }) {
   return <Info className="size-4 text-[var(--primary)]" />;
 }
 
-function ToastItem({ toast }: { toast: Toast.Root.ToastObject<any> }) {
-  const type = (toast as any).type as string | undefined;
+function ToastItem({
+  toast,
+}: {
+  toast: Toast.Root.ToastObject<Record<string, unknown>>;
+}) {
+  const type = toast.type;
 
   return (
     <Toast.Root
@@ -52,6 +53,9 @@ function ToastItem({ toast }: { toast: Toast.Root.ToastObject<any> }) {
           </Toast.Description>
         )}
       </div>
+      {toast.actionProps && (
+        <Toast.Action className="mt-0.5 shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10" />
+      )}
       <Toast.Close className="rounded-md p-1 text-on-surface-variant transition-colors hover:bg-on-surface/5 hover:text-on-surface">
         <X className="size-3.5" />
       </Toast.Close>

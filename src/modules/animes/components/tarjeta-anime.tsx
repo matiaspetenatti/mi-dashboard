@@ -6,6 +6,7 @@ import type { AnimeVisto } from "@/modules/animes/schema";
 import { ModalEditarAnime } from "@/modules/animes/components/modal/editar";
 import { ModalDetalleAnime } from "@/modules/animes/components/modal/detalle";
 import { obtenerDescripcionAnime } from "@/modules/animes/actions/descripcion";
+import { puntajeMostrable } from "@/modules/animes/lib/criterios";
 import { obtenerTemporadaAnime } from "@/modules/animes/lib/utils";
 
 const estadoLabel: Record<string, string> = {
@@ -35,6 +36,7 @@ export function TarjetaAnime({
   const vistos = anime.episodiosVistos || 0;
   const porcentaje = total && total > 0 ? Math.min(100, Math.round((vistos / total) * 100)) : 0;
   const temporada = obtenerTemporadaAnime(anime.fechaEmision);
+  const miPuntaje = puntajeMostrable(anime);
 
   const abrirDetalle = () => {
     setMostrarDetalle(true);
@@ -113,10 +115,10 @@ export function TarjetaAnime({
               </span>
             )}
           </div>
-          {anime.miPuntaje !== null && anime.miPuntaje !== undefined && (
+          {miPuntaje !== null && (
             <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded bg-amber-400/95 px-2 py-0.5 text-[11px] font-bold text-amber-950 shadow-sm">
               <Star size={10} fill="currentColor" />
-              {anime.miPuntaje}
+              {miPuntaje}
             </div>
           )}
           <button

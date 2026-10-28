@@ -23,10 +23,18 @@ import {
   Utensils,
   Sparkles,
   Bell,
+  FolderKanban,
+  Rocket,
+  Target,
+  Lightbulb,
+  Palette,
+  Camera,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 
 export const iconos = {
+  carpeta: FolderKanban,
   tag: Tag,
   home: Home,
   trabajo: Briefcase,
@@ -51,7 +59,18 @@ export const iconos = {
   comida: Utensils,
   ideas: Sparkles,
   recordatorio: Bell,
+  proyecto: Rocket,
+  objetivo: Target,
+  idea: Lightbulb,
+  diseno: Palette,
+  fotografia: Camera,
+  web: Globe,
 } satisfies Record<string, LucideIcon>;
 
 export type IconoKey = keyof typeof iconos;
 export const iconoKeys = Object.keys(iconos) as IconoKey[];
+
+export function iconoDe(clave: string | null | undefined, porDefecto: IconoKey = "carpeta") {
+  if (clave && clave in iconos) return iconos[clave as IconoKey];
+  return iconos[porDefecto];
+}

@@ -4,13 +4,9 @@ import { useEffect, useState, useTransition } from "react";
 import { Calendar, Check, Edit3, Film, Loader2, Minus, Plus, RotateCcw, Star, X } from "lucide-react";
 import { actualizarProgresoAnime } from "@/modules/animes/actions/progreso";
 import { ModalEditarAnime } from "@/modules/animes/components/modal/editar";
+import { DesglosePuntaje } from "@/modules/animes/components/desglose-puntaje";
 import type { AnimeVisto } from "@/modules/animes/schema";
-import {
-  CRITERIOS_ANIME,
-  extraerPuntajes,
-  contarCriteriosCalificados,
-  PUNTAJE_MAXIMO_CRITERIO,
-} from "@/modules/animes/lib/criterios";
+import { puntajeMostrable } from "@/modules/animes/lib/criterios";
 
 const estadoLabel: Record<string, string> = {
   viendo: "Viendo",
@@ -51,8 +47,7 @@ export function ModalDetalleAnime({
   const titulo = anime.tituloIngles || anime.titulo;
   const total = anime.episodios ?? null;
   const porcentaje = total && total > 0 ? Math.min(100, Math.round((vistos / total) * 100)) : 0;
-  const puntajes = extraerPuntajes(anime);
-  const criteriosCalificados = contarCriteriosCalificados(puntajes);
+  const miPuntaje = puntajeMostrable(anime);
 
   useEffect(() => {
     if (!open || mostrarEditar) return;
@@ -159,12 +154,12 @@ export function ModalDetalleAnime({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                  {anime.miPuntaje !== null && anime.miPuntaje !== undefined && (
+                  {miPuntaje !== null && (
                     <div>
                       <p className="text-[10px] uppercase tracking-wide text-neutral-400">Mi puntaje</p>
                       <p className="flex items-center gap-1 text-lg font-semibold text-amber-500">
                         <Star size={16} fill="currentColor" />
-                        {anime.miPuntaje}
+                        {miPuntaje}
                         <span className="text-xs font-normal text-neutral-400">/ 100</span>
                       </p>
                     </div>
@@ -207,6 +202,8 @@ export function ModalDetalleAnime({
                 </div>
               ) : null}
             </div>
+
+            <DesglosePuntaje anime={anime} />
 
             <div>
               <h4 className="mb-1 text-sm font-semibold text-neutral-800">Sinopsis</h4>

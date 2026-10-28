@@ -3,11 +3,15 @@
 import { requireAuthorizedUser } from "@/lib/auth";
 
 import { db } from "@/db";
-import { animesVistos, type AnimeVisto } from "@/modules/animes/schema";
-import { eq } from "drizzle-orm";
+import { animesVistos } from "@/modules/animes/schema";
 import { revalidatePath } from "next/cache";
 import { updateTag } from "next/cache";
 import { z } from "zod";
+import {
+  aColumnasPuntaje,
+  calcularTotalPuntajes,
+} from "@/modules/animes/lib/criterios";
+import { leerPuntajesFormData } from "./_puntajes";
 
 const ANIMES_TAG = "animes";
 
@@ -21,26 +25,21 @@ const parseNumero = (raw: FormDataEntryValue | null): number | null => {
   return Number.isFinite(numero) ? numero : Number.NaN;
 };
 
-const leerPuntajes = (formData: FormData) => {
-  // This will be passed CRITERIOS_ANIME from the component
-  // For now, we'll handle it in the action caller
-  return {};
-};
-
 const agregarSchema = z.object({
   kitsuId: z.coerce.number().int().positive(),
   titulo: z.string().min(1),
-  tituloIngles: z.string().optional().nullable(),
+  tituloIngles: z.string().nullable(),
   imagen: z.string().min(1),
-  tipo: z.string().optional().nullable(),
-  episodios: z.number().int().min(0).optional().nullable(),
-  ano: z.number().int().optional().nullable(),
-  fechaEmision: z.string().optional().nullable(),
-  generos: z.string().optional(),
-  descripcion: z.string().optional().nullable(),
-  scoreMal: z.number().optional().nullable(),
+  tipo: z.string().nullable(),
+  episodios: z.number().int().min(0).nullable(),
+  ano: z.number().int().nullable(),
+  fechaEmision: z.string().nullable(),
+  generos: z.array(z.string()),
+  descripcion: z.string().nullable(),
+  scoreMal: z.number().nullable(),
   estado: z.enum(["viendo", "completado", "en_pausa", "abandonado"]),
-  notas: z.string().optional().nullable(),
+  notas: z.string().nullable(),
+  episodiosVistos: z.number().int().min(0),
 });
 
 export async function agregarAnime(formData: FormData) {
@@ -76,19 +75,20 @@ export async function agregarAnime(formData: FormData) {
     formData.get("notas") === null || formData.get("notas") === ""
       ? null
       : String(formData.get("notas"));
+  const episodiosVistosRaw = parseNumero(formData.get("episodiosVistos")) ?? 0;
 
   let generos: string[] = [];
   try {
-    generos = JSON.parse(generosRaw || "[]");
+    const parsed = JSON.parse(generosRaw || "[]");
+    generos = Array.isArray(parsed) ? parsed.map(String) : [];
   } catch {
     generos = [];
   }
 
-  const puntajes: Record<string, number | null> = {};
-  // Extract scores from form data - this would need CRITERIOS_ANIME import
-  // For now, we'll set them as null and let the caller handle validation
+  const puntajes = leerPuntajesFormData(formData);
+  if (!puntajes) return { error: "Puntajes inválidos" };
 
-  const data = {
+  const parsed = agregarSchema.safeParse({
     kitsuId: Number(kitsuId),
     titulo,
     tituloIngles,
@@ -100,10 +100,25 @@ export async function agregarAnime(formData: FormData) {
     generos,
     descripcion,
     scoreMal,
-    miPuntaje: 0, // Will be calculated
-    episodiosVistos: 0,
-    estado: estado as AnimeVisto["estado"],
+    estado,
     notas,
+    episodiosVistos: episodiosVistosRaw,
+  });
+
+  if (!parsed.success) return { error: "Datos inválidos" };
+
+  const { episodios: totalEpisodios, episodiosVistos, ...resto } = parsed.data;
+  const vistos =
+    totalEpisodios && totalEpisodios > 0
+      ? Math.max(0, Math.min(episodiosVistos, totalEpisodios))
+      : Math.max(0, episodiosVistos);
+
+  const data: typeof animesVistos.$inferInsert = {
+    ...resto,
+    episodios: totalEpisodios,
+    ...aColumnasPuntaje(puntajes),
+    miPuntaje: calcularTotalPuntajes(puntajes),
+    episodiosVistos: vistos,
     actualizadoEn: new Date().toISOString(),
   };
 
