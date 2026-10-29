@@ -33,6 +33,29 @@ export function textoDias(dias: number) {
   return `en ${dias} días`;
 }
 
+export function textoDiasRelativo(dias: number) {
+  if (dias === 0) return "hoy";
+  if (dias === 1) return "mañana";
+  if (dias > 1) return `en ${dias} días`;
+  if (dias === -1) return "ayer";
+  return `hace ${Math.abs(dias)} días`;
+}
+
+// "YYYY-MM-DD" -> "28 oct 2026"
+export function formatearFecha(fecha: string, conAnio = true) {
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "short",
+    ...(conAnio ? { year: "numeric" } : {}),
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(anio, mes - 1, dia)));
+}
+
+export function formatNota(nota: number) {
+  return nota.toLocaleString("es-AR", { maximumFractionDigits: 2 });
+}
+
 // suma N unidades a una fecha "YYYY-MM-DD"
 // (mes/año: si el día no existe en el destino, usa el último del mes; ej. 31 ene + 1 mes = 28/29 feb)
 export function sumarFecha(

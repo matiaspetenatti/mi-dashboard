@@ -1,127 +1,205 @@
-import { Trash2 } from "lucide-react";
+import {
+  BookOpenCheck,
+  CalendarClock,
+  GraduationCap,
+  TrendingUp,
+} from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatNota } from "@/lib/format";
 import { getEstudioData } from "./queries";
-import { crearExamen, borrarExamen, borrarMateria, guardarNota } from "./actions";
-import { diasHasta, textoDias } from "@/lib/format";
+import { BotonNuevaCarrera } from "./components/boton-nueva-carrera";
+import { TarjetaCarrera } from "./components/tarjeta-carrera";
+import { FilaExamen } from "./components/fila-examen";
+import { PomodoroTimer } from "./components/pomodoro-timer";
 
-const input = "rounded-md border px-3 py-2 text-sm";
+export function EstudioSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-10 w-56" />
+        <Skeleton className="h-4 w-full max-w-md" />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, indice) => (
+          <Skeleton key={indice} className="h-28 rounded-2xl" />
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, indice) => (
+          <Skeleton key={indice} className="h-64 rounded-3xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export async function EstudioContenido() {
-    const { materias, examenes, hoy } = await getEstudioData();
+  const { carreras, proximosExamenes, resumen, hoy } = await getEstudioData();
 
-    const proximos = examenes.filter((e) => e.fecha >= hoy).reverse(); // más cercano primero
-    const pasados = examenes.filter((e) => e.fecha < hoy);
+  const estadisticas = [
+    {
+      etiqueta: "Carreras activas",
+      valor: resumen.carrerasActivas,
+      detalle: `${resumen.totalCarreras} en total`,
+      icono: GraduationCap,
+      clase: "bg-tertiary-container text-on-tertiary-container",
+    },
+    {
+      etiqueta: "Materias aprobadas",
+      valor: resumen.aprobadas,
+      detalle: `de ${resumen.totalPlan} del plan`,
+      icono: BookOpenCheck,
+      clase: "bg-success-container text-on-success-container",
+    },
+    {
+      etiqueta: "Promedio general",
+      valor:
+        resumen.promedio !== null ? formatNota(resumen.promedio) : "—",
+      detalle: "Sobre materias aprobadas",
+      icono: TrendingUp,
+      clase: "bg-primary-container text-on-primary-container",
+    },
+    {
+      etiqueta: "Próximos exámenes",
+      valor: resumen.proximosExamenes,
+      detalle:
+        resumen.proximosExamenes === 1 ? "examen agendado" : "exámenes agendados",
+      icono: CalendarClock,
+      clase: "bg-secondary-container text-on-secondary-container",
+    },
+  ];
 
-    return (
-        <div className="space-y-8">
-            {/* Nuevo examen */}
-            {materias.length > 0 && (
-                <form action={crearExamen} className="flex flex-wrap gap-2">
-                    <select name="materiaId" className={input}>
-                        {materias.map((m) => (
-                            <option key={m.id} value={m.id}>
-                                {m.nombre}
-                            </option>
-                        ))}
-                    </select>
-                    <select name="tipo" className={input}>
-                        <option value="parcial">Parcial</option>
-                        <option value="final">Final</option>
-                        <option value="recuperatorio">Recuperatorio</option>
-                        <option value="tp">TP</option>
-                    </select>
-                    <input type="date" name="fecha" required className={input} />
-                    <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white">
-                        Agregar examen
-                    </button>
-                </form>
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow={
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-tertiary-container px-3 py-1 text-xs font-medium text-on-tertiary-container">
+            <GraduationCap size={13} />
+            Recorrido académico
+          </span>
+        }
+        title="Estudio"
+        description="Seguí el avance de tus carreras, las materias, las notas y los próximos exámenes."
+        actions={<BotonNuevaCarrera />}
+      />
+
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        {estadisticas.map((stat) => {
+          const Icono = stat.icono;
+          return (
+            <div
+              key={stat.etiqueta}
+              className="rounded-2xl border border-outline-variant/50 bg-surface-container-lowest p-3.5"
+            >
+              <span
+                className={`grid size-8 place-items-center rounded-full ${stat.clase}`}
+              >
+                <Icono size={15} />
+              </span>
+              <p className="mt-2.5 text-2xl font-medium leading-none text-on-surface">
+                {stat.valor}
+              </p>
+              <p className="mt-1 text-xs font-medium text-on-surface">
+                {stat.etiqueta}
+              </p>
+              <p className="text-[10px] text-on-surface-variant">
+                {stat.detalle}
+              </p>
+            </div>
+          );
+        })}
+      </section>
+
+      {carreras.length === 0 ? (
+        <section className="rounded-3xl border border-dashed border-outline-variant/80 bg-surface-container-lowest/60 px-6 py-14 text-center">
+          <GraduationCap
+            size={28}
+            className="mx-auto text-on-surface-variant"
+          />
+          <p className="mt-3 text-base font-medium text-on-surface">
+            Empezá cargando tu primera carrera
+          </p>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-on-surface-variant">
+            Después podés agregar las materias, sus notas y las fechas de
+            examen para ver tu progreso.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <BotonNuevaCarrera />
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="space-y-3">
+            <div className="flex items-end justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
+                Mis carreras
+              </h2>
+              <span className="text-[11px] text-on-surface-variant">
+                {carreras.length}{" "}
+                {carreras.length === 1 ? "carrera" : "carreras"}
+              </span>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {carreras.map((item) => (
+                <TarjetaCarrera
+                  key={item.carrera.id}
+                  resumen={item}
+                  hoy={hoy}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-end justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
+                Próximos exámenes
+              </h2>
+              <span className="text-[11px] text-on-surface-variant">
+                {proximosExamenes.length}{" "}
+                {proximosExamenes.length === 1 ? "examen" : "exámenes"}
+              </span>
+            </div>
+
+            {proximosExamenes.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-outline-variant/70 bg-surface-container-lowest/60 px-4 py-8 text-center text-sm text-on-surface-variant">
+                No hay exámenes programados por delante.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {proximosExamenes.map((examen) => (
+                  <FilaExamen
+                    key={examen.id}
+                    examen={examen}
+                    hoy={hoy}
+                    mostrarCarrera
+                  />
+                ))}
+              </ul>
             )}
+          </section>
 
-            {/* Próximos */}
-            <section className="space-y-2">
-                <h2 className="text-sm font-medium text-neutral-500">Próximos exámenes</h2>
-                <ul className="divide-y rounded-xl border bg-white">
-                    {proximos.length === 0 && (
-                        <li className="p-4 text-sm text-neutral-500">No hay exámenes por delante.</li>
-                    )}
-                    {proximos.map((e) => (
-                        <li key={e.id} className="flex items-center gap-3 p-3">
-                            <div className="flex-1">
-                                <p className="text-sm">{e.materia}</p>
-                                <p className="text-xs text-neutral-500">
-                                    {e.tipo} · {e.fecha}
-                                </p>
-                            </div>
-                            <span className="text-xs text-neutral-500">
-                                {textoDias(diasHasta(e.fecha, hoy))}
-                            </span>
-                            <form action={borrarExamen.bind(null, e.id)}>
-                                <button aria-label="Borrar" className="text-neutral-400 hover:text-red-600">
-                                    <Trash2 size={16} />
-                                </button>
-                            </form>
-                        </li>
-                    ))}
-                </ul>
-            </section>
-
-            {/* Pasados, con nota */}
-            {pasados.length > 0 && (
-                <section className="space-y-2">
-                    <h2 className="text-sm font-medium text-neutral-500">Rendidos</h2>
-                    <ul className="divide-y rounded-xl border bg-white">
-                        {pasados.map((e) => (
-                            <li key={e.id} className="flex items-center gap-3 p-3">
-                                <div className="flex-1">
-                                    <p className="text-sm">{e.materia}</p>
-                                    <p className="text-xs text-neutral-500">
-                                        {e.tipo} · {e.fecha}
-                                    </p>
-                                </div>
-                                {e.nota !== null ? (
-                                    <span className="text-sm font-medium">{e.nota}</span>
-                                ) : (
-                                    <form action={guardarNota.bind(null, e.id)} className="flex gap-1">
-                                        <input
-                                            name="nota"
-                                            inputMode="decimal"
-                                            placeholder="Nota"
-                                            className={`${input} w-20 py-1`}
-                                        />
-                                        <button className="rounded-md border px-2 text-xs">OK</button>
-                                    </form>
-                                )}
-                                <form action={borrarExamen.bind(null, e.id)}>
-                                    <button aria-label="Borrar" className="text-neutral-400 hover:text-red-600">
-                                        <Trash2 size={16} />
-                                    </button>
-                                </form>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-
-            {/* Materias */}
-            {materias.length > 0 && (
-                <section className="space-y-2">
-                    <h2 className="text-sm font-medium text-neutral-500">Materias</h2>
-                    <ul className="divide-y rounded-xl border bg-white">
-                        {materias.map((m) => (
-                            <li key={m.id} className="flex items-center justify-between p-3">
-                                <span className="text-sm">{m.nombre}</span>
-                                <form action={borrarMateria.bind(null, m.id)}>
-                                    <button aria-label="Borrar" className="text-neutral-400 hover:text-red-600">
-                                        <Trash2 size={16} />
-                                    </button>
-                                </form>
-                            </li>
-                        ))}
-                    </ul>
-                    <p className="text-xs text-neutral-400">
-                        Al borrar una materia se borran también sus exámenes.
-                    </p>
-                </section>
-            )}
-        </div>
-    );
+          <section className="space-y-3">
+            <div className="flex items-end justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
+                Pomodoro
+              </h2>
+              <span className="text-[11px] text-on-surface-variant">
+                Temporizador de estudio
+              </span>
+            </div>
+            <PomodoroTimer
+              carreras={carreras.map((c) => ({
+                id: c.carrera.id,
+                nombre: c.carrera.nombre,
+              }))}
+            />
+          </section>
+        </>
+      )}
+    </div>
+  );
 }
