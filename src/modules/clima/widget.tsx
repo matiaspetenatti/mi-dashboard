@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   CloudRain,
   Droplets,
@@ -8,7 +11,7 @@ import {
 } from "lucide-react";
 import { WidgetCard } from "@/components/widget-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getClimaResumen } from "./queries";
+import type { ClimaResumen } from "./types";
 import { getWeatherInfo } from "./clima-utils";
 
 export function ClimaWidgetSkeleton() {
@@ -43,15 +46,34 @@ function ClimaWidgetError() {
   );
 }
 
-export async function ClimaWidget() {
-  let resumen;
+export function ClimaWidget() {
+  const [resumen, setResumen] = useState<ClimaResumen | null>(null);
+  const [error, setError] = useState(false);
 
-  try {
-    resumen = await getClimaResumen();
-  } catch (error) {
-    console.error("No se pudo obtener el resumen del clima:", error);
-    return <ClimaWidgetError />;
-  }
+  useEffect(() => {
+    let cancelado = false;
+
+    async function cargar() {
+      try {
+        const res = await fetch("/api/clima/resumen", {
+          next: { tags: ["clima"] },
+        });
+        if (!res.ok) throw new Error("Error al cargar el clima");
+        const data = (await res.json()) as ClimaResumen;
+        if (!cancelado) setResumen(data);
+      } catch {
+        if (!cancelado) setError(true);
+      }
+    }
+
+    cargar();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  if (error) return <ClimaWidgetError />;
+  if (!resumen) return <ClimaWidgetSkeleton />;
 
   const { actual, etiqueta, max, min, probabilidadLluvia } = resumen;
   const weather = getWeatherInfo(actual.weather_code);

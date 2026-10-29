@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const serie = z.array(z.number());
+const serie = z.preprocess(
+  (valor) =>
+    Array.isArray(valor) ? valor.map((v) => (v == null ? 0 : v)) : valor,
+  z.array(z.number()),
+);
 
 const actualSchema = z.object({
   time: z.string(),
