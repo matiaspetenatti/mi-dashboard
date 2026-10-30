@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   ChartContainer,
@@ -27,7 +23,7 @@ const rangos: { id: RangoTiempo; label: string; dias: number }[] = [
 const chartConfig = {
   saldo: {
     label: "Patrimonio",
-    color: "#10b981",
+    color: "var(--chart-finance-line)",
   },
 } satisfies ChartConfig;
 
@@ -81,37 +77,40 @@ export function EvolucionPatrimonioChart({
   }, [datosFiltrados]);
 
   const esPositivo = stats.diferencia >= 0;
-  const strokeColor = esPositivo ? "#059669" : "#dc2626";
+  const colorLinea = esPositivo
+    ? "var(--chart-finance-line)"
+    : "var(--error)";
+  const colorArea = esPositivo ? "var(--chart-finance-area)" : "var(--error)";
+  const etiquetaRango = rangos.find((r) => r.id === rango)?.label ?? "1 mes";
 
   const yDomain = useMemo(() => {
     const { min, max } = stats;
     const spread = max - min;
-    const padding = spread > 0 ? spread * 0.15 : (max > 0 ? max * 0.15 : 1000);
+    const padding = spread > 0 ? spread * 0.15 : max > 0 ? max * 0.15 : 1000;
     const bottom = Math.max(0, Math.floor(min - padding));
     const top = Math.ceil(max + padding);
     return [bottom, top];
   }, [stats]);
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-xs transition">
-      {/* Encabezado: Título y Selector de Rango */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
-              <TrendingUp size={15} />
-            </div>
-            <h3 className="text-base font-semibold text-neutral-900">
+    <section className="rounded-xl border border-outline-variant/60 bg-card p-6 shadow-elevation-1">
+      {/* Encabezado: título y selector de rango */}
+      <div className="flex flex-col gap-4 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
+            <TrendingUp size={16} />
+          </span>
+          <div>
+            <h2 className="text-base font-bold leading-tight text-heading">
               Evolución del Patrimonio
-            </h3>
+            </h2>
+            <p className="text-xs text-charcoal">
+              Seguimiento histórico de tu saldo acumulado en todas las cuentas
+            </p>
           </div>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            Seguimiento histórico de tu saldo acumulado en todas las cuentas
-          </p>
         </div>
 
-        {/* Selector de Rango (1M, 3M, 6M, 1A) */}
-        <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-50 p-1 self-start sm:self-auto">
+        <div className="inline-flex self-start rounded-full border border-outline-variant/60 bg-surface-container p-1 text-xs font-semibold sm:self-auto">
           {rangos.map((r) => {
             const activo = rango === r.id;
             return (
@@ -119,10 +118,11 @@ export function EvolucionPatrimonioChart({
                 key={r.id}
                 type="button"
                 onClick={() => setRango(r.id)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition ${
+                aria-pressed={activo}
+                className={`rounded-full px-3.5 py-1 transition-colors ${
                   activo
-                    ? "bg-white text-neutral-900 shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-900"
+                    ? "bg-card text-heading shadow-xs"
+                    : "text-charcoal hover:text-heading"
                 }`}
               >
                 {r.label}
@@ -132,179 +132,174 @@ export function EvolucionPatrimonioChart({
         </div>
       </div>
 
-      {/* Métricas destacadas del periodo */}
-      <div className="mt-4 flex flex-wrap items-baseline gap-4 sm:gap-6">
+      {/* Métricas del periodo */}
+      <div className="grid grid-cols-2 gap-4 border-t border-outline-variant/50 py-3 text-xs sm:grid-cols-4">
         <div>
-          <span className="text-[11px] font-medium text-neutral-500">
-            Patrimonio al día de hoy
+          <span className="block text-charcoal">Patrimonio al día de hoy</span>
+          <span className="text-base font-extrabold text-heading">
+            {formatMonto(stats.actual * 100)}
           </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold tracking-tight text-neutral-900">
-              {formatMonto(stats.actual * 100)}
-            </span>
-          </div>
         </div>
 
-        <div className="border-l border-neutral-200 pl-4 sm:pl-6">
-          <span className="text-[11px] font-medium text-neutral-500">
-            Variación en {rangos.find((r) => r.id === rango)?.label}
-          </span>
-          <div className="flex items-center gap-1.5">
+        <div>
+          <span className="block text-charcoal">Variación en {etiquetaRango}</span>
+          <span
+            className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold ${
+              esPositivo
+                ? "bg-success-container text-on-success-container"
+                : "bg-error-container text-on-error-container"
+            }`}
+          >
+            {esPositivo ? (
+              <ArrowUpRight size={13} />
+            ) : (
+              <ArrowDownRight size={13} />
+            )}
+            {esPositivo ? "+" : "−"} {formatMonto(Math.abs(stats.diferencia) * 100)}
             <span
-              className={`inline-flex items-center gap-0.5 text-sm font-semibold ${
-                esPositivo ? "text-emerald-600" : "text-red-600"
-              }`}
-            >
-              {esPositivo ? (
-                <ArrowUpRight size={15} />
-              ) : (
-                <ArrowDownRight size={15} />
-              )}
-              {esPositivo ? "+ " : "− "}
-              {formatMonto(Math.abs(stats.diferencia) * 100)}
-            </span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+              className={`rounded-full px-1.5 text-[10px] ${
                 esPositivo
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-red-100 text-red-800"
+                  ? "bg-on-success-container/10"
+                  : "bg-on-error-container/10"
               }`}
             >
               {esPositivo ? "+" : ""}
               {stats.porcentaje}%
             </span>
-          </div>
+          </span>
         </div>
 
-        <div className="hidden sm:block border-l border-neutral-200 pl-6 text-xs text-neutral-500">
-          <div>
-            <span className="text-neutral-400">Mínimo: </span>
-            <span className="font-medium text-neutral-700">
-              {formatMonto(stats.min * 100)}
-            </span>
-          </div>
-          <div>
-            <span className="text-neutral-400">Máximo: </span>
-            <span className="font-medium text-neutral-700">
-              {formatMonto(stats.max * 100)}
-            </span>
-          </div>
+        <div>
+          <span className="block text-charcoal">Mínimo</span>
+          <span className="font-bold text-heading">
+            {formatMonto(stats.min * 100)}
+          </span>
+        </div>
+
+        <div>
+          <span className="block text-charcoal">Máximo</span>
+          <span className="font-bold text-heading">
+            {formatMonto(stats.max * 100)}
+          </span>
         </div>
       </div>
 
-      {/* Gráfico ReCharts usando Shadcn Chart Container */}
-      <div className="mt-4 pt-2">
-        <ChartContainer config={chartConfig} className="h-64 w-full">
-          <AreaChart
-            data={datosFiltrados}
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="patrimonioGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor={esPositivo ? "#10b981" : "#ef4444"}
-                  stopOpacity={0.35}
-                />
-                <stop
-                  offset="95%"
-                  stopColor={esPositivo ? "#10b981" : "#ef4444"}
-                  stopOpacity={0.0}
-                />
-              </linearGradient>
-            </defs>
+      {/* Gráfico */}
+      <div className="pt-2">
+        {datosFiltrados.length === 0 ? (
+          <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-outline-variant/60 bg-surface-container-low/60 px-6 text-center text-xs text-charcoal">
+            Todavía no hay movimientos suficientes para dibujar la evolución
+            del patrimonio.
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="h-64 w-full">
+            <AreaChart
+              data={datosFiltrados}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="patrimonioGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={colorArea} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={colorArea} stopOpacity={0} />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="oklch(0.92 0 0)"
-              className="stroke-neutral-200/60"
-            />
+              <CartesianGrid
+                strokeDasharray="4 4"
+                vertical={false}
+                stroke="var(--outline-variant)"
+              />
 
-            <XAxis
-              dataKey="fecha"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={28}
-              tickFormatter={(value: string) => {
-                if (!value) return "";
-                const [y, m, d] = value.split("-").map(Number);
-                const date = new Date(Date.UTC(y, m - 1, d));
-                if (rango === "1M") {
+              <XAxis
+                dataKey="fecha"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={28}
+                tickFormatter={(value: string) => {
+                  if (!value) return "";
+                  const [y, m, d] = value.split("-").map(Number);
+                  const date = new Date(Date.UTC(y, m - 1, d));
+                  if (rango === "1M") {
+                    return new Intl.DateTimeFormat("es-AR", {
+                      day: "numeric",
+                      month: "short",
+                    }).format(date);
+                  }
+                  if (rango === "3M" || rango === "6M") {
+                    return new Intl.DateTimeFormat("es-AR", {
+                      month: "short",
+                      day: "numeric",
+                    }).format(date);
+                  }
                   return new Intl.DateTimeFormat("es-AR", {
-                    day: "numeric",
                     month: "short",
+                    year: "2-digit",
                   }).format(date);
-                }
-                if (rango === "3M" || rango === "6M") {
-                  return new Intl.DateTimeFormat("es-AR", {
-                    month: "short",
+                }}
+                className="text-[11px]"
+              />
+
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                domain={yDomain}
+                tickFormatter={(value: number) => formatMontoCompacto(value)}
+                className="text-[11px]"
+                width={58}
+              />
+
+              <ChartTooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const punto = payload[0].payload as PuntoEvolucion;
+                  const [y, m, d] = punto.fecha.split("-").map(Number);
+                  const fechaFormat = new Intl.DateTimeFormat("es-AR", {
                     day: "numeric",
-                  }).format(date);
-                }
-                return new Intl.DateTimeFormat("es-AR", {
-                  month: "short",
-                  year: "2-digit",
-                }).format(date);
-              }}
-              className="text-[11px] text-neutral-400"
-            />
+                    month: "long",
+                    year: "numeric",
+                  }).format(new Date(Date.UTC(y, m - 1, d)));
 
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              domain={yDomain}
-              tickFormatter={(value: number) => formatMontoCompacto(value)}
-              className="text-[11px] text-neutral-400"
-              width={58}
-            />
-
-            <ChartTooltip
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const punto = payload[0].payload as PuntoEvolucion;
-                const [y, m, d] = punto.fecha.split("-").map(Number);
-                const fechaFormat = new Intl.DateTimeFormat("es-AR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                }).format(new Date(Date.UTC(y, m - 1, d)));
-
-                return (
-                  <div className="rounded-xl border border-neutral-200 bg-white p-3 shadow-lg">
-                    <p className="text-[11px] font-medium text-neutral-500 capitalize">
-                      {fechaFormat}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="text-xs text-neutral-600">Patrimonio:</span>
-                      <span className="text-sm font-bold text-neutral-900">
-                        {formatMonto(punto.saldo * 100)}
-                      </span>
+                  return (
+                    <div className="rounded-lg border border-outline-variant/60 bg-card p-3 shadow-elevation-3">
+                      <p className="text-[11px] font-medium capitalize text-charcoal">
+                        {fechaFormat}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: colorLinea }}
+                        />
+                        <span className="text-xs text-charcoal">
+                          Patrimonio:
+                        </span>
+                        <span className="text-sm font-bold text-heading">
+                          {formatMonto(punto.saldo * 100)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              }}
-            />
+                  );
+                }}
+              />
 
-            <Area
-              type="monotone"
-              dataKey="saldo"
-              stroke={strokeColor}
-              strokeWidth={2.2}
-              fill="url(#patrimonioGrad)"
-              activeDot={{
-                r: 5,
-                fill: strokeColor,
-                stroke: "#ffffff",
-                strokeWidth: 2,
-              }}
-            />
-          </AreaChart>
-        </ChartContainer>
+              <Area
+                type="monotone"
+                dataKey="saldo"
+                stroke={colorLinea}
+                strokeWidth={2.2}
+                fill="url(#patrimonioGrad)"
+                activeDot={{
+                  r: 5,
+                  fill: colorLinea,
+                  stroke: "var(--card)",
+                  strokeWidth: 2,
+                }}
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
       </div>
-    </div>
+    </section>
   );
 }

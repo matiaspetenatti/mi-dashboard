@@ -4,10 +4,8 @@ import { connection } from "next/server";
 import { requireAuthorizedUser } from "@/lib/auth";
 import {
   getProyectoWorkspace,
-  getProyectosConResumen,
 } from "@/modules/tareas/queries";
 import { AjustesProyecto } from "@/modules/tareas/components/ajustes-proyecto";
-import { NavProyectos } from "@/modules/tareas/components/nav-proyectos";
 
 export default async function AjustesProyectoPage({
   params,
@@ -29,15 +27,8 @@ async function Contenido({ params }: { params: Promise<{ slug: string }> }) {
   const workspace = await getProyectoWorkspace(slug);
   if (!workspace) notFound();
 
-  const resumen = await getProyectosConResumen();
-
   return (
-    <div className="flex gap-6">
-      <NavProyectos
-        proyectos={resumen}
-        slugActivo={slug}
-        className="hidden w-52 shrink-0 lg:block"
-      />
+    <div>
       <AjustesProyecto
         proyecto={workspace.proyecto}
         estados={workspace.estados}

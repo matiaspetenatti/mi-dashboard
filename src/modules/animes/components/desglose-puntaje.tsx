@@ -24,22 +24,22 @@ export function DesglosePuntaje({ anime }: { anime: AnimeVisto }) {
   const esLegacy = totalCalculado === null && total !== null;
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-neutral-50">
+    <div className="overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-low">
       <button
         type="button"
         onClick={() => setAbierto((valor) => !valor)}
         aria-expanded={abierto}
         aria-controls={contenidoId}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-100/70"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-warning-container text-on-warning-container">
           <Star size={16} fill="currentColor" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-neutral-800">
+          <span className="block text-sm font-semibold text-charcoal">
             Mi puntaje
           </span>
-          <span className="block text-[11px] text-neutral-500">
+          <span className="block text-[11px] text-on-surface-variant">
             {total === null
               ? "Sin puntaje asignado"
               : esLegacy
@@ -48,39 +48,39 @@ export function DesglosePuntaje({ anime }: { anime: AnimeVisto }) {
           </span>
         </span>
         <span className="flex items-baseline gap-1 tabular-nums">
-          <span className="text-lg font-semibold text-neutral-900">
+          <span className="text-lg font-semibold text-charcoal">
             {total ?? "—"}
           </span>
-          <span className="text-xs font-medium text-neutral-400">
+          <span className="text-xs font-medium text-pebble">
             / {PUNTAJE_MAXIMO_TOTAL}
           </span>
         </span>
         <ChevronDown
           size={16}
-          className={`shrink-0 text-neutral-400 transition-transform ${
+          className={`shrink-0 text-pebble transition-transform ${
             abierto ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {abierto && (
-        <div id={contenidoId} className="border-t px-4 pb-4 pt-3">
+        <div id={contenidoId} className="border-t border-outline-variant/40 px-4 pb-4 pt-3">
           {total === null ? (
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-on-surface-variant">
               Todavía no calificaste este anime. Usá “Editar” para cargar el
               desglose por criterios.
             </p>
           ) : esLegacy ? (
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-on-surface-variant">
               Tiene un puntaje total de {total}/100, pero se cargó antes de que
               existiera el desglose. Editá el anime para calificar los 10
               criterios.
             </p>
           ) : (
             <>
-              <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-neutral-200">
+              <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
                 <div
-                  className="h-full rounded-full bg-amber-400 transition-all"
+                  className="h-full rounded-full bg-warning transition-all"
                   style={{
                     width: `${((total ?? 0) / PUNTAJE_MAXIMO_TOTAL) * 100}%`,
                   }}
@@ -98,8 +98,8 @@ export function DesglosePuntaje({ anime }: { anime: AnimeVisto }) {
                         <span
                           className={`text-xs font-medium ${
                             sinCalificar
-                              ? "text-neutral-500"
-                              : "text-neutral-800"
+                              ? "text-on-surface-variant"
+                              : "text-charcoal"
                           }`}
                           title={criterio.descripcion}
                         >
@@ -108,8 +108,8 @@ export function DesglosePuntaje({ anime }: { anime: AnimeVisto }) {
                         <span
                           className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
                             sinCalificar
-                              ? "bg-neutral-100 text-neutral-400"
-                              : "bg-neutral-900 text-white"
+                              ? "bg-surface-container-high text-pebble"
+                              : "bg-inverse-surface text-inverse-on-surface"
                           }`}
                         >
                           {sinCalificar ? "—" : valor}
@@ -119,14 +119,14 @@ export function DesglosePuntaje({ anime }: { anime: AnimeVisto }) {
                         </span>
                       </div>
 
-                      <p className="line-clamp-1 text-[10px] leading-tight text-neutral-400">
+                      <p className="line-clamp-1 text-[10px] leading-tight text-pebble">
                         {criterio.descripcion}
                       </p>
 
-                      <div className="h-1 overflow-hidden rounded-full bg-neutral-200">
+                      <div className="h-1 overflow-hidden rounded-full bg-surface-container-high">
                         <div
                           className={`h-full rounded-full transition-all ${
-                            sinCalificar ? "bg-neutral-300" : "bg-amber-400"
+                            sinCalificar ? "bg-outline-variant" : "bg-warning"
                           }`}
                           style={{
                             width: sinCalificar

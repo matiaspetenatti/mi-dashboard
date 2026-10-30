@@ -7,11 +7,33 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-roboto), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-inter);
 
-  /* Material 3 surface roles */
+  /* Wise — tonos nombrados */
+  --color-forest-ink: var(--forest-ink);
+  --color-lime-voltage: var(--lime-voltage);
+  --color-spruce: var(--spruce);
+  --color-linen-mist: var(--linen-mist);
+  --color-signal-blue: var(--signal-blue);
+  --color-alarm-red: var(--alarm-red);
+  --color-charcoal: var(--charcoal);
+  --color-obsidian: var(--obsidian);
+  --color-pebble: var(--pebble);
+  --color-slate: var(--slate);
+  --color-fog: var(--fog);
+  --color-paper: var(--paper);
+
+  /* Wise — tokens de la réplica de Stitch */
+  --color-heading: var(--heading);
+  --color-card-inverse: var(--card-inverse);
+  --color-card-inverse-foreground: var(--card-inverse-foreground);
+  --color-card-inverse-muted: var(--card-inverse-muted);
+  --color-card-inverse-inset: var(--card-inverse-inset);
+  --color-card-inverse-border: var(--card-inverse-border);
+
+  /* Wise surface roles */
   --color-surface: var(--surface);
   --color-surface-dim: var(--surface-dim);
   --color-surface-bright: var(--surface-bright);
@@ -27,7 +49,7 @@
   --color-outline: var(--outline);
   --color-outline-variant: var(--outline-variant);
 
-  /* Material 3 accent roles */
+  /* Wise accent roles */
   --color-primary: var(--primary);
   --color-on-primary: var(--on-primary);
   --color-primary-container: var(--primary-container);
@@ -83,13 +105,15 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Border radius — Wise: cards 10px, largeCards 28px, píldoras 9999px */
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-2xl: 28px;
+  --radius-3xl: 32px;
+  --radius-4xl: 40px;
+  --radius-full: 9999px;
 
   --shadow-elevation-1: var(--elev-1);
   --shadow-elevation-2: var(--elev-2);
@@ -102,191 +126,234 @@
 }
 
 :root {
-  --background: #fbf8ff;
-  --foreground: #1d1b20;
+  /* Wise — Sistema visual: deep moss (Forest Ink) + una sola punta de Lime Voltage.
+     Tema base: claro, plano (sin gradientes), según el diseño de Stitch. */
+  --background: #f7faf5;
+  --foreground: #454745;
 
-  --surface: #fbf8ff;
-  --surface-dim: #ded8e5;
-  --surface-bright: #fbf8ff;
+  --forest-ink: #163300;
+  --lime-voltage: #9fe870;
+  --spruce: #054d28;
+  --linen-mist: #e2f6d5;
+  --signal-blue: #0b4c72;
+  --alarm-red: #cb272f;
+  --charcoal: #454745;
+  --obsidian: #0e0f0c;
+  --pebble: #868685;
+  --slate: #6a6c6a;
+  --fog: #e8ebe6;
+  --paper: #ffffff;
+
+  --surface: #f7faf5;
+  --surface-dim: #d8dbd6;
+  --surface-bright: #f7faf5;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f7f2fa;
-  --surface-container: #f1ecf9;
-  --surface-container-high: #ece6f4;
-  --surface-container-highest: #e6e0ee;
-  --on-surface: #1d1b20;
-  --on-surface-variant: #49454f;
-  --inverse-surface: #322f35;
-  --inverse-on-surface: #f5eff7;
-  --outline: #79747e;
-  --outline-variant: #cac4d0;
+  --surface-container-low: #f2f4ef;
+  --surface-container: #ecefea;
+  --surface-container-high: #e6e9e4;
+  --surface-container-highest: #e0e3de;
+  --on-surface: #454745;
+  --on-surface-variant: #43483d;
+  --inverse-surface: #163300;
+  --inverse-on-surface: #ffffff;
+  --outline: #74796c;
+  --outline-variant: #c3c8b9;
 
-  --primary: #6750a4;
+  --heading: #091c00;
+  --card-inverse: #163300;
+  --card-inverse-foreground: #ffffff;
+  --card-inverse-muted: #aff2bf;
+  --card-inverse-inset: #0b2400;
+  --card-inverse-border: rgba(226, 246, 213, 0.18);
+
+  --primary: #163300;
   --on-primary: #ffffff;
-  --primary-container: #eaddff;
-  --on-primary-container: #21005d;
-  --inverse-primary: #d0bcff;
+  --primary-container: #e2f6d5;
+  --on-primary-container: #163300;
+  --inverse-primary: #9fe870;
 
-  --secondary: #386a52;
+  --secondary: #054d28;
   --on-secondary: #ffffff;
-  --secondary-container: #b7f0ce;
-  --on-secondary-container: #0a3b26;
+  --secondary-container: #e2f6d5;
+  --on-secondary-container: #054d28;
 
-  --tertiary: #8b4a2b;
+  --tertiary: #163300;
   --on-tertiary: #ffffff;
-  --tertiary-container: #ffdbc8;
-  --on-tertiary-container: #33180a;
+  --tertiary-container: #e2f6d5;
+  --on-tertiary-container: #163300;
 
-  --success: #2f6a4f;
+  --success: #054d28;
   --on-success: #ffffff;
-  --success-container: #c8f5dc;
-  --on-success-container: #06301c;
+  --success-container: #e2f6d5;
+  --on-success-container: #054d28;
 
-  --warning: #7a5900;
+  --warning: #a16207;
   --on-warning: #ffffff;
-  --warning-container: #ffe08a;
-  --on-warning-container: #251a00;
+  --warning-container: #fef3c7;
+  --on-warning-container: #a16207;
 
-  --error: #b3261e;
+  --error: #cb272f;
   --on-error: #ffffff;
-  --error-container: #ffdad6;
-  --on-error-container: #410002;
+  --error-container: #fdecec;
+  --on-error-container: #cb272f;
 
-  --card: var(--surface-container-lowest);
-  --card-foreground: var(--on-surface);
-  --popover: var(--surface-container-lowest);
-  --popover-foreground: var(--on-surface);
-  --primary-foreground: var(--on-primary);
-  --secondary-foreground: var(--on-secondary);
-  --muted: var(--surface-container);
-  --muted-foreground: var(--on-surface-variant);
-  --accent: var(--primary-container);
-  --accent-foreground: var(--on-primary-container);
-  --destructive: var(--error);
-  --destructive-foreground: var(--on-error);
-  --border: var(--outline-variant);
-  --input: var(--outline-variant);
-  --ring: var(--primary);
+  --card: #ffffff;
+  --card-foreground: #454745;
+  --popover: #ffffff;
+  --popover-foreground: #454745;
+  --primary-foreground: #ffffff;
+  --secondary-foreground: #ffffff;
+  --muted: #ecefea;
+  --muted-foreground: #74796c;
+  --accent: #e2f6d5;
+  --accent-foreground: #163300;
+  --destructive: #cb272f;
+  --destructive-foreground: #ffffff;
+  --border: #c3c8b9;
+  --input: #74796c;
+  --ring: #163300;
 
-  --chart-1: #9a82db;
-  --chart-2: #6cc5a2;
-  --chart-3: #f2a47e;
-  --chart-4: #7fb6e8;
-  --chart-5: #e9c46a;
+  --chart-1: #163300;
+  --chart-2: #054d28;
+  --chart-3: #9fe870;
+  --chart-4: #0b4c72;
+  --chart-5: #e2f6d5;
 
-  --sidebar: var(--surface-container-low);
-  --sidebar-foreground: var(--on-surface);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--on-primary);
-  --sidebar-accent: var(--primary-container);
-  --sidebar-accent-foreground: var(--on-primary-container);
-  --sidebar-border: var(--outline-variant);
-  --sidebar-ring: var(--primary);
+  /* Finanzas — evolución del patrimonio (línea verde, área lima) */
+  --chart-finance-line: #258f38;
+  --chart-finance-area: #9fe870;
 
-  --radius: 1rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #454745;
+  --sidebar-primary: #163300;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e2f6d5;
+  --sidebar-accent-foreground: #163300;
+  --sidebar-border: #c3c8b9;
+  --sidebar-ring: #163300;
 
-  --elev-1:
-    0 1px 2px 0 rgb(103 80 164 / 0.08), 0 1px 3px 1px rgb(103 80 164 / 0.06);
-  --elev-2:
-    0 1px 2px 0 rgb(103 80 164 / 0.1), 0 2px 6px 2px rgb(103 80 164 / 0.08);
-  --elev-3:
-    0 4px 8px 3px rgb(103 80 164 / 0.1), 0 1px 3px 0 rgb(103 80 164 / 0.12);
-  --elev-4:
-    0 6px 10px 4px rgb(103 80 164 / 0.1), 0 2px 3px 0 rgb(103 80 164 / 0.12);
-  --elev-5:
-    0 8px 12px 6px rgb(103 80 164 / 0.12), 0 4px 4px 0 rgb(103 80 164 / 0.1);
+  --radius: 10px;
+
+  --elev-1: rgba(22, 51, 0, 0.08) 0px 1px 2px 0, rgba(22, 51, 0, 0.06) 0px 1px 3px 1px;
+  --elev-2: rgba(22, 51, 0, 0.10) 0px 1px 2px 0, rgba(22, 51, 0, 0.08) 0px 2px 6px 2px;
+  --elev-3: rgba(22, 51, 0, 0.10) 0px 4px 8px 3px, rgba(22, 51, 0, 0.12) 0px 1px 3px 0;
+  --elev-4: rgba(22, 51, 0, 0.10) 0px 6px 10px 4px, rgba(22, 51, 0, 0.12) 0px 2px 3px 0;
+  --elev-5: rgba(22, 51, 0, 0.12) 0px 8px 12px 6px, rgba(22, 51, 0, 0.10) 0px 4px 4px 0;
 }
 
 .dark {
-  --background: #141218;
-  --foreground: #e6e0e9;
+  /* Wise invertido — el dark casi negro verdoso del diseño de Stitch. */
+  --background: #0a1404;
+  --foreground: #f2f5ee;
 
-  --surface: #141218;
-  --surface-dim: #141218;
-  --surface-bright: #3b383e;
-  --surface-container-lowest: #0f0d13;
-  --surface-container-low: #1d1b20;
-  --surface-container: #211f26;
-  --surface-container-high: #2b292f;
-  --surface-container-highest: #36343b;
-  --on-surface: #e6e0e9;
-  --on-surface-variant: #cac4d0;
-  --inverse-surface: #e6e0e9;
-  --inverse-on-surface: #322f35;
-  --outline: #938f99;
-  --outline-variant: #49454f;
+  --forest-ink: #163300;
+  --lime-voltage: #9fe870;
+  --spruce: #054d28;
+  --linen-mist: #1e3b0f;
+  --signal-blue: #38bdf8;
+  --alarm-red: #ff716c;
+  --charcoal: #cbd1c7;
+  --obsidian: #060d02;
+  --pebble: #9ea39a;
+  --slate: #9ea39a;
+  --fog: #0d1f05;
+  --paper: #122206;
 
-  --primary: #d0bcff;
-  --on-primary: #381e72;
-  --primary-container: #4f378b;
-  --on-primary-container: #eaddff;
-  --inverse-primary: #6750a4;
+  --surface: #0c1805;
+  --surface-dim: #081003;
+  --surface-bright: #1a340b;
+  --surface-container-lowest: #0a1304;
+  --surface-container-low: #0e1c06;
+  --surface-container: #152a08;
+  --surface-container-high: #1b360c;
+  --surface-container-highest: #223d0d;
+  --on-surface: #f2f5ee;
+  --on-surface-variant: #c3c8b9;
+  --inverse-surface: #f2f5ee;
+  --inverse-on-surface: #0a1404;
+  --outline: #4b643a;
+  --outline-variant: rgba(159, 232, 112, 0.15);
 
-  --secondary: #9bd4b6;
-  --on-secondary: #0a3b26;
-  --secondary-container: #234c39;
-  --on-secondary-container: #b7f0ce;
+  --heading: #f2f5ee;
+  --card-inverse: #102405;
+  --card-inverse-foreground: #f2f5ee;
+  --card-inverse-muted: #aff2bf;
+  --card-inverse-inset: #0a1404;
+  --card-inverse-border: rgba(159, 232, 112, 0.3);
 
-  --tertiary: #ffb599;
-  --on-tertiary: #4a2010;
-  --tertiary-container: #6b3220;
-  --on-tertiary-container: #ffdbc8;
+  --primary: #9fe870;
+  --on-primary: #163300;
+  --primary-container: #163300;
+  --on-primary-container: #9fe870;
+  --inverse-primary: #163300;
 
-  --success: #8fd8b4;
-  --on-success: #06301c;
-  --success-container: #1d4a35;
-  --on-success-container: #c8f5dc;
+  --secondary: #9fe870;
+  --on-secondary: #092100;
+  --secondary-container: #0d3800;
+  --on-secondary-container: #9fe870;
 
-  --warning: #f2c66d;
-  --on-warning: #251a00;
-  --warning-container: #5c4300;
-  --on-warning-container: #ffe08a;
+  --tertiary: #aff2bf;
+  --on-tertiary: #092100;
+  --tertiary-container: #003418;
+  --on-tertiary-container: #94d5a4;
+
+  --success: #9fe870;
+  --on-success: #163300;
+  --success-container: #0d3800;
+  --on-success-container: #9fe870;
+
+  --warning: #eab308;
+  --on-warning: #163300;
+  --warning-container: #2d5a14;
+  --on-warning-container: #eab308;
 
   --error: #ffb4ab;
-  --on-error: #690005;
-  --error-container: #93000a;
+  --on-error: #ffffff;
+  --error-container: #4e0002;
   --on-error-container: #ffdad6;
 
-  --card: var(--surface-container);
-  --card-foreground: var(--on-surface);
-  --popover: var(--surface-container-high);
-  --popover-foreground: var(--on-surface);
-  --primary-foreground: var(--on-primary);
-  --secondary-foreground: var(--on-secondary);
-  --muted: var(--surface-container-high);
-  --muted-foreground: var(--on-surface-variant);
-  --accent: var(--primary-container);
-  --accent-foreground: var(--on-primary-container);
-  --destructive: var(--error);
-  --destructive-foreground: var(--on-error);
-  --border: var(--outline-variant);
-  --input: var(--outline-variant);
-  --ring: var(--primary);
+  --card: #122206;
+  --card-foreground: #f2f5ee;
+  --popover: #122206;
+  --popover-foreground: #f2f5ee;
+  --primary-foreground: #163300;
+  --secondary-foreground: #163300;
+  --muted: #152a08;
+  --muted-foreground: #c3c8b9;
+  --accent: #9fe870;
+  --accent-foreground: #163300;
+  --destructive: #cb272f;
+  --destructive-foreground: #ffffff;
+  --border: rgba(159, 232, 112, 0.2);
+  --input: rgba(159, 232, 112, 0.3);
+  --ring: #9fe870;
 
-  --chart-1: #d0bcff;
-  --chart-2: #8fe0bc;
-  --chart-3: #ffb599;
-  --chart-4: #9ccbf5;
-  --chart-5: #f5da8b;
+  --chart-1: #9fe870;
+  --chart-2: #aff2bf;
+  --chart-3: #e2f6d5;
+  --chart-4: #38bdf8;
+  --chart-5: #94d5a4;
 
-  --sidebar: var(--surface-container-low);
-  --sidebar-foreground: var(--on-surface);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--on-primary);
-  --sidebar-accent: var(--primary-container);
-  --sidebar-accent-foreground: var(--on-primary-container);
-  --sidebar-border: var(--outline-variant);
-  --sidebar-ring: var(--primary);
+  /* Finanzas — en oscuro la línea también es lima, para que resalte */
+  --chart-finance-line: #9fe870;
+  --chart-finance-area: #9fe870;
 
-  --elev-1:
-    0 1px 2px 0 rgb(0 0 0 / 0.4), 0 1px 3px 1px rgb(0 0 0 / 0.24);
-  --elev-2:
-    0 1px 2px 0 rgb(0 0 0 / 0.44), 0 2px 6px 2px rgb(0 0 0 / 0.3);
-  --elev-3:
-    0 4px 8px 3px rgb(0 0 0 / 0.36), 0 1px 3px 0 rgb(0 0 0 / 0.44);
-  --elev-4:
-    0 6px 10px 4px rgb(0 0 0 / 0.36), 0 2px 3px 0 rgb(0 0 0 / 0.44);
-  --elev-5:
-    0 8px 12px 6px rgb(0 0 0 / 0.4), 0 4px 4px 0 rgb(0 0 0 / 0.36);
+  --sidebar: #102006;
+  --sidebar-foreground: #f2f5ee;
+  --sidebar-primary: #9fe870;
+  --sidebar-primary-foreground: #163300;
+  --sidebar-accent: #163300;
+  --sidebar-accent-foreground: #9fe870;
+  --sidebar-border: #1f3f0c;
+  --sidebar-ring: #9fe870;
+
+  --radius: 10px;
+
+  --elev-1: rgba(0, 0, 0, 0.40) 0px 1px 2px 0, rgba(0, 0, 0, 0.24) 0px 1px 3px 1px;
+  --elev-2: rgba(0, 0, 0, 0.44) 0px 1px 2px 0, rgba(0, 0, 0, 0.30) 0px 2px 6px 2px;
+  --elev-3: rgba(0, 0, 0, 0.36) 0px 4px 8px 3px, rgba(0, 0, 0, 0.44) 0px 1px 3px 0;
+  --elev-4: rgba(0, 0, 0, 0.36) 0px 6px 10px 4px, rgba(0, 0, 0, 0.44) 0px 2px 3px 0;
+  --elev-5: rgba(0, 0, 0, 0.40) 0px 8px 12px 6px, rgba(0, 0, 0, 0.36) 0px 4px 4px 0;
 }
 
 @layer base {
@@ -338,34 +405,6 @@
 }
 
 @layer utilities {
-  .app-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    pointer-events: none;
-    background:
-      radial-gradient(
-        60rem 40rem at 8% -12%,
-        color-mix(in oklab, var(--primary-container) 85%, transparent),
-        transparent 62%
-      ),
-      radial-gradient(
-        50rem 36rem at 100% -4%,
-        color-mix(in oklab, var(--secondary-container) 65%, transparent),
-        transparent 58%
-      ),
-      radial-gradient(
-        46rem 40rem at 88% 108%,
-        color-mix(in oklab, var(--tertiary-container) 55%, transparent),
-        transparent 60%
-      );
-  }
-
-  .dark .app-backdrop {
-    opacity: 0.42;
-  }
-
   .text-balance {
     text-wrap: balance;
   }

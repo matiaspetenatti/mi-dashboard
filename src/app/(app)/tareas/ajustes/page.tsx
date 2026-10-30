@@ -1,12 +1,8 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAuthorizedUser } from "@/lib/auth";
-import {
-  getEtiquetasConUso,
-  getProyectosConResumen,
-} from "@/modules/tareas/queries";
+import { getEtiquetasConUso } from "@/modules/tareas/queries";
 import { AjustesGlobales } from "@/modules/tareas/components/ajustes-globales";
-import { NavProyectos } from "@/modules/tareas/components/nav-proyectos";
 
 export default async function AjustesTareasPage() {
   await requireAuthorizedUser();
@@ -20,14 +16,10 @@ export default async function AjustesTareasPage() {
 
 async function Contenido() {
   await connection();
-  const [etiquetas, proyectos] = await Promise.all([
-    getEtiquetasConUso(),
-    getProyectosConResumen(),
-  ]);
+  const etiquetas = await getEtiquetasConUso();
 
   return (
-    <div className="flex gap-6">
-      <NavProyectos proyectos={proyectos} className="hidden w-52 shrink-0 lg:block" />
+    <div>
       <AjustesGlobales etiquetas={etiquetas} />
     </div>
   );

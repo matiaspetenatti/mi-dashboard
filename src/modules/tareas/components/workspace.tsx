@@ -32,7 +32,6 @@ import {
 } from "@/modules/tareas/lib/use-cambios";
 import { useToast } from "@/hooks/use-toast";
 import { EncabezadoProyecto } from "./encabezado-proyecto";
-import { NavProyectos } from "./nav-proyectos";
 import { VistasTabs, iconosVista } from "./vistas-tabs";
 import { BarraHerramientas } from "./barra-herramientas";
 import { QuickAdd } from "./quick-add";
@@ -235,13 +234,7 @@ export function Workspace({
   }
 
   return (
-    <div className="flex gap-6">
-      <NavProyectos
-        proyectos={resumen}
-        slugActivo={proyecto.slug}
-        className="hidden w-52 shrink-0 lg:block"
-      />
-
+    <div className="space-y-4">
       <div className="min-w-0 flex-1 space-y-4">
         <EncabezadoProyecto
           proyecto={proyecto}

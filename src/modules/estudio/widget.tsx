@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import { BellRing, GraduationCap } from "lucide-react";
 import { WidgetCard } from "@/components/widget-card";
 import { CountUp } from "@/components/motion/count-up";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,103 +16,149 @@ export function EstudioWidgetSkeleton() {
   return (
     <WidgetCard
       title="Estudio"
+      subtitle="Progreso universitario"
       href="/estudio"
       icon={GraduationCap}
       accent="tertiary"
     >
       <div className="space-y-3">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-2 w-full" />
-        <Skeleton className="mt-4 h-20 w-full rounded-2xl" />
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-2.5 w-full rounded-full" />
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="mt-2 h-28 w-full rounded-[16px]" />
       </div>
     </WidgetCard>
   );
 }
 
 export async function EstudioWidget() {
-  const { resumen, proximo, hoy } = await getWidgetEstudio();
+  let widget: Awaited<ReturnType<typeof getWidgetEstudio>>;
+
+  try {
+    widget = await getWidgetEstudio();
+  } catch {
+    return <EstudioWidgetError />;
+  }
+
+  const { resumen, proximo, hoy } = widget;
   const dias = proximo ? Math.max(0, diasHasta(proximo.fecha, hoy)) : 0;
+  const restantes =
+    dias === 0
+      ? "es hoy"
+      : dias === 1
+        ? "1 día restante"
+        : `${dias} días restantes`;
 
   return (
     <WidgetCard
       title="Estudio"
+      subtitle="Progreso universitario"
+      href="/estudio"
+      icon={GraduationCap}
+      accent="tertiary"
+      footer={
+        <>
+          <span>{resumen.totalMaterias} materias cargadas</span>
+          <span>
+            {proximo ? `(${textoDiasRelativo(dias)})` : "Sin exámenes"}
+          </span>
+        </>
+      }
+    >
+      <div className="flex items-center justify-between gap-3 text-xs text-on-surface-variant">
+        <p className="font-semibold uppercase tracking-wider">
+          Avance general:{" "}
+          <CountUp
+            value={resumen.progreso}
+            className="font-bold text-heading"
+          />
+          %
+        </p>
+        <p className="shrink-0">
+          {resumen.aprobadas} de {resumen.totalPlan} materias
+        </p>
+      </div>
+
+      <BarraProgreso
+        valor={resumen.progreso}
+        color="var(--primary)"
+        className="mt-2 h-2.5"
+      />
+
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs text-on-surface-variant">
+        <p>
+          Promedio:{" "}
+          <span className="font-bold text-heading">
+            {resumen.promedio !== null ? formatNota(resumen.promedio) : "—"}
+          </span>
+        </p>
+        <p className="shrink-0">
+          {resumen.carrerasActivas}{" "}
+          {resumen.carrerasActivas === 1 ? "carrera activa" : "carreras activas"}
+        </p>
+      </div>
+
+      <div className="mt-4 rounded-[16px] border border-outline-variant/60 bg-surface-container p-3.5">
+        {proximo ? (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                Próximo examen: {restantes}
+              </p>
+              <BellRing
+                size={14}
+                className="shrink-0 text-primary"
+                aria-hidden="true"
+              />
+            </div>
+
+            <h3 className="mt-1 truncate text-sm font-bold text-heading">
+              {proximo.materia}
+            </h3>
+            <p className="mt-0.5 truncate text-xs text-charcoal">
+              {etiquetasTipoExamen[proximo.tipo]} ·{" "}
+              {formatearFecha(proximo.fecha)}
+            </p>
+            <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">
+              {proximo.carrera}
+            </p>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-1 py-2 text-center">
+            <BellRing
+              size={18}
+              className="text-on-surface-variant opacity-60"
+            />
+            <p className="text-sm font-medium text-heading">
+              Sin exámenes por delante
+            </p>
+            <p className="text-[11px] text-on-surface-variant">
+              Cuando cargues uno, aparece acá.
+            </p>
+          </div>
+        )}
+      </div>
+    </WidgetCard>
+  );
+}
+
+export function EstudioWidgetError() {
+  return (
+    <WidgetCard
+      title="Estudio"
+      subtitle="Progreso universitario"
       href="/estudio"
       icon={GraduationCap}
       accent="tertiary"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
-            Avance general
-          </p>
-          <div className="mt-1 flex items-baseline gap-0.5">
-            <CountUp
-              value={resumen.progreso}
-              className="text-4xl font-medium leading-none tracking-tight text-on-surface"
-            />
-            <span className="text-lg font-medium text-on-surface-variant">
-              %
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-on-surface-variant">
-            {resumen.aprobadas} de {resumen.totalPlan} materias aprobadas
-          </p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
-            Promedio
-          </p>
-          <p className="mt-1 text-2xl font-medium leading-none text-on-surface">
-            {resumen.promedio !== null ? formatNota(resumen.promedio) : "—"}
-          </p>
-          <p className="mt-1 text-[10px] text-on-surface-variant">
-            {resumen.carrerasActivas}{" "}
-            {resumen.carrerasActivas === 1
-              ? "carrera activa"
-              : "carreras activas"}
-          </p>
-        </div>
-      </div>
-
-      <BarraProgreso valor={resumen.progreso} className="mt-3" />
-
-      <div className="mt-auto pt-4">
-        {proximo ? (
-          <div className="rounded-2xl bg-tertiary-container/45 px-3 py-2.5 text-on-tertiary-container">
-            <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
-              Próximo examen
-            </p>
-            <p className="mt-0.5 truncate text-sm font-medium">
-              {proximo.materia}
-            </p>
-            <p className="truncate text-[10px] opacity-80">
-              {etiquetasTipoExamen[proximo.tipo]} ·{" "}
-              {formatearFecha(proximo.fecha)} · {proximo.carrera}
-            </p>
-            <div className="mt-1.5 flex items-baseline gap-1.5">
-              <CountUp
-                value={dias}
-                className="text-xl font-medium leading-none"
-              />
-              <span className="text-[11px]">
-                {dias === 0
-                  ? "es hoy"
-                  : dias === 1
-                    ? "día restante"
-                    : "días restantes"}
-              </span>
-              <span className="text-[10px] opacity-70">
-                ({textoDiasRelativo(dias)})
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-tertiary-container/45 px-3 py-3 text-sm text-on-tertiary-container">
-            Sin exámenes cargados por delante.
-          </div>
-        )}
+      <div className="flex flex-1 flex-col justify-center gap-1 py-6 text-center">
+        <GraduationCap className="mx-auto h-6 w-6 text-on-surface-variant opacity-60" />
+        <p className="text-sm font-medium text-on-surface">
+          No se pudo cargar el avance de estudio
+        </p>
+        <p className="text-xs text-on-surface-variant">
+          Entrá al módulo de Estudio para reintentar.
+        </p>
       </div>
     </WidgetCard>
   );

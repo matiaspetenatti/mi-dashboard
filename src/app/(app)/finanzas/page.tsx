@@ -6,12 +6,19 @@ export default async function FinanzasPage() {
   await requireAuthorizedUser();
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+    <div className="space-y-7">
+      <header>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-pebble">
+          Panel financiero
+        </p>
+        <h1 className="mt-0.5 text-4xl font-extrabold tracking-tight text-heading lg:text-5xl">
           Finanzas
         </h1>
-      </div>
+        <p className="mt-1 max-w-xl text-sm text-charcoal">
+          Patrimonio, gastos y movimientos de todas tus cuentas en un solo
+          lugar.
+        </p>
+      </header>
 
       <Suspense fallback={<FinanzasSkeleton />}>
         <FinanzasContenido />

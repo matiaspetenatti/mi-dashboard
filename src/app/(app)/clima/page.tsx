@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CloudSun, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { requireAuthorizedUser } from "@/lib/auth";
 import {
   getClimaData,
@@ -27,34 +27,41 @@ export default async function ClimaPage() {
   ]);
 
   return (
-    <div className="max-w-6xl space-y-6">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-container">
-              <CloudSun className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-on-surface">
-                Clima
-              </h1>
-              <p className="flex flex-wrap items-center gap-1.5 text-sm text-on-surface-variant">
-                <MapPin className="h-3.5 w-3.5 text-primary" />
-                <span className="font-medium text-on-surface">
-                  {ubicacion.etiqueta}
-                </span>
-                <span className="tabular-nums text-on-surface-variant">
-                  ({formatearCoordenadas(ubicacion.latitud, ubicacion.longitud)})
-                </span>
-              </p>
-            </div>
-          </div>
+    <div className="space-y-7">
+      <header>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-pebble">
+          Ahora mismo
+        </p>
+        <h1 className="mt-0.5 text-4xl font-extrabold tracking-tight text-heading lg:text-5xl">
+          Clima
+        </h1>
+        <p className="mt-1 max-w-xl text-sm text-charcoal">
+          El estado del cielo de hoy y el pronóstico de los próximos días.
+        </p>
+      </header>
 
-          <DialogoUbicacion ubicaciones={ubicaciones} activa={ubicacion} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-container text-on-primary-container">
+            <MapPin className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-charcoal">
+              {ubicacion.etiqueta}
+            </p>
+            <p className="text-xs tabular-nums text-pebble">
+              {formatearCoordenadas(ubicacion.latitud, ubicacion.longitud)}
+            </p>
+          </div>
         </div>
 
-        <SelectorUbicacion ubicaciones={ubicaciones} activa={ubicacion} />
+        <DialogoUbicacion
+          ubicaciones={ubicaciones}
+          activa={ubicacion}
+        />
       </div>
+
+      <SelectorUbicacion ubicaciones={ubicaciones} activa={ubicacion} />
 
       <Suspense fallback={<ClimaSkeleton />}>
         <ClimaPronostico ubicacion={ubicacion} />

@@ -2,7 +2,14 @@
 
 import { useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, SlidersHorizontal, X, Calendar } from "lucide-react";
+import {
+  Plus,
+  Search,
+  SlidersHorizontal,
+  X,
+  Calendar,
+  Film,
+} from "lucide-react";
 import { ModalAgregarAnime } from "@/modules/animes/components/modal/agregar";
 import { PaginacionAnimes as BarraPaginacion } from "@/modules/animes/components/paginacion";
 import { TarjetaAnime } from "@/modules/animes/components/tarjeta-anime";
@@ -102,28 +109,28 @@ export function AnimesCatalogo({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-1.5">
           <Link
             href="/animes/calendario"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
+            className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-card px-3.5 py-1.5 text-xs font-semibold text-charcoal transition-colors hover:bg-surface-container active:scale-[0.98]"
           >
             <Calendar size={14} />
             Calendario
           </Link>
           <button
             onClick={() => setMostrarAgregar(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-on-primary transition-colors hover:bg-primary/90 active:scale-[0.98]"
           >
             <Plus size={14} />
             Agregar anime
           </button>
           <button
             onClick={() => setMostrarFiltros(!mostrarFiltros)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border ${
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors active:scale-[0.98] ${
               mostrarFiltros
-                ? "bg-neutral-900 text-white border-neutral-900"
-                : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
+                ? "border-inverse-surface bg-inverse-surface text-inverse-on-surface"
+                : "border-outline-variant/60 bg-card text-charcoal hover:bg-surface-container"
             }`}
           >
             <SlidersHorizontal size={14} />
@@ -132,30 +139,37 @@ export function AnimesCatalogo({
           {hayFiltrosActivos && (
             <button
               onClick={limpiarFiltros}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-neutral-500 hover:text-neutral-700"
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
             >
               <X size={13} />
               Limpiar
             </button>
           )}
-          {isPending && <span className="text-xs text-neutral-400">Actualizando...</span>}
+          {isPending && (
+            <span className="text-xs text-on-surface-variant">
+              Actualizando...
+            </span>
+          )}
         </div>
 
-        <form onSubmit={buscar} className="relative">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <form onSubmit={buscar} className="relative w-full sm:w-64">
+          <Search
+            size={14}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pebble"
+          />
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar en mi catálogo..."
-            className="rounded-lg border border-neutral-200 bg-white pl-8 pr-3 py-1.5 text-xs w-56 focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            className="w-full rounded-full border border-outline-variant/60 bg-card py-1.5 pl-9 pr-4 text-xs text-on-surface placeholder:text-pebble transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </form>
       </div>
 
       {mostrarFiltros && (
-        <div className="rounded-xl border bg-white p-3 shadow-xs space-y-3">
+        <div className="space-y-3 rounded-xl border border-outline-variant/50 bg-card p-3 shadow-elevation-1">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg border border-neutral-200 p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-outline-variant/50 bg-surface-container-low p-0.5">
               {[
                 { value: "todos", label: "Todos" },
                 { value: "completado", label: "Completado" },
@@ -166,10 +180,10 @@ export function AnimesCatalogo({
                 <button
                   key={opt.value}
                   onClick={() => actualizarFiltro("estado", opt.value)}
-                  className={`px-2.5 py-1 text-xs rounded-md ${
+                  className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
                     estado === opt.value
-                      ? "bg-neutral-900 text-white"
-                      : "text-neutral-600 hover:bg-neutral-50"
+                      ? "bg-inverse-surface font-semibold text-inverse-on-surface"
+                      : "text-charcoal hover:bg-surface-container"
                   }`}
                 >
                   {opt.label}
@@ -180,7 +194,7 @@ export function AnimesCatalogo({
             <select
               value={tipo}
               onChange={(e) => actualizarFiltro("tipo", e.target.value)}
-              className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
+              className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest px-2.5 py-1 text-xs text-charcoal transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Todos los tipos</option>
               {metadatos.tipos.map((t) => (
@@ -193,7 +207,7 @@ export function AnimesCatalogo({
             <select
               value={genero}
               onChange={(e) => actualizarFiltro("genero", e.target.value)}
-              className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
+              className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest px-2.5 py-1 text-xs text-charcoal transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Todos los géneros</option>
               {metadatos.generos.map((g) => (
@@ -206,7 +220,7 @@ export function AnimesCatalogo({
             <select
               value={temporada}
               onChange={(e) => actualizarFiltro("temporada", e.target.value)}
-              className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
+              className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest px-2.5 py-1 text-xs text-charcoal transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Todas las temporadas</option>
               {(metadatos.temporadas || []).map((t) => (
@@ -219,7 +233,7 @@ export function AnimesCatalogo({
             <select
               value={ordenarPor}
               onChange={(e) => actualizarFiltro("ordenar", e.target.value)}
-              className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs"
+              className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest px-2.5 py-1 text-xs text-charcoal transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="puntaje_desc">Mayor puntaje</option>
               <option value="puntaje_asc">Menor puntaje</option>
@@ -230,19 +244,19 @@ export function AnimesCatalogo({
             </select>
 
             <div className="flex items-center gap-1.5">
-              <Calendar size={13} className="text-neutral-400" />
+              <Calendar size={13} className="text-pebble" />
               <input
                 type="date"
                 value={fechaDesde}
                 onChange={(e) => actualizarFiltro("fechaDesde", e.target.value)}
-                className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs"
+                className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest px-2 py-1 text-xs text-charcoal transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
-              <span className="text-xs text-neutral-400">–</span>
+              <span className="text-xs text-pebble">–</span>
               <input
                 type="date"
                 value={fechaHasta}
                 onChange={(e) => actualizarFiltro("fechaHasta", e.target.value)}
-                className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs"
+                className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest px-2 py-1 text-xs text-charcoal transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -251,13 +265,21 @@ export function AnimesCatalogo({
 
       <div
         ref={gridRef}
-        className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 transition-opacity ${
-          cargando || isPending ? "opacity-50 pointer-events-none" : "opacity-100"
+        className={`grid grid-cols-2 gap-4 transition-opacity sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 ${
+          cargando || isPending ? "pointer-events-none opacity-50" : "opacity-100"
         }`}
       >
         {animes.length === 0 ? (
-          <div className="col-span-full py-16 text-center text-sm text-neutral-400">
-            No se encontraron animes con los filtros seleccionados.
+          <div className="col-span-full flex flex-col items-center gap-2 rounded-xl border border-dashed border-outline-variant/60 bg-surface-container-low px-6 py-16 text-center">
+            <span className="grid size-10 place-items-center rounded-full bg-primary-container text-on-primary-container">
+              <Film size={18} />
+            </span>
+            <p className="text-sm font-medium text-charcoal">
+              No se encontraron animes con los filtros seleccionados.
+            </p>
+            <p className="text-xs text-pebble">
+              Probá limpiar los filtros o agregar un anime nuevo al catálogo.
+            </p>
           </div>
         ) : (
           animes.map((anime) => (

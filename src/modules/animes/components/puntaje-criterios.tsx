@@ -28,17 +28,15 @@ export function PuntajeCriterios({
   const faltan = CRITERIOS_ANIME.length - calificados;
 
   return (
-    <div className="space-y-3 rounded-xl border bg-neutral-50/70 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2.5">
+    <div className="space-y-3 rounded-xl border border-outline-variant/50 bg-surface-container-low p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant/40 bg-card px-3 py-2.5 shadow-elevation-1">
         <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+          <span className="flex size-8 items-center justify-center rounded-full bg-warning-container text-on-warning-container">
             <Star size={16} fill="currentColor" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-neutral-800">
-              Puntaje total
-            </p>
-            <p className="text-[11px] text-neutral-500">
+            <p className="text-sm font-semibold text-charcoal">Puntaje total</p>
+            <p className="text-[11px] text-on-surface-variant">
               {esPuntajePrevio
                 ? "Puntaje anterior sin desglose"
                 : total === null
@@ -50,18 +48,18 @@ export function PuntajeCriterios({
           </div>
         </div>
         <p className="flex items-baseline gap-1 tabular-nums">
-          <span className="text-2xl font-bold text-neutral-900">
+          <span className="text-2xl font-bold text-charcoal">
             {totalMostrado ?? "—"}
           </span>
-          <span className="text-xs font-medium text-neutral-400">
+          <span className="text-xs font-medium text-pebble">
             / {PUNTAJE_MAXIMO_TOTAL}
           </span>
         </p>
       </div>
 
-      <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface-container-high">
         <div
-          className="h-full rounded-full bg-amber-400 transition-all"
+          className="h-full rounded-full bg-warning transition-all"
           style={{
             width: `${((totalMostrado ?? 0) / PUNTAJE_MAXIMO_TOTAL) * 100}%`,
           }}
@@ -78,7 +76,7 @@ export function PuntajeCriterios({
               <div className="flex items-baseline justify-between gap-2">
                 <span
                   className={`text-xs font-medium ${
-                    sinCalificar ? "text-neutral-500" : "text-neutral-800"
+                    sinCalificar ? "text-on-surface-variant" : "text-charcoal"
                   }`}
                   title={criterio.descripcion}
                 >
@@ -87,8 +85,8 @@ export function PuntajeCriterios({
                 <span
                   className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
                     sinCalificar
-                      ? "bg-neutral-100 text-neutral-400"
-                      : "bg-neutral-900 text-white"
+                      ? "bg-surface-container-high text-pebble"
+                      : "bg-inverse-surface text-inverse-on-surface"
                   }`}
                 >
                   {sinCalificar ? "—" : valor}
@@ -98,7 +96,7 @@ export function PuntajeCriterios({
                 </span>
               </div>
 
-              <p className="line-clamp-1 text-[10px] leading-tight text-neutral-400">
+              <p className="line-clamp-1 text-[10px] leading-tight text-pebble">
                 {criterio.descripcion}
               </p>
 
@@ -110,16 +108,14 @@ export function PuntajeCriterios({
                 step={1}
               >
                 <Slider.Control className="flex w-full touch-none items-center py-1.5 select-none">
-                  <Slider.Track className="h-1.5 w-full rounded-full bg-neutral-200 select-none">
-                    <Slider.Indicator className="rounded-full bg-neutral-900 select-none" />
+                  <Slider.Track className="h-1.5 w-full rounded-full bg-surface-container-high select-none">
+                    <Slider.Indicator className="rounded-full bg-warning select-none" />
                     <Slider.Thumb
                       aria-label={`${criterio.etiqueta}: ${
                         valor ?? 0
                       } de ${PUNTAJE_MAXIMO_CRITERIO}`}
-                      className={`size-3.5 rounded-full border-2 border-white shadow-sm select-none has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-neutral-900 ${
-                        sinCalificar
-                          ? "bg-neutral-300"
-                          : "bg-neutral-900"
+                      className={`size-3.5 rounded-full border-2 border-surface-container-lowest shadow-elevation-1 select-none has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary ${
+                        sinCalificar ? "bg-outline-variant" : "bg-warning"
                       }`}
                     />
                   </Slider.Track>

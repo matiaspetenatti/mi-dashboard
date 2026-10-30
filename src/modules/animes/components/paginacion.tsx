@@ -37,15 +37,15 @@ export function PaginacionAnimes({
   const hasta = Math.min(pagina * limite, total);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 px-1 text-xs text-neutral-500">
+    <div className="flex flex-col items-center justify-between gap-3 px-1 pt-1 text-xs text-on-surface-variant sm:flex-row">
       <div className="flex items-center gap-2">
         <p>
           Mostrando{" "}
-          <span className="font-semibold text-neutral-800">{desde}</span> a{" "}
-          <span className="font-semibold text-neutral-800">{hasta}</span> de{" "}
-          <span className="font-semibold text-neutral-800">{total}</span> animes
+          <span className="font-semibold text-charcoal">{desde}</span> a{" "}
+          <span className="font-semibold text-charcoal">{hasta}</span> de{" "}
+          <span className="font-semibold text-charcoal">{total}</span> animes
         </p>
-        {cargando && <Loader2 size={13} className="animate-spin text-neutral-400" />}
+        {cargando && <Loader2 size={13} className="animate-spin text-primary" />}
       </div>
 
       {totalPaginas > 1 && (
@@ -54,7 +54,7 @@ export function PaginacionAnimes({
             type="button"
             onClick={() => onCambiarPagina(pagina - 1)}
             disabled={pagina <= 1 || cargando}
-            className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 shadow-xs transition hover:bg-neutral-50 disabled:opacity-40 disabled:pointer-events-none"
+            className="flex items-center gap-1 rounded-full border border-outline-variant/60 bg-card px-3 py-1 text-xs font-semibold text-charcoal transition hover:bg-surface-container disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft size={14} />
             <span>Anterior</span>
@@ -66,7 +66,7 @@ export function PaginacionAnimes({
                 return (
                   <span
                     key={`ellipsis-${idx}`}
-                    className="px-1 text-neutral-400"
+                    className="px-1 text-pebble"
                   >
                     …
                   </span>
@@ -81,10 +81,10 @@ export function PaginacionAnimes({
                   onClick={() => onCambiarPagina(p)}
                   disabled={cargando}
                   aria-current={activa ? "page" : undefined}
-                  className={`min-w-7 h-7 rounded-lg text-xs font-medium transition ${
+                  className={`h-7 min-w-7 rounded-full px-2 text-xs transition ${
                     activa
-                      ? "bg-neutral-900 text-white shadow-xs font-semibold"
-                      : "bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-50"
+                      ? "bg-inverse-surface font-semibold text-inverse-on-surface"
+                      : "border border-outline-variant/60 bg-card text-charcoal hover:bg-surface-container"
                   }`}
                 >
                   {p}
@@ -97,7 +97,7 @@ export function PaginacionAnimes({
             type="button"
             onClick={() => onCambiarPagina(pagina + 1)}
             disabled={pagina >= totalPaginas || cargando}
-            className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 shadow-xs transition hover:bg-neutral-50 disabled:opacity-40 disabled:pointer-events-none"
+            className="flex items-center gap-1 rounded-full border border-outline-variant/60 bg-card px-3 py-1 text-xs font-semibold text-charcoal transition hover:bg-surface-container disabled:pointer-events-none disabled:opacity-40"
           >
             <span>Siguiente</span>
             <ChevronRight size={14} />

@@ -88,7 +88,7 @@ export function SelectorUbicacion({ ubicaciones, activa }: Props) {
             <span
               key={ubicacion.etiqueta}
               aria-current="true"
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary-container px-3 py-1.5 text-xs font-medium text-on-primary-container"
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary-container px-3 py-1.5 text-xs font-medium text-on-primary-container"
             >
               {contenido}
             </span>
@@ -106,8 +106,8 @@ export function SelectorUbicacion({ ubicaciones, activa }: Props) {
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-70",
               esActiva
-                ? "border-primary/40 bg-primary-container text-on-primary-container"
-                : "border-outline-variant/50 bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                ? "border-primary bg-primary-container text-on-primary-container"
+                : "border-outline-variant/60 bg-card text-charcoal hover:bg-surface-container hover:text-charcoal",
             )}
           >
             {contenido}

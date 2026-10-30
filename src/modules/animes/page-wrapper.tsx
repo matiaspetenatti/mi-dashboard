@@ -208,7 +208,25 @@ export function AnimesPageWrapper() {
   );
 
   if (cargando && !datos) {
-    return <p className="text-sm text-neutral-500">Cargando...</p>;
+    return (
+      <div className="animate-pulse space-y-6" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Cargando catálogo</span>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1"
+            >
+              <div className="aspect-[3/4] bg-surface-container-high" />
+              <div className="space-y-2 p-3">
+                <div className="h-3 w-4/5 rounded-full bg-surface-container-high" />
+                <div className="h-2.5 w-1/2 rounded-full bg-surface-container" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
