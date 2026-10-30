@@ -3,3 +3,4 @@ export * from "@/modules/finanzas/schema";
 export * from "@/modules/estudio/schema";
 export * from "@/modules/animes/schema";
 export * from "@/modules/clima/schema";
+export * from "@/modules/salud/schema";

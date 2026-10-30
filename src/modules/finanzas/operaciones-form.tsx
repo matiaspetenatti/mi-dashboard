@@ -1,30 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { categorias } from "./categorias";
 import { crearMovimiento, transferirEntreCuentas } from "./actions";
 import type { CuentaConSaldo } from "./queries";
 import { formatMonto } from "@/lib/format";
-import { ArrowRightLeft, PlusCircle, Settings } from "lucide-react";
 import { getCategoriasFinanzas } from "./queries";
-import { GestionarCategoriasModal } from "./gestionar-categorias-modal";
 import { useToast } from "@/hooks/use-toast";
 
-const input = "rounded-md border px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900";
+const campo =
+  "w-full rounded-xl border border-outline-variant/70 bg-surface-container-low px-3 py-2 text-xs font-medium text-heading placeholder:text-pebble focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+const campoSelect = `${campo} pr-8`;
+const botonEnviar =
+  "shrink-0 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-on-primary transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50";
 
-export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
+type Pestana = "movimiento" | "transferencia";
+
+export function OperacionesForm({
+  cuentas,
+  pestana,
+}: {
+  cuentas: CuentaConSaldo[];
+  pestana: Pestana;
+}) {
   const toast = useToast();
-  const [pestana, setPestana] = useState<"movimiento" | "transferencia">("movimiento");
-  const [cuentaSeleccionada, setCuentaSeleccionada] = useState<number>(cuentas[0]?.id ?? 0);
+  const [cuentaSeleccionada, setCuentaSeleccionada] = useState<number>(
+    cuentas[0]?.id ?? 0,
+  );
   const [cuentaDestino, setCuentaDestino] = useState<number>(
-    cuentas.find((c) => c.id !== cuentas[0]?.id)?.id ?? 0
+    cuentas.find((c) => c.id !== cuentas[0]?.id)?.id ?? 0,
   );
   const [tipo, setTipo] = useState<"gasto" | "ingreso">("gasto");
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState<string>("");
   const [descripcion, setDescripcion] = useState("");
   const [fecha, setFecha] = useState("");
-  const [mostrarGestionCategorias, setMostrarGestionCategorias] = useState(false);
   const [categoriasDb, setCategoriasDb] = useState<any[]>([]);
 
   useEffect(() => {
@@ -35,60 +45,56 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
         if (first && !categoria) setCategoria(first.nombre);
       }
     });
+    // La categoría inicial se resuelve una sola vez por tipo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipo]);
 
-  const categoriasPorTipo = categoriasDb.length > 0
-    ? categoriasDb.filter((c: any) => c.tipo === tipo)
-    : categorias.filter((c) => {
-        if (tipo === "ingreso") return ["Sueldo", "Rendimientos", "Transferencia", "Ajuste", "Otros"].includes(c);
-        return ["Comida", "Transporte", "Servicios", "Ocio", "Salud", "Estudio", "Transferencia", "Ajuste", "Otros"].includes(c);
-      }).map((c) => ({ nombre: c, icono: "Tag", parentId: null }));
+  // Si la categoría guardada no corresponde al tipo actual (por ejemplo al
+  // volver de "Transferencia"), mostramos la primera disponible de ese tipo.
+  const categoriaSeleccionada = useMemo(() => {
+    if (!categoriasDb.length) return categoria;
+    const existe = categoriasDb.some(
+      (c: any) => c.nombre === categoria && c.tipo === tipo,
+    );
+    if (existe) return categoria;
+    const primera = categoriasDb.find(
+      (c: any) => c.tipo === tipo && !c.parentId,
+    );
+    return primera?.nombre ?? categoria;
+  }, [categoriasDb, categoria, tipo]);
+
+  const categoriasPorTipo =
+    categoriasDb.length > 0
+      ? categoriasDb.filter((c: any) => c.tipo === tipo)
+      : categorias
+          .filter((c) => {
+            if (tipo === "ingreso")
+              return [
+                "Sueldo",
+                "Rendimientos",
+                "Transferencia",
+                "Ajuste",
+                "Otros",
+              ].includes(c);
+            return [
+              "Comida",
+              "Transporte",
+              "Servicios",
+              "Ocio",
+              "Salud",
+              "Estudio",
+              "Transferencia",
+              "Ajuste",
+              "Otros",
+            ].includes(c);
+          })
+          .map((c) => ({ nombre: c, icono: "Tag", parentId: null }));
 
   return (
-    <div className="rounded-xl border bg-white p-4 shadow-xs">
-        <div className="flex items-center justify-between pb-3 border-b mb-3">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setPestana("movimiento")}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                pestana === "movimiento"
-                  ? "bg-neutral-900 text-white"
-                  : "text-neutral-600 hover:bg-neutral-100"
-              }`}
-            >
-              <PlusCircle size={14} />
-              <span>Nuevo Movimiento</span>
-            </button>
-            {cuentas.length >= 2 && (
-              <button
-                type="button"
-                onClick={() => setPestana("transferencia")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                  pestana === "transferencia"
-                    ? "bg-neutral-900 text-white"
-                    : "text-neutral-600 hover:bg-neutral-100"
-                }`}
-              >
-                <ArrowRightLeft size={14} />
-                <span>Transferir entre cuentas</span>
-              </button>
-            )}
-          </div>
-          {pestana === "movimiento" && (
-            <button
-              type="button"
-              onClick={() => setMostrarGestionCategorias(true)}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100"
-            >
-              <Settings size={14} />
-              <span>Gestionar categorías</span>
-            </button>
-          )}
-        </div>
-
+    <div className="rounded-xl border border-outline-variant/60 bg-card p-4 shadow-elevation-1">
       {pestana === "movimiento" ? (
         <form
+          id="nuevo-movimiento"
           action={async (formData) => {
             try {
               const res = await crearMovimiento(formData);
@@ -99,18 +105,19 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
               toast.success("Movimiento agregado correctamente");
               setMonto("");
               setDescripcion("");
-            } catch (e) {
+            } catch {
               toast.error("Error al agregar movimiento");
             }
           }}
-          className="flex flex-wrap items-center gap-2"
+          className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6"
         >
-          {/* Selector de cuenta */}
+          {/* Cuenta */}
           <select
             name="cuentaId"
+            aria-label="Cuenta"
             value={cuentaSeleccionada}
             onChange={(e) => setCuentaSeleccionada(Number(e.target.value))}
-            className={`${input} font-medium`}
+            className={campoSelect}
             required
           >
             {cuentas.map((c) => (
@@ -123,17 +130,18 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
           {/* Tipo */}
           <select
             name="tipo"
+            aria-label="Tipo de movimiento"
             value={tipo}
             onChange={(e) => {
               const val = e.target.value as "gasto" | "ingreso";
               setTipo(val);
-              if (val === "ingreso" && categoria === "Comida") {
+              if (val === "ingreso" && categoriaSeleccionada === "Comida") {
                 setCategoria("Sueldo");
-              } else if (val === "gasto" && categoria === "Sueldo") {
+              } else if (val === "gasto" && categoriaSeleccionada === "Sueldo") {
                 setCategoria("Comida");
               }
             }}
-            className={input}
+            className={campoSelect}
           >
             <option value="gasto">Gasto</option>
             <option value="ingreso">Ingreso</option>
@@ -141,27 +149,31 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
 
           {/* Monto */}
           <input
+            id="campo-monto"
             name="monto"
             inputMode="decimal"
             placeholder="Monto (ej: 1500,50)"
             required
             value={monto}
             onChange={(e) => setMonto(e.target.value)}
-            className={`${input} w-40`}
+            className={campo}
           />
 
           {/* Categoría */}
           <select
             name="categoria"
-            value={categoria}
+            aria-label="Categoría"
+            value={categoriaSeleccionada}
             onChange={(e) => setCategoria(e.target.value)}
-            className={input}
+            className={campoSelect}
           >
             {categoriasDb.length > 0 ? (
               categoriasPorTipo
                 .filter((c: any) => !c.parentId)
                 .flatMap((padre: any) => {
-                  const hijos = categoriasPorTipo.filter((h: any) => h.parentId === padre.id);
+                  const hijos = categoriasPorTipo.filter(
+                    (h: any) => h.parentId === padre.id,
+                  );
                   const items = [
                     <option key={padre.nombre} value={padre.nombre}>
                       {padre.nombre}
@@ -173,7 +185,7 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
                         <option key={h.nombre} value={h.nombre}>
                           {`  └ ${h.nombre}`}
                         </option>
-                      ))
+                      )),
                     );
                   }
                   return items;
@@ -193,27 +205,27 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
             placeholder="Descripción (opcional)"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            className={`${input} flex-1 min-w-36`}
+            className={campo}
           />
 
-          {/* Fecha */}
-          <input
-            type="date"
-            name="fecha"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className={input}
-          />
-
-          <button
-            type="submit"
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition"
-          >
-            Agregar
-          </button>
+          {/* Fecha + enviar */}
+          <div className="col-span-2 flex gap-2 sm:col-span-1">
+            <input
+              type="date"
+              name="fecha"
+              aria-label="Fecha"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className={campo}
+            />
+            <button type="submit" className={botonEnviar}>
+              Agregar
+            </button>
+          </div>
         </form>
       ) : (
         <form
+          id="nuevo-movimiento"
           action={async (formData) => {
             try {
               const res = await transferirEntreCuentas(formData);
@@ -224,14 +236,17 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
               toast.success("Transferencia realizada correctamente");
               setMonto("");
               setDescripcion("");
-            } catch (e) {
+            } catch {
               toast.error("Error al realizar transferencia");
             }
           }}
-          className="flex flex-wrap items-center gap-2"
+          className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6"
         >
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-neutral-500 font-medium">De:</span>
+          {/* Origen */}
+          <label className={`${campo} flex items-center gap-1.5`}>
+            <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-pebble">
+              De
+            </span>
             <select
               name="cuentaOrigenId"
               value={cuentaSeleccionada}
@@ -243,7 +258,7 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
                   if (otra) setCuentaDestino(otra.id);
                 }
               }}
-              className={input}
+              className="w-full min-w-0 bg-transparent text-xs font-medium text-heading focus:outline-none"
               required
             >
               {cuentas.map((c) => (
@@ -252,15 +267,18 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
                 </option>
               ))}
             </select>
-          </div>
+          </label>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-neutral-500 font-medium">A:</span>
+          {/* Destino */}
+          <label className={`${campo} flex items-center gap-1.5`}>
+            <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-pebble">
+              A
+            </span>
             <select
               name="cuentaDestinoId"
               value={cuentaDestino}
               onChange={(e) => setCuentaDestino(Number(e.target.value))}
-              className={input}
+              className="w-full min-w-0 bg-transparent text-xs font-medium text-heading focus:outline-none"
               required
             >
               {cuentas
@@ -271,8 +289,9 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
                   </option>
                 ))}
             </select>
-          </div>
+          </label>
 
+          {/* Monto */}
           <input
             name="monto"
             inputMode="decimal"
@@ -280,29 +299,33 @@ export function OperacionesForm({ cuentas }: { cuentas: CuentaConSaldo[] }) {
             required
             value={monto}
             onChange={(e) => setMonto(e.target.value)}
-            className={`${input} w-36`}
+            className={campo}
           />
 
+          {/* Motivo */}
           <input
             name="descripcion"
             placeholder="Motivo (opcional)"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            className={`${input} flex-1 min-w-32`}
+            className={campo}
           />
 
-          <input type="date" name="fecha" value={fecha} onChange={(e) => setFecha(e.target.value)} className={input} />
-
-          <button
-            type="submit"
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition"
-          >
-            Transferir
-          </button>
+          {/* Fecha + enviar */}
+          <div className="col-span-2 flex gap-2 sm:col-span-1 lg:col-span-2">
+            <input
+              type="date"
+              name="fecha"
+              aria-label="Fecha"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className={campo}
+            />
+            <button type="submit" className={botonEnviar}>
+              Transferir
+            </button>
+          </div>
         </form>
-      )}
-      {mostrarGestionCategorias && (
-        <GestionarCategoriasModal onClose={() => setMostrarGestionCategorias(false)} />
       )}
     </div>
   );

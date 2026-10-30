@@ -273,6 +273,7 @@ export function DialogoUbicacion({ ubicaciones, activa }: Props) {
         size="sm"
         onClick={abrir}
         aria-label="Gestionar ubicaciones guardadas"
+        className="border-outline-variant/60 bg-card text-charcoal hover:bg-surface-container"
       >
         <MapPinned />
         <span className="hidden sm:inline">Ubicaciones</span>
@@ -308,9 +309,9 @@ export function DialogoUbicacion({ ubicaciones, activa }: Props) {
                     <li
                       key={ubicacion.id}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-2xl border px-2 py-1.5",
+                        "flex items-center gap-1.5 rounded-xl border px-2 py-1.5",
                         esActiva
-                          ? "border-primary/40 bg-primary-container/40"
+                          ? "border-primary bg-primary-container/40"
                           : "border-outline-variant/40 bg-surface-container-low",
                       )}
                     >
@@ -417,7 +418,7 @@ export function DialogoUbicacion({ ubicaciones, activa }: Props) {
                   className={cn(
                     "inline-flex items-center justify-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                     modo === valor
-                      ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                      ? "bg-card text-charcoal shadow-elevation-1"
                       : "text-on-surface-variant hover:text-on-surface",
                   )}
                 >

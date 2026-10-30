@@ -53,7 +53,7 @@ function TarjetaMetrica({
   children: React.ReactNode;
 }) {
   return (
-    <article className="flex min-h-[136px] flex-col rounded-3xl border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-elevation-1">
+    <article className="flex min-h-[136px] flex-col rounded-2xl border border-outline-variant/40 bg-card p-4 shadow-elevation-1 transition-shadow hover:shadow-elevation-2">
       <div className="flex items-center gap-2">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-container-high text-on-surface-variant">
           <Icono size={15} />
@@ -124,7 +124,7 @@ export function BentoClima({
       className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
     >
       {/* Héroe: lo primero que se lee es la temperatura y el estado del cielo. */}
-      <article className="relative col-span-2 flex min-h-[252px] flex-col overflow-hidden rounded-3xl border border-transparent bg-primary-container p-5 text-on-primary-container shadow-elevation-2 sm:p-6 lg:row-span-2">
+      <article className="relative col-span-2 flex min-h-[252px] flex-col overflow-hidden rounded-2xl border border-transparent bg-primary-container p-5 text-on-primary-container shadow-elevation-2 sm:p-6 lg:row-span-2">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-14 -top-14 size-48 rounded-full bg-white/30 blur-3xl dark:bg-white/10"
@@ -137,7 +137,7 @@ export function BentoClima({
             </p>
             <p className="mt-1 text-sm font-medium">{weather.label}</p>
           </div>
-          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white/40 dark:bg-white/10">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/60 dark:bg-white/10">
             <WeatherIcon size={26} strokeWidth={1.7} />
           </span>
         </header>
@@ -161,7 +161,7 @@ export function BentoClima({
               </span>
               <span>Máx {temperatura(maxima)}</span>
             </div>
-            <div className="relative mt-2 h-1.5 rounded-full bg-on-primary-container/15">
+            <div className="relative mt-2 h-2 rounded-full bg-on-primary-container/15">
               <div
                 aria-hidden="true"
                 className="absolute inset-0 rounded-full bg-gradient-to-r from-chart-4 to-chart-3"
@@ -181,7 +181,7 @@ export function BentoClima({
       <TarjetaMetrica etiqueta="Viento" icono={Wind}>
         <div className="flex items-end justify-between gap-1">
           <div className="min-w-0">
-            <p className="text-xl font-semibold tracking-tight text-on-surface tabular-nums sm:text-2xl">
+            <p className="text-xl font-semibold tracking-tight text-charcoal tabular-nums sm:text-2xl">
               {numero(dayData?.windSpeed)}{" "}
               <span className="text-xs font-medium text-on-surface-variant">
                 km/h
@@ -208,7 +208,7 @@ export function BentoClima({
       </TarjetaMetrica>
 
       <TarjetaMetrica etiqueta="Índice UV" icono={SunMedium}>
-        <p className="text-2xl font-semibold tracking-tight text-on-surface tabular-nums">
+        <p className="text-2xl font-semibold tracking-tight text-charcoal tabular-nums">
           {numero(dayData?.uvIndex)}
         </p>
         <p className={cn("mt-0.5 text-xs font-medium", uv.texto)}>
@@ -228,7 +228,7 @@ export function BentoClima({
       </TarjetaMetrica>
 
       <TarjetaMetrica etiqueta="Humedad" icono={Droplets}>
-        <p className="text-2xl font-semibold tracking-tight text-on-surface tabular-nums">
+        <p className="text-2xl font-semibold tracking-tight text-charcoal tabular-nums">
           {numero(dayData?.humidity)}
           <span className="text-xs font-medium text-on-surface-variant">%</span>
         </p>
@@ -238,13 +238,13 @@ export function BentoClima({
       </TarjetaMetrica>
 
       <TarjetaMetrica etiqueta="Lluvia" icono={CloudRain}>
-        <p className="text-2xl font-semibold tracking-tight text-on-surface tabular-nums">
+        <p className="text-2xl font-semibold tracking-tight text-charcoal tabular-nums">
           {numero(dayData?.precipitationProb)}
           <span className="text-xs font-medium text-on-surface-variant">%</span>
         </p>
         <div
           aria-hidden="true"
-          className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-container-high"
+          className="mt-2 h-2 overflow-hidden rounded-full bg-surface-container-high"
         >
           <div
             className="h-full rounded-full bg-primary"
@@ -257,7 +257,7 @@ export function BentoClima({
       </TarjetaMetrica>
 
       {/* Franja de atmósfera: datos de contexto, con menor jerarquía. */}
-      <article className="col-span-2 rounded-3xl border border-outline-variant/40 bg-surface-container-low p-4 lg:col-span-4">
+      <article className="col-span-2 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 lg:col-span-4">
         <div className="grid grid-cols-3 divide-x divide-outline-variant/50">
           {atmosfera.map(({ label, icono: Icono, valor }, indice) => (
             <div
@@ -274,7 +274,7 @@ export function BentoClima({
                   {label}
                 </span>
               </div>
-              <p className="mt-1 text-base font-semibold text-on-surface tabular-nums sm:text-lg">
+              <p className="mt-1 text-base font-semibold text-charcoal tabular-nums sm:text-lg">
                 {valor}
               </p>
             </div>

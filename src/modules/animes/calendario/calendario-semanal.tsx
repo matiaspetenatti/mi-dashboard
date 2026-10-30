@@ -68,19 +68,20 @@ export function CalendarioSemanal() {
 
   if (cargando && !datos) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-sm text-neutral-500">Cargando calendario...</p>
+      <div className="flex items-center justify-center gap-2 py-12 text-sm text-on-surface-variant">
+        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+        Cargando calendario...
       </div>
     );
   }
 
   if (error && !datos) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-3">
-        <p className="text-sm text-red-600">{error}</p>
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-outline-variant/50 bg-card px-6 py-12">
+        <p className="text-sm font-medium text-on-error-container">{error}</p>
         <button
           onClick={() => cargarCalendario()}
-          className="px-3 py-1.5 text-sm rounded-lg border hover:bg-neutral-50"
+          className="rounded-full border border-outline-variant/60 bg-card px-3.5 py-1.5 text-xs font-semibold text-charcoal transition hover:bg-surface-container"
         >
           Reintentar
         </button>
@@ -90,13 +91,15 @@ export function CalendarioSemanal() {
 
   if (!datos || (datos.dias.every((d) => d.items.length === 0) && datos.sinHorarios.length === 0)) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-2">
-        <Calendar className="h-8 w-8 text-neutral-400" />
-        <p className="text-sm text-neutral-500 text-center">
-          No tenés animes en estado "Viendo" o no hay horarios esta semana
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-outline-variant/60 bg-surface-container-low px-6 py-12 text-center">
+        <span className="grid size-10 place-items-center rounded-full bg-primary-container text-on-primary-container">
+          <Calendar className="h-5 w-5" />
+        </span>
+        <p className="text-sm font-medium text-charcoal">
+          No tenés animes en estado &quot;Viendo&quot; o no hay horarios esta semana
         </p>
-        <p className="text-xs text-neutral-400 text-center">
-          Los animes con estado "Viendo" aparecerán aquí cuando tengan horario confirmado
+        <p className="text-xs text-pebble">
+          Los animes con estado &quot;Viendo&quot; aparecerán aquí cuando tengan horario confirmado
         </p>
       </div>
     );
@@ -104,22 +107,22 @@ export function CalendarioSemanal() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-on-surface">
             <Calendar className="h-5 w-5" />
             Calendario semanal
           </h2>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-on-surface-variant">
             Horario de Argentina • {datos.semana.inicio} al {datos.semana.fin}
           </p>
         </div>
         <button
           onClick={() => cargarCalendario(true)}
           disabled={actualizando}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border hover:bg-neutral-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-card px-3.5 py-1.5 text-xs font-semibold text-charcoal transition hover:bg-surface-container disabled:opacity-50"
         >
-          <RefreshCw className={`h-4 w-4 ${actualizando ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-3.5 w-3.5 ${actualizando ? "animate-spin" : ""}`} />
           Actualizar
         </button>
       </div>
@@ -128,25 +131,25 @@ export function CalendarioSemanal() {
         {datos.dias.map((dia) => (
           <div
             key={dia.indice}
-            className="rounded-xl border bg-white overflow-hidden"
+            className="overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1"
           >
-            <div className="px-3 py-2 border-b bg-neutral-50">
-              <h3 className="font-medium text-sm">{dia.nombre}</h3>
+            <div className="border-b border-outline-variant/40 bg-surface-container-low px-3 py-2">
+              <h3 className="text-sm font-semibold text-on-surface">{dia.nombre}</h3>
               {dia.items.length > 0 && (
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-on-surface-variant">
                   {dia.items.length} {dia.items.length === 1 ? "episodio" : "episodios"}
                 </p>
               )}
             </div>
-            <div className="p-2 space-y-2 min-h-[200px]">
+            <div className="min-h-[200px] space-y-2 p-2">
               {dia.items.length === 0 ? (
-                <p className="text-xs text-neutral-400 text-center py-4">Sin estrenos</p>
+                <p className="py-4 text-center text-xs text-pebble">Sin estrenos</p>
               ) : (
                 dia.items.map((item) => (
                   <Link
                     key={item.id}
                     href="/animes"
-                    className="block rounded-lg border p-2 hover:bg-neutral-50 transition-colors"
+                    className="block rounded-lg border border-outline-variant/40 p-2 transition-colors hover:border-outline-variant hover:bg-surface-container-low"
                   >
                     <div className="flex gap-2">
                       <Image
@@ -154,18 +157,18 @@ export function CalendarioSemanal() {
                         alt={item.titulo}
                         width={40}
                         height={56}
-                        className="rounded object-cover flex-shrink-0"
+                        className="flex-shrink-0 rounded-md object-cover"
                       />
                       <div className="min-w-0 flex-1 space-y-1">
-                        <p className="text-xs font-medium line-clamp-2 leading-tight">
+                        <p className="line-clamp-2 text-xs font-medium leading-tight text-charcoal">
                           {item.titulo}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-neutral-600">
+                        <div className="flex items-center gap-1 text-xs text-on-surface-variant">
                           <Clock className="h-3 w-3" />
-                          <span className="font-medium">{item.hora}</span>
+                          <span className="font-semibold tabular-nums text-charcoal">{item.hora}</span>
                         </div>
                         {item.episodio && (
-                          <p className="text-xs text-neutral-500">
+                          <p className="text-xs text-pebble">
                             Ep. {item.episodio}
                           </p>
                         )}
@@ -180,28 +183,28 @@ export function CalendarioSemanal() {
       </div>
 
       {datos.sinHorarios.length > 0 && (
-        <div className="rounded-xl border bg-white overflow-hidden">
-          <div className="px-4 py-3 border-b bg-neutral-50">
-            <h3 className="font-medium text-sm">Sin horario definido esta semana</h3>
-            <p className="text-xs text-neutral-500">
+        <div className="overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1">
+          <div className="border-b border-outline-variant/40 bg-surface-container-low px-4 py-3">
+            <h3 className="text-sm font-semibold text-on-surface">Sin horario definido esta semana</h3>
+            <p className="text-xs text-on-surface-variant">
               Animes que estás viendo pero no tienen emisión programada
             </p>
           </div>
-          <div className="p-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-2 p-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {datos.sinHorarios.map((anime) => (
               <Link
                 key={anime.animeId}
                 href="/animes"
-                className="flex items-center gap-2 rounded-lg border p-2 hover:bg-neutral-50 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-outline-variant/40 p-2 transition-colors hover:border-outline-variant hover:bg-surface-container-low"
               >
                 <Image
                   src={anime.imagen}
                   alt={anime.titulo}
                   width={32}
                   height={44}
-                  className="rounded object-cover flex-shrink-0"
+                  className="flex-shrink-0 rounded-md object-cover"
                 />
-                <p className="text-xs font-medium line-clamp-2">{anime.titulo}</p>
+                <p className="line-clamp-2 text-xs font-medium text-charcoal">{anime.titulo}</p>
               </Link>
             ))}
           </div>

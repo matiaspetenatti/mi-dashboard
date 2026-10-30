@@ -12,7 +12,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import type { ResumenProyecto } from "@/modules/tareas/queries/proyectos";
-import type { TareaConDetalle } from "@/modules/tareas/queries/tareas";
+import type { ResumenGlobal, TareaConDetalle } from "@/modules/tareas/queries/tareas";
 import type { Etiqueta } from "@/modules/tareas/schema";
 import {
   configVistaBase,
@@ -32,7 +32,7 @@ import {
   useRefrescoDiferido,
 } from "@/modules/tareas/lib/use-cambios";
 import { useToast } from "@/hooks/use-toast";
-import { NavProyectos } from "./nav-proyectos";
+import { NavTareasMovil } from "./nav-proyectos";
 import { BarraHerramientas } from "./barra-herramientas";
 import { VistaLista } from "./vistas/lista";
 import { PanelTarea, type ProyectoConEstados } from "./panel-tarea";
@@ -111,6 +111,7 @@ export function ListaInteligente({
   lista,
   tareas,
   proyectos,
+  resumen,
   etiquetas,
   tareaAbierta,
   hoy,
@@ -118,6 +119,7 @@ export function ListaInteligente({
   lista: ListaInteligenteSlug;
   tareas: TareaConDetalle[];
   proyectos: ResumenProyecto[];
+  resumen: ResumenGlobal;
   etiquetas: Etiqueta[];
   tareaAbierta: number | null;
   hoy: string;
@@ -256,14 +258,10 @@ export function ListaInteligente({
   const cantidad = filtrarTareas(filtradas, config, hoy).length;
 
   return (
-    <div className="flex gap-6">
-      <NavProyectos
-        proyectos={proyectos}
-        listaActiva={lista}
-        className="hidden w-52 shrink-0 lg:block"
-      />
+    <div className="space-y-4">
+      <NavTareasMovil resumen={resumen} />
 
-      <div className="min-w-0 flex-1 space-y-4">
+      <div className="min-w-0 space-y-4">
         <div>
           <Link
             href="/tareas"

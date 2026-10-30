@@ -1,4 +1,4 @@
-import { TrendingUp, Wallet } from "lucide-react";
+import { Lock, TrendingUp, Wallet } from "lucide-react";
 import { WidgetCard } from "@/components/widget-card";
 import { CountUp } from "@/components/motion/count-up";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,17 +9,18 @@ export function FinanzasWidgetSkeleton() {
   return (
     <WidgetCard
       title="Finanzas"
+      subtitle="Patrimonio en cuentas"
       href="/finanzas"
       icon={Wallet}
       accent="secondary"
+      variant="inverse"
     >
       <div className="space-y-3">
-        <Skeleton className="h-3.5 w-32" />
-        <Skeleton className="h-10 w-40" />
-        <Skeleton className="h-8 w-full" />
-        <div className="grid grid-cols-2 gap-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-48 bg-white/10" />
+        <Skeleton className="h-7 w-44 rounded-full bg-white/10" />
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <Skeleton className="h-16 w-full rounded-[14px] bg-white/10" />
+          <Skeleton className="h-16 w-full rounded-[14px] bg-white/10" />
         </div>
       </div>
     </WidgetCard>
@@ -27,58 +28,95 @@ export function FinanzasWidgetSkeleton() {
 }
 
 export async function FinanzasWidget() {
-  const [{ ingresos, gastos }, totales, cuentas] = await Promise.all([
-    getResumenDelMes(),
-    getTotalesGlobales(),
-    getCuentas(),
-  ]);
+  let resumen: Awaited<ReturnType<typeof getResumenDelMes>>;
+  let totales: Awaited<ReturnType<typeof getTotalesGlobales>>;
+  let cuentas: Awaited<ReturnType<typeof getCuentas>>;
+
+  try {
+    [resumen, totales, cuentas] = await Promise.all([
+      getResumenDelMes(),
+      getTotalesGlobales(),
+      getCuentas(),
+    ]);
+  } catch {
+    return <FinanzasWidgetError />;
+  }
+
+  const { ingresos, gastos } = resumen;
 
   return (
     <WidgetCard
       title="Finanzas"
+      subtitle="Patrimonio en cuentas"
       href="/finanzas"
       icon={Wallet}
       accent="secondary"
+      variant="inverse"
+      footer={
+        <>
+          <span>
+            {cuentas.length}{" "}
+            {cuentas.length === 1 ? "cuenta conectada" : "cuentas conectadas"}{" "}
+            · ARS
+          </span>
+          <Lock size={13} aria-hidden="true" />
+        </>
+      }
     >
-      <div className="space-y-3">
-        <div>
-          <p className="text-xs font-medium text-on-surface-variant">
-            Patrimonio en cuentas
+      <CountUp
+        value={totales.saldoTotal}
+        format="ars"
+        className="block text-[38px] font-black leading-none tracking-tight text-card-inverse-foreground md:text-[45px]"
+      />
+
+      {totales.rendimientoDiarioTotal > 0 && (
+        <div className="mt-2 inline-flex items-center gap-1.5 self-start rounded-full border border-lime-voltage/30 bg-white/5 px-3 py-1 text-xs font-semibold text-card-inverse-muted">
+          <TrendingUp size={13} />
+          <span>
+            +{formatMonto(totales.rendimientoDiarioTotal)}/día en rendimientos
+          </span>
+        </div>
+      )}
+
+      <div className="mt-auto grid grid-cols-2 gap-3 pt-4">
+        <div className="rounded-[14px] border border-white/10 bg-card-inverse-inset p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-card-inverse-muted/70">
+            Ingresos
           </p>
-          <CountUp
-            value={totales.saldoTotal}
-            format="ars"
-            className="mt-1 block text-3xl font-medium tracking-tight text-on-surface"
-          />
+          <p className="mt-1 truncate text-sm font-bold text-card-inverse-foreground">
+            {formatMonto(ingresos)}
+          </p>
         </div>
-
-        {totales.rendimientoDiarioTotal > 0 && (
-          <div className="flex items-center gap-1.5 rounded-full bg-success-container px-3 py-1.5 text-xs font-medium text-on-success-container">
-            <TrendingUp size={13} />
-            <span>
-              +{formatMonto(totales.rendimientoDiarioTotal)}/día en
-              rendimientos
-            </span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-2xl bg-success-container/60 px-3 py-2 text-on-success-container">
-            <p className="text-[10px] font-medium uppercase tracking-wider opacity-80">
-              Ingresos
-            </p>
-            <p className="mt-0.5 truncate font-semibold">↑ {formatMonto(ingresos)}</p>
-          </div>
-          <div className="rounded-2xl bg-error-container/60 px-3 py-2 text-on-error-container">
-            <p className="text-[10px] font-medium uppercase tracking-wider opacity-80">
-              Gastos
-            </p>
-            <p className="mt-0.5 truncate font-semibold">↓ {formatMonto(gastos)}</p>
-          </div>
+        <div className="rounded-[14px] border border-white/10 bg-card-inverse-inset p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-card-inverse-muted/70">
+            Gastos
+          </p>
+          <p className="mt-1 truncate text-sm font-bold text-card-inverse-foreground">
+            {formatMonto(gastos)}
+          </p>
         </div>
+      </div>
+    </WidgetCard>
+  );
+}
 
-        <p className="text-[11px] text-on-surface-variant">
-          {cuentas.length} {cuentas.length === 1 ? "cuenta conectada" : "cuentas conectadas"}
+export function FinanzasWidgetError() {
+  return (
+    <WidgetCard
+      title="Finanzas"
+      subtitle="Patrimonio en cuentas"
+      href="/finanzas"
+      icon={Wallet}
+      accent="secondary"
+      variant="inverse"
+    >
+      <div className="flex flex-1 flex-col justify-center gap-1 py-6 text-center">
+        <Wallet className="mx-auto h-6 w-6 text-card-inverse-muted opacity-70" />
+        <p className="text-sm font-medium text-card-inverse-foreground">
+          No se pudieron cargar las finanzas
+        </p>
+        <p className="text-xs text-card-inverse-muted">
+          Entrá al módulo de Finanzas para reintentar.
         </p>
       </div>
     </WidgetCard>

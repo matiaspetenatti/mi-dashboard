@@ -118,7 +118,7 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
           </span>
         </div>
 
-        <div className="grid max-h-[320px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {daily.time.map((dateStr, index) => {
             const weather = getWeatherInfo(daily.weathercode[index]);
             const DayIcon = weather.icon;
@@ -131,19 +131,17 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
                 aria-pressed={isSelected}
                 onClick={() => setSelectedDayIndex(index)}
                 className={cn(
-                  "flex flex-col gap-2 rounded-2xl border p-2.5 text-left transition-colors",
+                  "flex w-24 shrink-0 snap-start flex-col gap-2 rounded-xl border p-2.5 text-left transition-colors",
                   isSelected
-                    ? "border-primary/40 bg-primary-container text-on-primary-container shadow-elevation-1"
-                    : "border-outline-variant/40 bg-surface-container-low text-on-surface hover:border-outline-variant hover:bg-surface-container",
+                    ? "border-primary bg-primary-container text-on-primary-container shadow-elevation-1"
+                    : "border-outline-variant/40 bg-card text-charcoal hover:border-outline-variant hover:bg-surface-container",
                 )}
               >
                 <div className="flex w-full items-start justify-between gap-1">
                   <span
                     className={cn(
                       "text-[11px] font-semibold",
-                      isSelected
-                        ? "text-on-primary-container"
-                        : "text-on-surface",
+                      isSelected ? "text-on-primary-container" : "text-charcoal",
                     )}
                   >
                     {index === indiceHoy
@@ -155,7 +153,7 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
                       "text-[10px] tabular-nums",
                       isSelected
                         ? "text-on-primary-container/70"
-                        : "text-on-surface-variant",
+                        : "text-pebble",
                     )}
                   >
                     {dateStr.split("-").slice(1).join("/")}
@@ -167,18 +165,14 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
                     aria-hidden="true"
                     className={cn(
                       "size-5 shrink-0",
-                      isSelected
-                        ? "text-on-primary-container"
-                        : weather.color,
+                      isSelected ? "text-on-primary-container" : weather.color,
                     )}
                   />
                   <div className="text-right leading-tight">
                     <div
                       className={cn(
                         "text-sm font-semibold tabular-nums",
-                        isSelected
-                          ? "text-on-primary-container"
-                          : "text-on-surface",
+                        isSelected ? "text-on-primary-container" : "text-charcoal",
                       )}
                     >
                       {grados(daily.temperature_2m_max[index])}
@@ -214,13 +208,13 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
           onClick={() => setDetalleAbierto((valor) => !valor)}
           aria-expanded={detalleAbierto}
           aria-controls="detalle-hora-clima"
-          className="flex w-full items-center gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-3 text-left transition-colors hover:bg-surface-container focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="flex w-full items-center gap-3 rounded-2xl border border-outline-variant/40 bg-card px-4 py-3 text-left shadow-elevation-1 transition-shadow hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
         >
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-container text-on-primary-container">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-container text-on-primary-container">
             <Clock size={15} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-lg font-semibold tracking-tight text-on-surface">
+            <span className="block text-lg font-semibold tracking-tight text-charcoal">
               Detalle por hora
             </span>
             <span className="block text-xs text-on-surface-variant">
@@ -248,14 +242,14 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
         <div
           id="detalle-hora-clima"
           className={cn(
-            "overflow-hidden rounded-3xl border border-outline-variant/40 bg-surface-container-lowest shadow-elevation-1",
+            "overflow-hidden rounded-2xl border border-outline-variant/40 bg-card shadow-elevation-1",
             !detalleAbierto && "hidden",
           )}
         >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-outline-variant/40 bg-surface-container text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
+                <tr className="border-b border-outline-variant/40 bg-surface-container-low text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
                   <th className="px-4 py-3">Hora</th>
                   <th className="px-4 py-3">Temp</th>
                   <th className="px-4 py-3">Sensación</th>
@@ -346,22 +340,25 @@ export function ClimaSkeleton() {
   return (
     <div className="animate-pulse space-y-8">
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="col-span-2 min-h-[252px] rounded-3xl bg-surface-container-high lg:row-span-2" />
+        <div className="col-span-2 min-h-[252px] rounded-2xl bg-surface-container-high lg:row-span-2" />
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="min-h-[136px] rounded-3xl bg-surface-container-high"
+            className="min-h-[136px] rounded-2xl bg-surface-container-high"
           />
         ))}
-        <div className="col-span-2 h-24 rounded-3xl bg-surface-container-high lg:col-span-4" />
+        <div className="col-span-2 h-24 rounded-2xl bg-surface-container-high lg:col-span-4" />
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+      <div className="flex gap-2 overflow-hidden">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-20 rounded-2xl bg-surface-container-high" />
+          <div
+            key={i}
+            className="h-[76px] w-24 shrink-0 rounded-xl bg-surface-container-high"
+          />
         ))}
       </div>
-      <div className="h-96 rounded-3xl bg-surface-container-high" />
-      <div className="h-[68px] rounded-2xl bg-surface-container-high" />
+      <div className="h-96 rounded-2xl bg-surface-container-high" />
+      <div className="h-[72px] rounded-2xl bg-surface-container-high" />
     </div>
   );
 }

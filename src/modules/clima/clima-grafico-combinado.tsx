@@ -107,10 +107,10 @@ export function ClimaGraficoCombinado({
   const ultimoDia = chartData[inicioVisible + tamanio - 1];
 
   return (
-    <div className="space-y-4 rounded-3xl border border-outline-variant/40 bg-surface-container-low p-4 shadow-elevation-1 sm:p-6">
+    <div className="space-y-4 rounded-2xl border border-outline-variant/40 bg-card p-4 shadow-elevation-1 sm:p-6">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <div>
-          <h3 className="text-lg font-semibold tracking-tight text-on-surface">
+          <h3 className="text-lg font-semibold tracking-tight text-charcoal">
             {esDesktop
               ? "Evolución de temperaturas y lluvia (16 días)"
               : "Evolución de temperaturas y lluvia (7 días)"}
@@ -122,7 +122,7 @@ export function ClimaGraficoCombinado({
         </div>
 
         {!esDesktop && (
-          <div className="flex items-center gap-1 self-start rounded-full bg-surface-container-lowest p-1 shadow-sm">
+          <div className="flex items-center gap-1 self-start rounded-full border border-outline-variant/40 bg-surface-container-low p-1">
             <button
               type="button"
               aria-label="Ver días anteriores"
@@ -240,7 +240,7 @@ export function ClimaGraficoCombinado({
                 const dia = payload[0].payload as (typeof chartData)[number];
 
                 return (
-                  <div className="space-y-1 rounded-xl border border-outline-variant/40 bg-surface-container-lowest/95 p-3 text-xs shadow-elevation-2 backdrop-blur-md">
+                  <div className="space-y-1 rounded-lg border border-outline-variant/40 bg-card/95 p-3 text-xs shadow-elevation-2 backdrop-blur-md">
                     <p className="mb-1 border-b border-outline-variant/40 pb-1 font-semibold text-on-surface">
                       {dia.label} {dia.index === 0 ? "(Hoy)" : ""}
                     </p>
@@ -287,7 +287,7 @@ export function ClimaGraficoCombinado({
               dot={{ r: 4, fill: "var(--chart-3)", cursor: "pointer" }}
               activeDot={{
                 r: 7,
-                stroke: "var(--surface-container-low)",
+                stroke: "var(--card)",
                 strokeWidth: 2,
               }}
             />
@@ -301,7 +301,7 @@ export function ClimaGraficoCombinado({
               dot={{ r: 4, fill: "var(--chart-4)", cursor: "pointer" }}
               activeDot={{
                 r: 7,
-                stroke: "var(--surface-container-low)",
+                stroke: "var(--card)",
                 strokeWidth: 2,
               }}
             />

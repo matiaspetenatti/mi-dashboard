@@ -5,6 +5,7 @@ import {
   GraduationCap,
   Tv,
   CloudSun,
+  HeartPulse,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +56,13 @@ export const modules: AppModule[] = [
     icon: CloudSun,
     accent: "secondary",
   },
+  {
+    slug: "salud",
+    label: "Salud",
+    href: "/salud",
+    icon: HeartPulse,
+    accent: "secondary",
+  },
 ];
 
 export const accentStyles: Record<
@@ -62,21 +70,21 @@ export const accentStyles: Record<
   { container: string; onContainer: string; soft: string; text: string }
 > = {
   primary: {
-    container: "bg-primary-container",
-    onContainer: "text-on-primary-container",
-    soft: "bg-primary-container/45",
+    container: "bg-lime-voltage", // Lime Voltage: el acento activo del sistema Wise (inicio / hub)
+    onContainer: "text-forest-ink",
+    soft: "bg-linen-mist",
     text: "text-primary",
   },
   secondary: {
-    container: "bg-secondary-container",
-    onContainer: "text-on-secondary-container",
-    soft: "bg-secondary-container/45",
+    container: "bg-spruce", // Spruce: acento secundario (finanzas, clima)
+    onContainer: "text-linen-mist",
+    soft: "bg-linen-mist",
     text: "text-secondary",
   },
   tertiary: {
-    container: "bg-tertiary-container",
-    onContainer: "text-on-tertiary-container",
-    soft: "bg-tertiary-container/45",
+    container: "bg-forest-ink", // Forest Ink: acento terciario (estudio)
+    onContainer: "text-lime-voltage",
+    soft: "bg-linen-mist",
     text: "text-tertiary",
   },
 };

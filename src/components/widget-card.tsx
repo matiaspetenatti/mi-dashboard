@@ -3,62 +3,97 @@ import { ArrowUpRight, type LucideIcon } from "lucide-react";
 import { cn } from "cn";
 import { accentStyles, type ModuleAccent } from "@/lib/modules";
 
+type WidgetCardVariant = "paper" | "inverse";
+
 type WidgetCardProps = {
   title: string;
+  subtitle?: React.ReactNode;
   href: string;
   icon?: LucideIcon;
   accent?: ModuleAccent;
+  variant?: WidgetCardVariant;
+  footer?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 };
 
 export function WidgetCard({
   title,
+  subtitle,
   href,
   icon: Icon,
   accent = "primary",
+  variant = "paper",
+  footer,
   children,
   className,
 }: WidgetCardProps) {
   const styles = accentStyles[accent];
+  const inversa = variant === "inverse";
 
   return (
     <section
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-white/60 bg-surface-container-lowest/90 p-5 shadow-elevation-1 backdrop-blur-sm transition-shadow duration-300 hover:shadow-elevation-3 dark:border-white/5",
+        "group relative flex h-full flex-col rounded-[20px] p-6 transition-all duration-300",
+        inversa
+          ? "bg-card-inverse text-card-inverse-foreground ring-1 ring-inset ring-card-inverse-border dark:shadow-[0_0_24px_-6px_rgba(159,232,112,0.25)]"
+          : "bg-card text-card-foreground ring-1 ring-inset ring-black/[0.07] hover:ring-black/[0.14] dark:ring-[rgba(159,232,112,0.12)] dark:hover:ring-[rgba(159,232,112,0.3)]",
         className,
       )}
     >
-      <div
-        aria-hidden="true"
+      <header
         className={cn(
-          "pointer-events-none absolute -right-12 -top-12 size-32 rounded-full blur-2xl",
-          styles.soft,
+          "flex items-start justify-between gap-3 border-b pb-3",
+          inversa ? "border-white/10" : "border-outline-variant/50",
         )}
-      />
-      <header className="relative mb-4 flex items-center justify-between gap-3">
+      >
         <div className="flex min-w-0 items-center gap-2.5">
           {Icon && (
             <span
               className={cn(
-                "grid size-8 shrink-0 place-items-center rounded-full",
-                styles.container,
-                styles.onContainer,
+                "grid size-9 shrink-0 place-items-center rounded-full",
+                inversa
+                  ? "bg-white/10 text-lime-voltage"
+                  : cn("bg-surface-container", styles.text),
               )}
             >
-              <Icon size={15} />
+              <Icon size={17} />
             </span>
           )}
-          <h2 className="truncate text-sm font-medium text-on-surface-variant">
-            {title}
-          </h2>
+          <div className="min-w-0">
+            <h2
+              title={title}
+              className={cn(
+                "truncate text-lg font-bold leading-[24px] tracking-[-0.007em]",
+                inversa ? "text-card-inverse-foreground" : "text-heading",
+              )}
+            >
+              {title}
+            </h2>
+            {subtitle && (
+              <div
+                className={cn(
+                  "mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs",
+                  inversa ? "text-card-inverse-muted" : "text-on-surface-variant",
+                )}
+              >
+                {subtitle}
+              </div>
+            )}
+          </div>
         </div>
+
         <Link
           href={href}
           aria-label={`Ir a ${title}`}
           className={cn(
-            "grid size-8 shrink-0 place-items-center rounded-full bg-surface-container text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high hover:text-on-surface",
-            styles.text,
+            "grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-200",
+            inversa
+              ? "bg-white/10 text-lime-voltage hover:bg-white/20"
+              : cn(
+                  "bg-surface-container/70 text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                  styles.text,
+                ),
           )}
         >
           <ArrowUpRight
@@ -67,7 +102,21 @@ export function WidgetCard({
           />
         </Link>
       </header>
-      <div className="relative flex flex-1 flex-col">{children}</div>
+
+      <div className="mt-4 flex flex-1 flex-col">{children}</div>
+
+      {footer && (
+        <footer
+          className={cn(
+            "mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-xs",
+            inversa
+              ? "border-white/10 text-card-inverse-muted"
+              : "border-outline-variant/50 text-on-surface-variant",
+          )}
+        >
+          {footer}
+        </footer>
+      )}
     </section>
   );
 }

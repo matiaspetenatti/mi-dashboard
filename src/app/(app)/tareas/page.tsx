@@ -60,10 +60,11 @@ async function Contenido({ searchParams }: { searchParams: Promise<Params> }) {
   const hoy = fechaHoy();
 
   if (lista) {
-    const [tareas, proyectos, etiquetas] = await Promise.all([
+    const [tareas, proyectos, etiquetas, resumen] = await Promise.all([
       getTareasGlobales(),
       getProyectosConResumen(),
       getEtiquetas(),
+      getResumenGlobal(),
     ]);
 
     return (
@@ -72,6 +73,7 @@ async function Contenido({ searchParams }: { searchParams: Promise<Params> }) {
         lista={lista}
         tareas={tareas}
         proyectos={proyectos}
+        resumen={resumen}
         etiquetas={etiquetas}
         tareaAbierta={tareaAbierta}
         hoy={hoy}
@@ -95,21 +97,30 @@ async function Contenido({ searchParams }: { searchParams: Promise<Params> }) {
 
 function CargandoTareas() {
   return (
-    <div className="space-y-6">
-      <div className="h-24 animate-pulse rounded-3xl bg-surface-container-low" />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, indice) => (
+    <div className="space-y-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <div className="h-3 w-32 animate-pulse rounded-full bg-surface-container-low" />
+          <div className="h-10 w-40 animate-pulse rounded-xl bg-surface-container-low" />
+          <div className="h-3 w-64 animate-pulse rounded-full bg-surface-container-low" />
+        </div>
+        <div className="h-9 w-56 animate-pulse rounded-full bg-surface-container-low" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, indice) => (
           <div
             key={indice}
-            className="h-24 animate-pulse rounded-2xl bg-surface-container-low"
+            className="h-[118px] animate-pulse rounded-2xl bg-surface-container-low"
           />
         ))}
       </div>
-      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, indice) => (
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, indice) => (
           <div
             key={indice}
-            className="h-40 animate-pulse rounded-2xl bg-surface-container-low"
+            className="h-44 animate-pulse rounded-2xl bg-surface-container-low"
           />
         ))}
       </div>

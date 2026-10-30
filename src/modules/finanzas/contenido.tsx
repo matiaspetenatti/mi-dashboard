@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   getCuentas,
   getMovimientosPaginados,
@@ -8,18 +9,16 @@ import { ResumenMes, ResumenSkeleton } from "./resumen-mes";
 import { EvolucionPatrimonioChart } from "./evolucion-patrimonio";
 import { ComparadorServicios } from "./comparador-servicios";
 import { CuentasSection } from "./cuentas-section";
-import { OperacionesForm } from "./operaciones-form";
-import { ListaMovimientos } from "./lista-movimientos";
-import { Suspense } from "react";
+import { SeccionMovimientos } from "./seccion-movimientos";
 
 export function FinanzasSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="animate-pulse space-y-7">
       <ResumenSkeleton />
-      <div className="h-72 rounded-xl bg-neutral-100" />
-      <div className="h-44 rounded-xl bg-neutral-100" />
-      <div className="h-36 rounded-xl bg-neutral-100" />
-      <div className="h-44 rounded-xl bg-neutral-100" />
+      <div className="h-80 rounded-xl border border-outline-variant/40 bg-surface-container/60" />
+      <div className="h-72 rounded-xl border border-outline-variant/40 bg-surface-container/60" />
+      <div className="h-56 rounded-xl border border-outline-variant/40 bg-surface-container/60" />
+      <div className="h-72 rounded-xl border border-outline-variant/40 bg-surface-container/60" />
     </div>
   );
 }
@@ -38,12 +37,12 @@ export async function FinanzasContenido() {
     ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <Suspense fallback={<ResumenSkeleton />}>
         <ResumenMes />
       </Suspense>
 
-      {/* Gráfico de evolución del patrimonio (1M, 3M, 6M, 1A) */}
+      {/* Evolución del patrimonio (1 mes, 3, 6 y 1 año) */}
       <EvolucionPatrimonioChart puntos={evolucionPatrimonio} />
 
       {/* Comparador de gastos en servicios: mes anterior vs actual */}
@@ -52,14 +51,11 @@ export async function FinanzasContenido() {
       {/* Cuentas y rendimientos */}
       <CuentasSection cuentas={cuentas} />
 
-      {/* Movimientos: Formulario y Lista Paginada */}
-      <div className="space-y-4 pt-2">
-        <h2 className="text-lg font-semibold text-neutral-900">
-          Historial de Movimientos
-        </h2>
-        <OperacionesForm cuentas={cuentas} />
-        <ListaMovimientos initialData={movimientosData} cuentas={cuentas} />
-      </div>
+      {/* Movimientos: acciones, formulario y lista paginada */}
+      <SeccionMovimientos
+        cuentas={cuentas}
+        movimientosIniciales={movimientosData}
+      />
     </div>
   );
 }
