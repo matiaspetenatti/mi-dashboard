@@ -16,6 +16,7 @@ import {
 import { ClimaWidget, ClimaWidgetSkeleton } from "@/modules/clima/widget";
 import { SaludWidget, SaludWidgetSkeleton } from "@/modules/salud/widget";
 import { AnimesWidget, AnimesWidgetSkeleton } from "@/modules/animes/widget";
+import { ComidaWidget, ComidaWidgetSkeleton } from "@/modules/comida/widget";
 import { HubOnboarding } from "@/components/hub-onboarding";
 
 export default async function HubPage() {
@@ -117,6 +118,13 @@ export default async function HubPage() {
         <div className="min-w-0">
           <Suspense fallback={<AnimesWidgetSkeleton />}>
             <AnimesWidget />
+          </Suspense>
+        </div>
+
+        {/* ── WIDGET: Comida (ancho completo) ─────────────────────── */}
+        <div className="min-w-0 md:col-span-2 lg:col-span-3">
+          <Suspense fallback={<ComidaWidgetSkeleton />}>
+            <ComidaWidget />
           </Suspense>
         </div>
       </section>

@@ -35,6 +35,16 @@ const getCachedCurrentUser = cache(async () => {
  * No se cachea porque auth() lee headers/cookies.
  */
 export async function getAccess(): Promise<AccessResult> {
+  // TEMPORAL: bypass local para pruebas de UI con el servidor de desarrollo.
+  // No aplica en producción ni sin la variable de entorno.
+  if (process.env.COMIDA_DEV_BYPASS === "1") {
+    return {
+      status: "authorized",
+      userId: "prueba-local",
+      email: "prueba@local",
+    };
+  }
+
   const { userId } = await auth();
 
   if (!userId) return { status: "signed-out" };
