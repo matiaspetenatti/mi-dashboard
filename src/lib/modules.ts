@@ -6,6 +6,7 @@ import {
   Tv,
   CloudSun,
   HeartPulse,
+  UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
 
@@ -62,6 +63,13 @@ export const modules: AppModule[] = [
     href: "/salud",
     icon: HeartPulse,
     accent: "secondary",
+  },
+  {
+    slug: "comida",
+    label: "Comida",
+    href: "/comida",
+    icon: UtensilsCrossed,
+    accent: "tertiary",
   },
 ];
 

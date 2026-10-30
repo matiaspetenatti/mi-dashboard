@@ -16,6 +16,14 @@ if (secretKey && /[^\x20-\x7E]/.test(secretKey)) {
 const PUBLIC_PREFIXES = ["/sign-in", "/sign-up", "/acceso-denegado", "/__clerk"];
 
 function isPublicPath(pathname: string) {
+  // TEMPORAL: permite renderizar las vistas de prueba sin sesión de Clerk.
+  if (
+    process.env.COMIDA_DEV_BYPASS === "1" &&
+    (pathname === "/" || pathname.startsWith("/comida"))
+  ) {
+    return true;
+  }
+
   return PUBLIC_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
