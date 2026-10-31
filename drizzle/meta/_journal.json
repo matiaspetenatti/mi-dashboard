@@ -134,6 +134,13 @@
       "when": 1793412939712,
       "tag": "0018_amused_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1793422324923,
+      "tag": "0019_lucky_namora",
+      "breakpoints": true
     }
   ]
 }

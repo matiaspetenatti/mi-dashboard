@@ -12,7 +12,7 @@ import {
 } from "@/modules/tareas/lib/navegacion";
 import { requireAuthorizedUser } from "@/lib/auth";
 
-export default async function AppLayout({
+async function AppBody({
   children,
 }: {
   children: React.ReactNode;
@@ -73,5 +73,17 @@ export default async function AppLayout({
         </Suspense>
       </div>
     </MotionProvider>
+  );
+}
+
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen">Cargando...</div>}>
+      <AppBody>{children}</AppBody>
+    </Suspense>
   );
 }

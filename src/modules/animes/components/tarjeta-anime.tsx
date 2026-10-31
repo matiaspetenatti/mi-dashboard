@@ -5,6 +5,7 @@ import { Star, Film, Edit3, Calendar } from "lucide-react";
 import type { AnimeVisto } from "@/modules/animes/schema";
 import { ModalEditarAnime } from "@/modules/animes/components/modal/editar";
 import { ModalDetalleAnime } from "@/modules/animes/components/modal/detalle";
+import { MenuContextualAnime } from "@/modules/animes/components/menu-contextual-anime";
 import { obtenerDescripcionAnime } from "@/modules/animes/actions/descripcion";
 import { puntajeMostrable } from "@/modules/animes/lib/criterios";
 import { obtenerTemporadaAnime } from "@/modules/animes/lib/utils";
@@ -27,6 +28,8 @@ export function TarjetaAnime({
 }) {
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [mostrarDetalle, setMostrarDetalle] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [cargandoDescripcion, setCargandoDescripcion] = useState(false);
   const solicitudDescripcion = useRef(false);
   const generos = Array.isArray(anime.generos) ? anime.generos : [];
@@ -77,12 +80,23 @@ export function TarjetaAnime({
     cargar();
   };
 
+  const abrirMenu = (x: number, y: number) => {
+    setMenuPos({ x, y });
+    setMenuOpen(true);
+  };
+
+  const cerrarMenu = () => setMenuOpen(false);
+
   return (
     <>
       <div
         role="button"
         tabIndex={0}
         onClick={abrirDetalle}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          abrirMenu(e.clientX, e.clientY);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -201,6 +215,23 @@ export function TarjetaAnime({
           onEliminado={(id: number) => {
             onEliminado?.(id);
             setMostrarEditar(false);
+          }}
+        />
+      )}
+
+      {menuOpen && (
+        <MenuContextualAnime
+          anime={anime}
+          open={menuOpen}
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={cerrarMenu}
+          onActualizar={({ episodiosVistos }) =>
+            onActualizar?.({ id: anime.id, episodiosVistos })
+          }
+          onEditar={() => {
+            cerrarMenu();
+            setMostrarEditar(true);
           }}
         />
       )}

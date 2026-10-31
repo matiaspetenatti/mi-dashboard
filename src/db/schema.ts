@@ -5,3 +5,4 @@ export * from "@/modules/animes/schema";
 export * from "@/modules/clima/schema";
 export * from "@/modules/salud/schema";
 export * from "@/modules/comida/schema";
+export * from "@/modules/habitos/schema";

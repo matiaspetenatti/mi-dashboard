@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { X } from "lucide-react";
+import { X, RefreshCw, Loader2 } from "lucide-react";
 import {
   actualizarAnimeVisto,
   eliminarAnimeVisto,
 } from "@/modules/animes/actions/actualizar";
+import { actualizarAnimeDesdeApi } from "@/modules/animes/actions/actualizar-desde-api";
+import { useToast } from "@/hooks/use-toast";
 import type { AnimeVisto } from "@/modules/animes/schema";
 import {
   CRITERIOS_ANIME,
@@ -37,14 +39,75 @@ export function ModalEditarAnime({
   const [rewatch, setRewatch] = useState(anime.rewatch);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isRefrescando, setIsRefrescando] = useState(false);
+  const [datosMostrar, setDatosMostrar] = useState({
+    titulo: anime.tituloIngles || anime.titulo,
+    tipo: anime.tipo,
+    ano: anime.ano,
+    imagen: anime.imagen,
+    generos: Array.isArray(anime.generos) ? anime.generos : [],
+    descripcion: anime.descripcion,
+    scoreMal: anime.scoreMal,
+    episodios: anime.episodios,
+  });
+  const toast = useToast();
 
   if (!open) return null;
 
   const totalEpisodios =
-    anime.episodios && anime.episodios > 0 ? anime.episodios : null;
+    datosMostrar.episodios && datosMostrar.episodios > 0
+      ? datosMostrar.episodios
+      : null;
 
   const cambiarPuntaje = (criterio: CriterioAnimeKey, valor: number) => {
     setPuntajes((prev) => ({ ...prev, [criterio]: valor }));
+  };
+
+  const refrescarDesdeApi = async () => {
+    setError(null);
+    setIsRefrescando(true);
+
+    try {
+      const res = await actualizarAnimeDesdeApi(anime.id);
+
+      if (res?.error) {
+        setError(res.error);
+        toast.error("No se pudo actualizar desde la API", {
+          description: res.error,
+        });
+        return;
+      }
+
+      if (res?.success && res.cambios) {
+        // Actualiza la UI del modal inmediatamente, sin esperar al padre.
+        setDatosMostrar((prev) => ({
+          ...prev,
+          titulo: (res.cambios.tituloIngles ?? res.cambios.titulo) || prev.titulo,
+          tipo: res.cambios.tipo ?? prev.tipo,
+          ano: res.cambios.ano ?? prev.ano,
+          imagen: res.cambios.imagen ?? prev.imagen,
+          generos: res.cambios.generos ?? prev.generos,
+          descripcion: res.cambios.descripcion ?? prev.descripcion,
+          scoreMal: res.cambios.scoreMal ?? prev.scoreMal,
+          episodios: res.cambios.episodios ?? prev.episodios,
+        }));
+
+        // Notificar al padre para que refresque la galería.
+        // Nunca se envía episodiosVistos ni miPuntaje, así que se mantienen.
+        onActualizado?.({
+          id: anime.id,
+          ...res.cambios,
+        });
+
+        toast.success("Datos actualizados desde la API", {
+          description: "Título, tipo, año, géneros y sinopsis refrescados.",
+        });
+      }
+    } catch {
+      toast.error("Error inesperado al actualizar desde la API");
+    } finally {
+      setIsRefrescando(false);
+    }
   };
 
   const guardar = () => {
@@ -94,13 +157,28 @@ export function ModalEditarAnime({
     });
   };
 
-  const titulo = anime.tituloIngles || anime.titulo;
+  const titulo = datosMostrar.titulo;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 backdrop-blur-[2px]">
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface-container-lowest text-on-surface shadow-elevation-4">
         <div className="flex items-center justify-between border-b border-outline-variant/40 px-5 py-4">
-          <h3 className="text-lg font-semibold tracking-tight">Editar anime</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold tracking-tight">Editar anime</h3>
+            <button
+              onClick={refrescarDesdeApi}
+              disabled={isRefrescando}
+              className="grid size-8 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface disabled:opacity-50"
+              aria-label="Actualizar datos desde la API"
+              title="Actualizar datos desde la API"
+            >
+              {isRefrescando ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <RefreshCw size={14} />
+              )}
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="grid size-8 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
@@ -112,14 +190,44 @@ export function ModalEditarAnime({
 
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           <div className="flex items-center gap-3">
-            <img src={anime.imagen} alt={titulo} className="h-16 w-12 rounded-md object-cover" />
+            <img src={datosMostrar.imagen} alt={titulo} className="h-16 w-12 rounded-md object-cover" />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-charcoal">{titulo}</p>
               <p className="text-xs text-on-surface-variant">
-                {[anime.tipo, anime.ano].filter(Boolean).join(" • ")}
+                {[datosMostrar.tipo, datosMostrar.ano].filter(Boolean).join(" • ")}
               </p>
             </div>
           </div>
+
+          {datosMostrar.generos?.length || datosMostrar.descripcion || datosMostrar.scoreMal !== null || datosMostrar.scoreMal !== undefined ? (
+            <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
+              {datosMostrar.generos?.length && (
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {datosMostrar.generos.map((g) => (
+                    <span
+                      key={g}
+                      className="rounded bg-surface-container px-2 py-0.5 text-[10px] text-charcoal"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {datosMostrar.scoreMal !== null && datosMostrar.scoreMal !== undefined && (
+                <p className="text-xs text-on-surface-variant">
+                  Score MAL{" "}
+                  <span className="font-medium text-charcoal">
+                    {datosMostrar.scoreMal.toFixed(2)}
+                  </span>
+                </p>
+              )}
+              {datosMostrar.descripcion?.trim() && (
+                <p className="text-xs text-on-surface-variant whitespace-pre-line mt-1">
+                  {datosMostrar.descripcion}
+                </p>
+              )}
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-2 gap-3">
             <label className="space-y-1">

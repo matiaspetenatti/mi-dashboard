@@ -113,7 +113,9 @@ export async function agregarAnime(formData: FormData) {
       ? Math.max(0, Math.min(episodiosVistos, totalEpisodios))
       : Math.max(0, episodiosVistos);
 
-  const data: typeof animesVistos.$inferInsert = {
+  // id es autoincrement: no se incluye en el insert para que SQLite lo asigne.
+  // Nunca pasamos id: null porque SQLite lo rechaza en columnas autoincrement.
+  const data: Omit<typeof animesVistos.$inferInsert, "id"> = {
     ...resto,
     episodios: totalEpisodios,
     ...aColumnasPuntaje(puntajes),
@@ -129,9 +131,29 @@ export async function agregarAnime(formData: FormData) {
     return { success: true };
   } catch (e) {
     const mensaje = e instanceof Error ? e.message : String(e);
-    if (mensaje.includes("UNIQUE")) {
-      return { error: "Este anime ya lo tenés en tu catálogo" };
+    const lower = mensaje.toLowerCase();
+    console.error("[agregarAnime] Error:", e);
+
+    // Detectar restricción UNIQUE en kitsu_id (anime ya existe en la galería).
+    // SQLite/Drizzle pueden devolver el mensaje en varios formatos, así que
+    // buscamos varias palabras clave para ser robustos.
+    const esDuplicado =
+      lower.includes("unique") ||
+      lower.includes("constraint") ||
+      lower.includes("kitsu_id") ||
+      lower.includes("duplicat");
+
+    if (esDuplicado) {
+      return {
+        error:
+          "Este anime ya está en tu catálogo. Abrí su tarjeta y usá Editar si querés modificarlo.",
+      };
     }
-    return { error: "Error al agregar anime" };
+
+    if (lower.includes("not null")) {
+      return { error: "Faltan datos obligatorios para agregar el anime" };
+    }
+
+    return { error: `Error al agregar anime: ${mensaje}` };
   }
 }

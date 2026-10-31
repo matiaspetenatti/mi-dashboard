@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { LogOut, Plus, Settings, Sparkles, Zap } from "lucide-react";
 import { cn } from "cn";
 import { modules, type AppModule } from "@/lib/modules";
+import { SoloCliente } from "@/components/solo-cliente";
 import type { NavegacionTareas } from "@/modules/tareas/lib/navegacion";
 import { NavTareasLateral } from "@/modules/tareas/components/nav-proyectos";
 import { DialogoNuevaTarea } from "@/modules/tareas/components/dialogo-nueva-tarea";
@@ -270,10 +271,12 @@ export function MobileHeader() {
 
       <div className="flex shrink-0 items-center gap-1.5">
         <ThemeToggle className="size-8" />
-        <UserButton
-          appearance={{ elements: { avatarBox: "size-8" } }}
-          showName={false}
-        />
+        <SoloCliente>
+          <UserButton
+            appearance={{ elements: { avatarBox: "size-8" } }}
+            showName={false}
+          />
+        </SoloCliente>
         <SignOutButton redirectUrl="/sign-in">
           <button
             type="button"
