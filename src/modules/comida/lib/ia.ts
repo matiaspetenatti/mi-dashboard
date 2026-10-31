@@ -104,6 +104,9 @@ const nutricionSchema = z.object({
   proteinas: z.coerce.number().min(0).max(500),
   carbos: z.coerce.number().min(0).max(500),
   grasas: z.coerce.number().min(0).max(500),
+  fibra: z.coerce.number().min(0).max(100),
+  azucares: z.coerce.number().min(0).max(100),
+  sodio: z.coerce.number().min(0).max(5000),
 });
 
 const recetaSchema = z.object({
@@ -368,8 +371,8 @@ export async function generarReceta(contexto: ContextoReceta) {
     : "";
 
   const forma = esTrago
-    ? `{"titulo":"","tipo":"trago","tono":"${contexto.tono}","minutos":5,"porciones":1,"ingredientes":[{"nombre":"","cantidad":"60 ml","detalle":"","opcional":false}],"pasos":["","",""],"tips":"","nutricion":{"kcal":0,"proteinas":0,"carbos":0,"grasas":0},"herramientas":[""],"vaso":"","tecnica":""}`
-    : `{"titulo":"","tipo":"${tipo}","tono":"${contexto.tono}","minutos":30,"porciones":2,"ingredientes":[{"nombre":"","cantidad":"500 g","detalle":"","opcional":false}],"pasos":["","",""],"tips":"","nutricion":{"kcal":0,"proteinas":0,"carbos":0,"grasas":0}}`;
+    ? `{"titulo":"","tipo":"trago","tono":"${contexto.tono}","minutos":5,"porciones":1,"ingredientes":[{"nombre":"","cantidad":"60 ml","detalle":"","opcional":false}],"pasos":["","",""],"tips":"","nutricion":{"kcal":0,"proteinas":0,"carbos":0,"grasas":0,"fibra":0,"azucares":0,"sodio":0},"herramientas":[""],"vaso":"","tecnica":""}`
+    : `{"titulo":"","tipo":"${tipo}","tono":"${contexto.tono}","minutos":30,"porciones":2,"ingredientes":[{"nombre":"","cantidad":"500 g","detalle":"","opcional":false}],"pasos":["","",""],"tips":"","nutricion":{"kcal":0,"proteinas":0,"carbos":0,"grasas":0,"fibra":0,"azucares":0,"sodio":0}}`;
 
   const pedido = [
     `Prepará ${

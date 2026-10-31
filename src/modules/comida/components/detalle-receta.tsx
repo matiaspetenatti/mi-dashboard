@@ -55,12 +55,23 @@ export function DetalleReceta({
   const [eliminarAbierto, setEliminarAbierto] = useState(false);
   const [descuentoAbierto, setDescuentoAbierto] = useState(false);
   const [descuentos, setDescuentos] = useState<DescuentoPropuesto[]>([]);
+  const [paginaActual, setPaginaActual] = useState(0);
+  const INGREDIENTES_POR_PAGINA = 10;
 
   const faltantes = useMemo(
     () => calcularFaltantes(receta.ingredientes, items),
     [receta.ingredientes, items],
   );
   const faltantesObligatorios = faltantes.filter((faltante) => !faltante.opcional);
+
+  const ingredientesPaginados = useMemo(
+    () =>
+      receta.ingredientes.slice(
+        paginaActual * INGREDIENTES_POR_PAGINA,
+        (paginaActual + 1) * INGREDIENTES_POR_PAGINA,
+      ),
+    [receta.ingredientes, paginaActual],
+  );
 
   const esTrago = receta.tipo === "trago";
 
@@ -227,8 +238,8 @@ export function DetalleReceta({
           <div className="grid gap-4 sm:grid-cols-[220px_minmax(0,1fr)]">
             <div>
               <Etiqueta>Ingredientes</Etiqueta>
-              <ul className="mt-1.5 space-y-1.5">
-                {receta.ingredientes.map((ingrediente, indice) => {
+              <ul className="mt-1.5 space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
+                {ingredientesPaginados.map((ingrediente, indice) => {
                   const falta = faltantes.some(
                     (faltante) =>
                       faltante.nombre === ingrediente.nombre &&
@@ -259,6 +270,39 @@ export function DetalleReceta({
                   );
                 })}
               </ul>
+
+              {receta.ingredientes.length > INGREDIENTES_POR_PAGINA && (
+                <div className="flex items-center justify-between gap-3 mt-2 border-t border-outline-variant/25 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaginaActual((actual) => Math.max(0, actual - 1))}
+                    disabled={paginaActual === 0}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Anterior
+                  </button>
+                  <span className="text-[10px] font-bold text-on-surface-variant">
+                    {paginaActual * INGREDIENTES_POR_PAGINA + 1}-{" "}
+                    {Math.min(
+                      (paginaActual + 1) * INGREDIENTES_POR_PAGINA,
+                      receta.ingredientes.length,
+                    )} de {receta.ingredientes.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaginaActual((actual) => actual + 1)
+                    }
+                    disabled={
+                      (paginaActual + 1) * INGREDIENTES_POR_PAGINA >=
+                      receta.ingredientes.length
+                    }
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              )}
 
               {faltantesObligatorios.length > 0 && (
                 <div className="mt-3 rounded-xl border border-warning/30 bg-warning-container/30 p-2.5">
@@ -294,11 +338,44 @@ export function DetalleReceta({
                   <p className="mt-0.5 text-base font-extrabold text-heading">
                     {receta.nutricion.kcal} kcal
                   </p>
-                  <p className="text-[10px] text-on-surface-variant">
-                    {receta.nutricion.proteinas} g proteínas ·{" "}
-                    {receta.nutricion.carbos} g carbos · {receta.nutricion.grasas} g
-                    grasas
-                  </p>
+                  <div className="mt-1 grid grid-cols-3 gap-1 text-center text-[10px]">
+                    <div>
+                      <p className="font-bold text-heading">
+                        {receta.nutricion.proteinas} g
+                      </p>
+                      <p className="text-pebble">Proteínas</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-heading">
+                        {receta.nutricion.carbos} g
+                      </p>
+                      <p className="text-pebble">Carbos</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-heading">
+                        {receta.nutricion.grasas} g
+                      </p>
+                      <p className="text-pebble">Grasas</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-heading">
+                        {receta.nutricion.fibra} g
+                      </p>
+                      <p className="text-pebble">Fibra</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-heading">
+                        {receta.nutricion.azucares} g
+                      </p>
+                      <p className="text-pebble">Azúcares</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-heading">
+                        {receta.nutricion.sodio} g
+                      </p>
+                      <p className="text-pebble">Sodio</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

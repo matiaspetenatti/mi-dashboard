@@ -16,6 +16,7 @@ import {
   formatVisibility,
   getWeatherInfo,
   nivelUv,
+  UV_COLORS,
   posicionEnRango,
   rotacionViento,
   windDirectionCardinal,
@@ -215,15 +216,19 @@ export function BentoClima({
           {uv.label}
         </p>
         <div aria-hidden="true" className="mt-2 grid grid-cols-5 gap-1">
-          {Array.from({ length: 5 }).map((_, indice) => (
-            <span
-              key={indice}
-              className={cn(
-                "h-1.5 rounded-full",
-                indice < uv.nivel ? uv.barra : "bg-surface-container-high",
-              )}
-            />
-          ))}
+          {Array.from({ length: 5 }).map((_, indice) => {
+            const nivelSegmento = indice + 1;
+            const estaLlenado = nivelSegmento <= uv.nivel;
+            return (
+              <span
+                key={indice}
+                className={cn(
+                  "h-1.5 rounded-full transition-colors",
+                  estaLlenado ? UV_COLORS[nivelSegmento].barra : "bg-surface-container-high",
+                )}
+              />
+            );
+          })}
         </div>
       </TarjetaMetrica>
 
