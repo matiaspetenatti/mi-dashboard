@@ -219,6 +219,7 @@ export function ChefIa({
       vaso: recetaGenerada.vaso,
       tecnica: recetaGenerada.tecnica,
       origen: "ia" as const,
+      puntaje: 0,
     };
   }
 
@@ -778,6 +779,24 @@ export function ChefIa({
                           {receta.nutricion.grasas} g
                         </p>
                         <p className="text-pebble">Grasas</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-heading">
+                          {receta.nutricion.fibra} g
+                        </p>
+                        <p className="text-pebble">Fibra</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-heading">
+                          {receta.nutricion.azucares} g
+                        </p>
+                        <p className="text-pebble">Azúcares</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-heading">
+                          {receta.nutricion.sodio} g
+                        </p>
+                        <p className="text-pebble">Sodio</p>
                       </div>
                     </div>
                   </div>

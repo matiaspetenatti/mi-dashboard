@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Clock, CloudRain } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Clock, CloudRain, RefreshCw } from "lucide-react";
 import { cn } from "cn";
 import type { ClimaData, ClimaHora } from "./types";
 import { formatDateLabel, getWeatherInfo } from "./clima-utils";
 import { ClimaGraficoCombinado } from "./clima-grafico-combinado";
 import { BentoClima } from "./components/bento-clima";
+import { actualizarClima } from "./actions";
+import { Button } from "@/components/ui/button";
 
 const entero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const unDecimal = new Intl.NumberFormat("es-AR", {
@@ -47,6 +50,8 @@ function buscarHora<T extends { fullTimeStr: string }>(
 export function ClimaContenido({ data }: { data: ClimaData }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [detalleAbierto, setDetalleAbierto] = useState(false);
+  const [actualizando, setActualizando] = useState(false);
+  const router = useRouter();
 
   const { daily, hourly, current } = data;
 
@@ -92,8 +97,37 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
   const horaReferencia =
     dayData?.timePart ?? (esDiaActual ? `${horaActual}:00` : "12:00");
 
+  async function manejarActualizar() {
+    setActualizando(true);
+    const resultado = await actualizarClima();
+    setActualizando(false);
+    if (resultado.ok) {
+      router.refresh();
+    }
+  }
+
   return (
     <div className="space-y-8">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={manejarActualizar}
+          disabled={actualizando}
+          size="sm"
+          variant="outlined"
+          className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+        >
+          {actualizando ? (
+            <RefreshCw size={14} className="animate-spin" />
+          ) : (
+            <RefreshCw size={14} />
+          )}
+          <span className="ml-1.5 text-[11px] font-semibold">
+            {actualizando ? "Actualizando…" : "Actualizar"}
+          </span>
+        </Button>
+      </div>
+
       <BentoClima
         data={data}
         selectedDayIndex={selectedDayIndex}

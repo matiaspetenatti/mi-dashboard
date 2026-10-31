@@ -40,6 +40,9 @@ export type NutricionReceta = {
   proteinas: number;
   carbos: number;
   grasas: number;
+  fibra: number;
+  azucares: number;
+  sodio: number;
 };
 
 /**
@@ -127,6 +130,7 @@ export const comidaRecetas = sqliteTable(
       .notNull()
       .default("manual"),
     favorita: integer("favorita", { mode: "boolean" }).notNull().default(false),
+    puntaje: integer("puntaje").notNull().default(0),
     vecesCocinada: integer("veces_cocinada").notNull().default(0),
     ultimaVezEn: text("ultima_vez_en"),
     creadoEn: text("creado_en")

@@ -114,6 +114,26 @@ export async function guardarUbicacionClima(datos: {
   }
 }
 
+/**
+ * Invalida el caché del clima para forzar una lectura fresca de la API.
+ */
+export async function actualizarClima(): Promise<
+  | { ok: true }
+  | { ok: false; error: string }
+> {
+  await requireAuthorizedUser();
+
+  try {
+    updateTag(CLIMA_TAG);
+    revalidatePath("/clima");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    console.error("No se pudo actualizar el clima:", error);
+    return { ok: false, error: "No se pudo actualizar el clima" };
+  }
+}
+
 /** Cambia la ubicación activa sin tocar el resto. */
 export async function activarUbicacionClima(
   id: number,

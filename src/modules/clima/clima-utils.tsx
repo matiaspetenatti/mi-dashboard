@@ -89,7 +89,16 @@ export type NivelUv = {
   texto: string;
 };
 
-/** Nivel UV en la escala de la OMS, con clases del tema para el medidor. */
+/** Paleta de colores UV clara y consistente en modo claro y oscuro. */
+export const UV_COLORS: Record<number, { bg: string; barra: string; texto: string }> = {
+  1: { bg: "bg-[#8BC34A]", barra: "bg-[#8BC34A]", texto: "text-[#33691E]" }, // Bajo – verde claro
+  2: { bg: "bg-[#FFEB3B]", barra: "bg-[#FFEB3B]", texto: "text-[#F57F17]" }, // Moderado – amarillo claro
+  3: { bg: "bg-[#FFB74D]", barra: "bg-[#FFB74D]", texto: "text-[#E65100]" }, // Alto – naranja claro
+  4: { bg: "bg-[#EF5350]", barra: "bg-[#EF5350]", texto: "text-[#B71C1C]" }, // Muy alto – rojo claro
+  5: { bg: "bg-[#E57373]", barra: "bg-[#E57373]", texto: "text-[#7B1FA2]" }, // Extremo – rojo suave
+};
+
+/** Nivel UV en la escala de la OMS, con colores de escala clara. */
 export function nivelUv(indice?: number | null): NivelUv {
   if (indice === undefined || indice === null || !Number.isFinite(indice) || indice < 0) {
     return {
@@ -101,18 +110,18 @@ export function nivelUv(indice?: number | null): NivelUv {
   }
 
   if (indice < 3) {
-    return { nivel: 1, label: "Bajo", barra: "bg-success", texto: "text-success" };
+    return { nivel: 1, label: "Bajo", ...UV_COLORS[1] };
   }
   if (indice < 6) {
-    return { nivel: 2, label: "Moderado", barra: "bg-warning", texto: "text-warning" };
+    return { nivel: 2, label: "Moderado", ...UV_COLORS[2] };
   }
   if (indice < 8) {
-    return { nivel: 3, label: "Alto", barra: "bg-tertiary", texto: "text-tertiary" };
+    return { nivel: 3, label: "Alto", ...UV_COLORS[3] };
   }
   if (indice < 11) {
-    return { nivel: 4, label: "Muy alto", barra: "bg-error", texto: "text-error" };
+    return { nivel: 4, label: "Muy alto", ...UV_COLORS[4] };
   }
-  return { nivel: 5, label: "Extremo", barra: "bg-error", texto: "text-error" };
+  return { nivel: 5, label: "Extremo", ...UV_COLORS[5] };
 }
 
 /**

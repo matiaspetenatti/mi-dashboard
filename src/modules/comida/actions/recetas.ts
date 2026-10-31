@@ -26,6 +26,9 @@ const nutricionSchema = z.object({
   proteinas: z.number().min(0).max(500),
   carbos: z.number().min(0).max(500),
   grasas: z.number().min(0).max(500),
+  fibra: z.number().min(0).max(100),
+  azucares: z.number().min(0).max(100),
+  sodio: z.number().min(0).max(5000),
 });
 
 const recetaEntradaSchema = z.object({
@@ -56,6 +59,7 @@ const recetaEntradaSchema = z.object({
   vaso: z.string().max(120).nullable(),
   tecnica: z.string().max(240).nullable(),
   origen: z.enum(["ia", "manual"]),
+  puntaje: z.number().int().min(0).max(5).default(0),
 });
 
 export type EntradaReceta = z.infer<typeof recetaEntradaSchema>;

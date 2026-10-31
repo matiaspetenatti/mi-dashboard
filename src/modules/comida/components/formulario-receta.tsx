@@ -70,6 +70,7 @@ export function FormularioReceta({
   const [minutos, setMinutos] = useState(String(receta?.minutos ?? 30));
   const [porciones, setPorciones] = useState(String(receta?.porciones ?? 2));
   const [tips, setTips] = useState(receta?.tips ?? "");
+  const [puntaje, setPuntaje] = useState(receta?.puntaje ?? 0);
   const [vaso, setVaso] = useState(receta?.vaso ?? "");
   const [tecnica, setTecnica] = useState(receta?.tecnica ?? "");
   const [herramientas, setHerramientas] = useState(
@@ -138,6 +139,7 @@ export function FormularioReceta({
       vaso: esTrago ? vaso.trim() || null : null,
       tecnica: esTrago ? tecnica.trim() || null : null,
       origen: receta?.origen ?? "manual",
+      puntaje,
     };
 
     iniciar(async () => {
@@ -203,6 +205,17 @@ export function FormularioReceta({
                 </option>
               ))}
             </select>
+          </Campo>
+          <Campo etiqueta="Puntaje" ayuda="0-5 puntos para calificar la receta">
+            <input
+              value={puntaje}
+              onChange={(evento) => setPuntaje(Number(evento.currentTarget.value))}
+              type="number"
+              min="0"
+              max="5"
+              step="1"
+              className={CAMPO}
+            />
           </Campo>
           <Campo etiqueta="Minutos">
             <input
