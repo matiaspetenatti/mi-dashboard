@@ -5,13 +5,9 @@ import { requireAuthorizedUser } from "@/lib/auth";
 import { db } from "@/db";
 import { animesVistos } from "@/modules/animes/schema";
 import { eq } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
-const ANIMES_TAG = "animes";
-
-const invalidarCacheAnimes = () => {
-  updateTag(ANIMES_TAG);
-};
+import { invalidarCacheAnimes } from "@/modules/animes/lib/cache";
 
 export async function actualizarAnimeDesdeApi(id: number) {
   await requireAuthorizedUser();
@@ -74,6 +70,40 @@ export async function actualizarAnimeDesdeApi(id: number) {
       if (name && !genres.includes(name)) genres.push(name);
     }
 
+    // Leer estudio desde el endpoint de media-productions
+    let studio: string | null = null;
+    try {
+      const prodRes = await fetch(
+        `https://kitsu.io/api/edge/anime/${anime.kitsuId}/media-productions?include=producer`,
+        {
+          headers: {
+            Accept: "application/vnd.api+json",
+            "Content-Type": "application/vnd.api+json",
+          },
+        },
+      );
+      if (prodRes.ok) {
+        const prodJson = await prodRes.json();
+        const producersById = new Map<string, string>();
+        for (const inc of prodJson.included || []) {
+          if (inc.type === "producers" && inc.attributes?.name) {
+            producersById.set(inc.id, inc.attributes.name);
+          }
+        }
+        for (const item of prodJson.data || []) {
+          if (item.attributes?.role !== "studio") continue;
+          const producerId = item.relationships?.producer?.data?.id;
+          const name = producerId ? producersById.get(producerId) : null;
+          if (name) {
+            studio = name;
+            break;
+          }
+        }
+      }
+    } catch {
+      // ignorar; se mantiene el estudio anterior
+    }
+
     const cambios: Partial<typeof animesVistos.$inferInsert> = {
       titulo: attrs.canonicalTitle || titles.en_jp || titles.en || anime.titulo,
       tituloIngles: titles.en ?? anime.tituloIngles,
@@ -84,6 +114,7 @@ export async function actualizarAnimeDesdeApi(id: number) {
       ano: year ?? anime.ano,
       fechaEmision: startDate ?? anime.fechaEmision,
       generos: genres.length > 0 ? genres : anime.generos,
+      estudio: studio ?? anime.estudio,
       descripcion: attrs.synopsis ?? anime.descripcion,
       scoreMal: attrs.averageRating
         ? Number((Number(attrs.averageRating) / 10).toFixed(2))

@@ -15,6 +15,7 @@ import {
   aniosMateria,
   etiquetasCuatrimestre,
   etiquetasEstadoMateria,
+  notasAprobado,
 } from "../constantes";
 import {
   actualizarMateria,
@@ -32,11 +33,13 @@ export function DialogoMateria({
   onOpenChange,
   carreraId,
   materia,
+  materias,
 }: {
   abierto: boolean;
   onOpenChange: (abierto: boolean) => void;
   carreraId: number;
   materia?: Materia | null;
+  materias?: Materia[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -63,6 +66,19 @@ export function DialogoMateria({
   );
   const [profesor, setProfesor] = useState(materia?.profesor ?? "");
   const [notas, setNotas] = useState(materia?.notas ?? "");
+  const [correlativas, setCorrelativas] = useState<number[]>(
+    materia?.correlativas ?? [],
+  );
+
+  const otrasMaterias = (materias ?? []).filter((m) => m.id !== materia?.id);
+
+  function alternarCorrelativa(id: number) {
+    setCorrelativas((previas) =>
+      previas.includes(id)
+        ? previas.filter((valor) => valor !== id)
+        : [...previas, id],
+    );
+  }
 
   function guardar() {
     const datos: DatosMateria = {
@@ -71,6 +87,7 @@ export function DialogoMateria({
       anio: aNumero(anio),
       cuatrimestre: cuatrimestre || null,
       creditos: aNumero(creditos),
+      correlativas,
       estado,
       notaFinal: notaFinal.trim() || null,
       profesor: profesor.trim() || null,
@@ -183,15 +200,49 @@ export function DialogoMateria({
             </SelectEstudio>
           </Campo>
 
-          <Campo etiqueta="Nota final" ayuda="Opcional, de 0 a 10.">
+          <Campo etiqueta="Nota final" ayuda="Opcional, de 0 a 10. Con 4 o más se marca como aprobada.">
             <Input
               inputMode="decimal"
               value={notaFinal}
-              onChange={(event) => setNotaFinal(event.target.value)}
+              onChange={(event) => {
+                setNotaFinal(event.target.value);
+                const valor = Number(event.target.value.replace(",", "."));
+                if (Number.isFinite(valor) && valor >= notasAprobado) {
+                  setEstado("aprobada");
+                }
+              }}
               placeholder="8,5"
             />
           </Campo>
         </div>
+
+        <Campo
+          etiqueta="Correlativas"
+          ayuda="Materias que tenés que aprobar antes de cursar esta."
+        >
+          {otrasMaterias.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-outline-variant/70 px-3 py-2 text-[11px] text-on-surface-variant">
+              No hay otras materias cargadas en esta carrera todavía.
+            </p>
+          ) : (
+            <div className="space-y-1 rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-2">
+              {otrasMaterias.map((otra) => (
+                <label
+                  key={otra.id}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-on-surface transition-colors hover:bg-surface-container"
+                >
+                  <input
+                    type="checkbox"
+                    checked={correlativas.includes(otra.id)}
+                    onChange={() => alternarCorrelativa(otra.id)}
+                    className="size-4 accent-tertiary"
+                  />
+                  <span className="truncate">{otra.nombre}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </Campo>
 
         <Campo etiqueta="Profesor">
           <Input

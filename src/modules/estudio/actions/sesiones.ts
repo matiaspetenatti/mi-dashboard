@@ -10,7 +10,12 @@ import {
   type TipoSesion,
 } from "../schema";
 import { sesionEstudioSchema } from "../lib/validacion";
-import { errorAccion, mensajeError, type ResultadoAccion } from "./_comun";
+import {
+  errorAccion,
+  mensajeError,
+  refrescarEstudio,
+  type ResultadoAccion,
+} from "./_comun";
 
 export async function registrarSesionEstudio(
   datos: {
@@ -50,6 +55,7 @@ export async function registrarSesionEstudio(
       .insert(sesionesEstudio)
       .values(parsed.data)
       .returning({ id: sesionesEstudio.id });
+    refrescarEstudio(parsed.data.carreraId);
     return { ok: true, id: sesion.id };
   } catch (error) {
     return errorAccion(mensajeError(error, "No se pudo registrar la sesión"));

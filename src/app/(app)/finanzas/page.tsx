@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { FinanzasContenido, FinanzasSkeleton } from "@/modules/finanzas/contenido";
 import { requireAuthorizedUser } from "@/lib/auth";
 
+export const instant = false;
+
 export default async function FinanzasPage() {
   await requireAuthorizedUser();
 

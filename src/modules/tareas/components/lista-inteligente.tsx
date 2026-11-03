@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useHotkeys } from "@/modules/tareas/lib/use-hotkeys";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -43,7 +44,8 @@ export type ListaInteligenteSlug =
   | "vencidas"
   | "sin-fecha"
   | "completadas"
-  | "todas";
+  | "todas"
+  | "mi-dia";
 
 const definiciones = {
   hoy: {
@@ -76,6 +78,11 @@ const definiciones = {
     descripcion: "Una mirada completa a todos los proyectos.",
     icon: CheckSquare,
   },
+  "mi-dia": {
+    titulo: "Mi día",
+    descripcion: "Lo que tenés que atender hoy, vencidas y próximas.",
+    icon: Sparkles,
+  },
 } satisfies Record<
   ListaInteligenteSlug,
   { titulo: string; descripcion: string; icon: typeof Sparkles }
@@ -94,6 +101,20 @@ function incluirEnLista(
 ) {
   if (lista === "completadas") return tarea.estado.categoria === "completado";
   if (lista === "todas") return true;
+  if (lista === "mi-dia") {
+    if (
+      tarea.estado.categoria !== "pendiente" &&
+      tarea.estado.categoria !== "en_progreso"
+    )
+      return false;
+    if (tarea.destacada) return true;
+    if (!tarea.fechaLimite) return false;
+    const sumar = (f: string, d: number) =>
+      new Date(Date.parse(`${f}T00:00:00Z`) + d * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+    return tarea.fechaLimite <= sumar(hoy, 3);
+  }
   if (
     tarea.estado.categoria !== "pendiente" &&
     tarea.estado.categoria !== "en_progreso"
@@ -126,6 +147,8 @@ export function ListaInteligente({
 }) {
   const toast = useToast();
   const [, startTransition] = useTransition();
+
+  useHotkeys([{ tecla: "Escape", handler: () => cerrarTarea() }]);
   const definicion = definiciones[lista];
   const Icono = definicion.icon;
 

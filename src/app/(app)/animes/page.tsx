@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { AnimesPageWrapper } from "@/modules/animes/page-wrapper";
 import { requireAuthorizedUser } from "@/lib/auth";
 
+export const instant = false;
+
 export default async function AnimesPage() {
   await requireAuthorizedUser();
 

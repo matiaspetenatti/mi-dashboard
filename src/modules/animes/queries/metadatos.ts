@@ -7,6 +7,10 @@ export type AnimeMetadatos = {
   tipos: string[];
   generos: string[];
   anos: number[];
+  estudios: string[];
+  fuentes: string[];
+  formatos: string[];
+  tags: string[];
   temporadas: Array<{
     key: string;
     label: string;
@@ -16,7 +20,16 @@ export type AnimeMetadatos = {
 };
 
 export async function obtenerMetadatosAnime(): Promise<AnimeMetadatos> {
-  const [tiposRows,anosRows,fechasRows,generosRows] = await Promise.all([
+  const [
+    tiposRows,
+    anosRows,
+    fechasRows,
+    generosRows,
+    estudiosRows,
+    fuentesRows,
+    formatosRows,
+    tagsRows,
+  ] = await Promise.all([
     db.selectDistinct({ tipo: animesVistos.tipo }).from(animesVistos),
     db.selectDistinct({ ano: animesVistos.ano }).from(animesVistos),
     db
@@ -25,6 +38,14 @@ export async function obtenerMetadatosAnime(): Promise<AnimeMetadatos> {
     db.all<{ genero: string }>(
       sql`select distinct json_each.value as genero
           from ${animesVistos}, json_each(${animesVistos.generos})
+          where json_each.value is not null and json_each.value <> ''`,
+    ),
+    db.selectDistinct({ estudio: animesVistos.estudio }).from(animesVistos),
+    db.selectDistinct({ fuente: animesVistos.fuente }).from(animesVistos),
+    db.selectDistinct({ formato: animesVistos.formato }).from(animesVistos),
+    db.all<{ tag: string }>(
+      sql`select distinct json_each.value as tag
+          from ${animesVistos}, json_each(${animesVistos.tags})
           where json_each.value is not null and json_each.value <> ''`,
     ),
   ]);
@@ -38,6 +59,20 @@ export async function obtenerMetadatosAnime(): Promise<AnimeMetadatos> {
     .sort((a, b) => b - a);
 
   const generos = generosRows.map((r) => r.genero).sort();
+
+  const estudios = estudiosRows
+    .flatMap((r) => (r.estudio ? [r.estudio] : []))
+    .sort();
+
+  const fuentes = fuentesRows
+    .flatMap((r) => (r.fuente ? [r.fuente] : []))
+    .sort();
+
+  const formatos = formatosRows
+    .flatMap((r) => (r.formato ? [r.formato] : []))
+    .sort();
+
+  const tags = tagsRows.map((r) => r.tag).sort();
 
   const temporadas = new Map<
     string,
@@ -75,7 +110,11 @@ export async function obtenerMetadatosAnime(): Promise<AnimeMetadatos> {
   return {
     tipos,
     generos,
-  anos,
+    anos,
+    estudios,
+    fuentes,
+    formatos,
+    tags,
     temporadas: temporadasList,
   };
 }

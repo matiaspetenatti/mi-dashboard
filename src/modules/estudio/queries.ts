@@ -3,6 +3,12 @@ import { and, asc, desc, eq, gte } from "drizzle-orm";
 import { db } from "@/db";
 import { fechaHoy } from "@/lib/format";
 import {
+  calcularRachaActividad,
+  calcularRachaMaxima,
+  inicioSemana,
+  sumarDias,
+} from "./lib/tiempo";
+import {
   carreras,
   examenes,
   materias,
@@ -47,6 +53,7 @@ export type ResumenMaterias = {
 export type ResumenCarrera = ResumenMaterias & {
   carrera: Carrera;
   proximoExamen: ExamenConContexto | null;
+  graduacionEstimada: number | null;
 };
 
 export type ResumenEstudio = {
@@ -73,12 +80,32 @@ export type DetalleCarreraData = {
   materias: Materia[];
   examenes: ExamenConContexto[];
   resumen: ResumenMaterias;
+  graduacionEstimada: number | null;
 };
 
 export type WidgetEstudioData = {
   hoy: string;
   resumen: ResumenEstudio;
   proximo: ExamenConContexto | null;
+  enSieteDias: number;
+};
+
+export type TiempoPorMateria = {
+  materiaId: number;
+  materia: string;
+  carrera: string;
+  minutos: number;
+};
+
+export type EstadisticasTiempo = {
+  rachaActual: number;
+  rachaMaxima: number;
+  minutosHoy: number;
+  minutosSemana: number;
+  minutosUltimos30: number;
+  promedioDiario30: number;
+  porDia: { fecha: string; minutos: number }[];
+  porMateria: TiempoPorMateria[];
 };
 
 const camposExamen = {
@@ -108,16 +135,62 @@ function contarEstado(lista: Materia[], estado: EstadoMateria) {
 }
 
 function calcularPromedio(lista: Materia[]) {
-  const notas = lista
-    .filter(
-      (materia) =>
-        materia.estado === "aprobada" && materia.notaFinal !== null,
-    )
-    .map((materia) => materia.notaFinal as number);
+  const aprobadas = lista.filter(
+    (materia) => materia.estado === "aprobada" && materia.notaFinal !== null,
+  );
 
-  if (notas.length === 0) return null;
-  const promedio = notas.reduce((total, nota) => total + nota, 0) / notas.length;
-  return Math.round(promedio * 100) / 100;
+  if (aprobadas.length === 0) return null;
+
+  // Promedio ponderado por créditos cuando hay materias con créditos cargados.
+  const conCreditos = aprobadas.filter(
+    (materia) => materia.creditos !== null && materia.creditos > 0,
+  );
+  if (conCreditos.length > 0) {
+    const sumaNotas = conCreditos.reduce(
+      (total, materia) => total + (materia.notaFinal as number) * (materia.creditos as number),
+      0,
+    );
+    const sumaCreditos = conCreditos.reduce(
+      (total, materia) => total + (materia.creditos as number),
+      0,
+    );
+    if (sumaCreditos > 0) {
+      return Math.round((sumaNotas / sumaCreditos) * 100) / 100;
+    }
+  }
+
+  const suma = aprobadas.reduce(
+    (total, materia) => total + (materia.notaFinal as number),
+    0,
+  );
+  return Math.round((suma / aprobadas.length) * 100) / 100;
+}
+
+/**
+ * Estima el año de graduación según el ritmo actual (materias aprobadas por año
+ * desde el inicio de la carrera). Devuelve null cuando faltan datos.
+ */
+export function estimarGraduacion(
+  carrera: Carrera,
+  lista: Materia[],
+  hoy: string,
+): number | null {
+  if (!carrera.anioInicio) return null;
+  if (carrera.estado === "graduada") return carrera.anioFin ?? null;
+
+  const totalPlan = Math.max(
+    contarEstado(lista, "aprobada"),
+    carrera.materiasTotales ?? lista.length,
+  );
+  const restantes = Math.max(0, totalPlan - contarEstado(lista, "aprobada"));
+  if (restantes === 0) return null;
+
+  const anioActual = Number(hoy.slice(0, 4));
+  const aniosCursados = Math.max(1, anioActual - carrera.anioInicio);
+  const ritmo = contarEstado(lista, "aprobada") / aniosCursados;
+  if (ritmo <= 0) return null;
+
+  return anioActual + Math.ceil(restantes / ritmo);
 }
 
 export function calcularResumenMaterias(
@@ -237,6 +310,7 @@ export async function getEstudioData(): Promise<EstudioData> {
       proximoExamen:
         proximosExamenes.find((examen) => examen.carreraId === carrera.id) ??
         null,
+      graduacionEstimada: estimarGraduacion(carrera, materiasCarrera, hoy),
     };
   });
 
@@ -286,6 +360,7 @@ export async function getCarreraDetalle(
     materias: listaMaterias,
     examenes: ordenarExamenes(listaExamenes, hoy),
     resumen: calcularResumenMaterias(carrera, listaMaterias),
+    graduacionEstimada: estimarGraduacion(carrera, listaMaterias, hoy),
   };
 }
 
@@ -293,7 +368,7 @@ export async function getWidgetEstudio(): Promise<WidgetEstudioData> {
   await connection();
   const hoy = fechaHoy();
 
-  const [listaCarreras, listaMaterias, proximo] = await Promise.all([
+  const [listaCarreras, listaMaterias, proximos] = await Promise.all([
     db.select().from(carreras),
     db.select().from(materias),
     db
@@ -308,13 +383,23 @@ export async function getWidgetEstudio(): Promise<WidgetEstudioData> {
         ),
       )
       .orderBy(asc(examenes.fecha))
-      .limit(1),
+      .limit(30),
   ]);
+
+  const limiteSieteDias = sumarDias(hoy, 7);
+  const enSieteDias = proximos.filter(
+    (examen) => examen.fecha <= limiteSieteDias,
+  ).length;
 
   return {
     hoy,
-    resumen: calcularResumenGlobal(listaCarreras, listaMaterias, proximo.length),
-    proximo: proximo[0] ?? null,
+    resumen: calcularResumenGlobal(
+      listaCarreras,
+      listaMaterias,
+      proximos.length,
+    ),
+    proximo: proximos[0] ?? null,
+    enSieteDias,
   };
 }
 
@@ -335,4 +420,76 @@ export async function getSesionesEstudio(): Promise<SesionEstudio[]> {
     .select()
     .from(sesionesEstudio)
     .orderBy(desc(sesionesEstudio.fecha), desc(sesionesEstudio.creadaEn));
+}
+
+export async function getEstadisticasTiempo(): Promise<EstadisticasTiempo> {
+  await connection();
+  const hoy = fechaHoy();
+
+  const sesiones = await db
+    .select({
+      fecha: sesionesEstudio.fecha,
+      duracionMinutos: sesionesEstudio.duracionMinutos,
+      materiaId: sesionesEstudio.materiaId,
+      materia: materias.nombre,
+      carrera: carreras.nombre,
+    })
+    .from(sesionesEstudio)
+    .innerJoin(materias, eq(sesionesEstudio.materiaId, materias.id))
+    .innerJoin(carreras, eq(materias.carreraId, carreras.id))
+    .where(eq(sesionesEstudio.tipo, "trabajo"))
+    .orderBy(asc(sesionesEstudio.fecha));
+
+  const porDia = new Map<string, number>();
+  const fechasConActividad = new Set<string>();
+  const porMateria = new Map<
+    number,
+    { materiaId: number; materia: string; carrera: string; minutos: number }
+  >();
+
+  for (const sesion of sesiones) {
+    porDia.set(
+      sesion.fecha,
+      (porDia.get(sesion.fecha) ?? 0) + sesion.duracionMinutos,
+    );
+    fechasConActividad.add(sesion.fecha);
+
+    const actual = porMateria.get(sesion.materiaId) ?? {
+      materiaId: sesion.materiaId,
+      materia: sesion.materia,
+      carrera: sesion.carrera,
+      minutos: 0,
+    };
+    actual.minutos += sesion.duracionMinutos;
+    porMateria.set(sesion.materiaId, actual);
+  }
+
+  const inicioSemanaActual = inicioSemana(hoy);
+  const hace30Dias = sumarDias(hoy, -29);
+
+  let minutosSemana = 0;
+  let minutosUltimos30 = 0;
+
+  for (const [fecha, minutos] of porDia) {
+    if (fecha >= inicioSemanaActual) minutosSemana += minutos;
+    if (fecha >= hace30Dias) minutosUltimos30 += minutos;
+  }
+
+  const porMateriaOrdenado = [...porMateria.values()].sort(
+    (a, b) => b.minutos - a.minutos,
+  );
+
+  return {
+    rachaActual: calcularRachaActividad(fechasConActividad, hoy),
+    rachaMaxima: calcularRachaMaxima(fechasConActividad),
+    minutosHoy: porDia.get(hoy) ?? 0,
+    minutosSemana,
+    minutosUltimos30,
+    promedioDiario30: Math.round(minutosUltimos30 / 30),
+    porDia: [...porDia.entries()].map(([fecha, minutos]) => ({
+      fecha,
+      minutos,
+    })),
+    porMateria: porMateriaOrdenado,
+  };
 }

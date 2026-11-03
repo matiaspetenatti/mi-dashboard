@@ -29,12 +29,35 @@ import {
   crearSubtarea,
   duplicarTarea,
   moverTareaAProyecto,
+  archivarTarea,
+  restaurarTarea,
+  alternarDestacada,
+  posponerTarea,
+  actualizarEstimacion,
+  registrarTiempo,
+  actualizarColorTarea,
 } from "@/modules/tareas/actions/tareas";
+import {
+  agregarComentario,
+  actualizarComentario,
+  eliminarComentario,
+} from "@/modules/tareas/actions/comentarios";
+import {
+  agregarAdjunto,
+  eliminarAdjunto,
+} from "@/modules/tareas/actions/adjuntos";
+import {
+  agregarDependencia,
+  eliminarDependencia,
+} from "@/modules/tareas/actions/dependencias";
 import {
   destinoAlAlternar,
   type CambioTarea,
 } from "@/modules/tareas/lib/optimista";
 import { cn } from "cn";
+import { useEffect, useRef } from "react";
+import { cargarDetalleTarea } from "@/modules/tareas/actions/detalle";
+import type { TareaComentario, TareaAdjunto, TareaDependencia } from "@/modules/tareas/schema";
 import { Checkbox } from "./ui/checkbox";
 import { Menu, MenuItem, MenuSeparador } from "./ui/menu";
 import { Dialogo } from "@/components/ui/dialogo";
@@ -178,6 +201,65 @@ function ContenidoPanel({
   );
   const [estadoDestino, setEstadoDestino] = useState<number | null>(null);
 
+  const [detalle, setDetalle] = useState<{
+    comentarios: TareaComentario[];
+    adjuntos: TareaAdjunto[];
+    dependencias: TareaDependencia[];
+    disponibles: { id: number; titulo: string; proyectoId: number }[];
+  } | null>(null);
+  const [nuevoComentario, setNuevoComentario] = useState("");
+  const [nuevoEnlaceNombre, setNuevoEnlaceNombre] = useState("");
+  const [nuevoEnlaceUrl, setNuevoEnlaceUrl] = useState("");
+  const [nuevaDepId, setNuevaDepId] = useState<number | null>(null);
+  const [nuevaDepTipo, setNuevaDepTipo] = useState<"bloquea" | "relacionada">(
+    "bloquea",
+  );
+  const [timerActivo, setTimerActivo] = useState(false);
+  const timerInicioRef = useRef<number | null>(null);
+  const [tiempoAcumulado, setTiempoAcumulado] = useState(
+    tarea.tiempoRegistradoSegundos,
+  );
+  const [estimacion, setEstimacion] = useState<number | null>(
+    tarea.estimacionMinutos,
+  );
+
+  useEffect(() => {
+    let activo = true;
+    cargarDetalleTarea(tarea.id).then((d) => {
+      if (activo) setDetalle(d);
+    });
+    return () => {
+      activo = false;
+    };
+  }, [tarea.id]);
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!timerActivo) return;
+    timerInicioRef.current = Date.now();
+    const intervalo = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(intervalo);
+  }, [timerActivo]);
+
+  function toggleTimer() {
+    if (timerActivo) {
+      const inicio = timerInicioRef.current;
+      if (inicio) {
+        const delta = Math.max(0, Math.round((Date.now() - inicio) / 1000));
+        if (delta > 0) {
+          startTransition(async () => {
+            await registrarTiempo(tarea.id, delta);
+          });
+          setTiempoAcumulado((p) => p + delta);
+        }
+      }
+      timerInicioRef.current = null;
+      setTimerActivo(false);
+    } else {
+      setTimerActivo(true);
+    }
+  }
+
   const completada = tarea.estado.categoria === "completado";
   const estadosDestino =
     proyectos.find((proyecto) => proyecto.id === proyectoDestino)?.estados ?? [];
@@ -250,6 +332,82 @@ function ContenidoPanel({
     if (!valor) return;
     setNuevaSubtarea("");
     ejecutarEstructural(() => crearSubtarea(tarea.id, valor));
+  }
+
+  function onSnooze(dias: number) {
+    const base = tarea.fechaLimite ?? new Date().toISOString().slice(0, 10);
+    const fecha = new Date(Date.parse(`${base}T00:00:00Z`) + dias * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    setFechaLimite(fecha);
+    ejecutar(() => posponerTarea(tarea.id, fecha), {
+      fechaLimite: fecha,
+    });
+  }
+
+  function onToggleDestacada() {
+    ejecutarEstructural(() => alternarDestacada(tarea.id));
+  }
+
+  function onArchivar() {
+    startTransition(async () => {
+      if (tarea.archivadaEn) {
+        await restaurarTarea(tarea.id);
+      } else {
+        await archivarTarea(tarea.id);
+      }
+      onCerrar();
+      onRefrescar?.();
+    });
+  }
+
+  function onGuardarEstimacion() {
+    startTransition(async () => {
+      await actualizarEstimacion(tarea.id, estimacion);
+      onRefrescar?.();
+    });
+  }
+
+  function onGuardarColor(color: string | null) {
+    startTransition(async () => {
+      await actualizarColorTarea(tarea.id, color);
+      onRefrescar?.();
+    });
+  }
+
+  async function onAgregarComentario() {
+    const texto = nuevoComentario.trim();
+    if (!texto) return;
+    setNuevoComentario("");
+    await agregarComentario(tarea.id, texto);
+    const d = await cargarDetalleTarea(tarea.id);
+    setDetalle(d);
+  }
+
+  async function onAgregarEnlace() {
+    if (!nuevoEnlaceNombre.trim() || !nuevoEnlaceUrl.trim()) return;
+    await agregarAdjunto({
+      tareaId: tarea.id,
+      tipo: "enlace",
+      nombre: nuevoEnlaceNombre.trim(),
+      url: nuevoEnlaceUrl.trim(),
+    });
+    setNuevoEnlaceNombre("");
+    setNuevoEnlaceUrl("");
+    const d = await cargarDetalleTarea(tarea.id);
+    setDetalle(d);
+  }
+
+  async function onAgregarDependencia() {
+    if (!nuevaDepId) return;
+    await agregarDependencia({
+      tareaId: tarea.id,
+      dependeDeId: nuevaDepId,
+      tipo: nuevaDepTipo,
+    });
+    setNuevaDepId(null);
+    const d = await cargarDetalleTarea(tarea.id);
+    setDetalle(d);
   }
 
   return (
@@ -421,6 +579,282 @@ function ContenidoPanel({
             }}
           />
         </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onToggleDestacada}
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+              tarea.destacada
+                ? "border-amber-400 bg-amber-50 text-amber-700"
+                : "border-outline-variant/60 text-on-surface-variant hover:bg-surface-container",
+            )}
+          >
+            {tarea.destacada ? "★ Destacada" : "☆ Destacar"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onSnooze(1)}
+            className="rounded-full border border-outline-variant/60 px-2.5 py-1 text-[11px] font-medium text-on-surface-variant hover:bg-surface-container"
+          >
+            +1 día
+          </button>
+          <button
+            type="button"
+            onClick={() => onSnooze(7)}
+            className="rounded-full border border-outline-variant/60 px-2.5 py-1 text-[11px] font-medium text-on-surface-variant hover:bg-surface-container"
+          >
+            +1 semana
+          </button>
+          <button
+            type="button"
+            onClick={onArchivar}
+            className="rounded-full border border-outline-variant/60 px-2.5 py-1 text-[11px] font-medium text-on-surface-variant hover:bg-surface-container"
+          >
+            {tarea.archivadaEn ? "Restaurar" : "Archivar"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Campo etiqueta="Estimación (min)">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                value={estimacion ?? ""}
+                onChange={(e) =>
+                  setEstimacion(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
+                }
+                onBlur={onGuardarEstimacion}
+                className="h-9 w-full rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 text-sm outline-none focus:border-primary"
+              />
+            </div>
+          </Campo>
+          <Campo etiqueta="Tiempo registrado">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-on-surface">
+                {Math.floor(tiempoAcumulado / 60)}m {tiempoAcumulado % 60}s
+              </span>
+              <button
+                type="button"
+                onClick={toggleTimer}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[11px] font-medium",
+                  timerActivo
+                    ? "bg-error-container text-on-error-container"
+                    : "bg-primary-container text-on-primary-container",
+                )}
+              >
+                {timerActivo ? "Pausar" : "Iniciar"}
+              </button>
+            </div>
+          </Campo>
+        </div>
+
+        <Campo etiqueta="Color de tarea">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onGuardarColor(null)}
+              className={cn(
+                "size-6 rounded-full border",
+                !tarea.color ? "ring-2 ring-primary" : "border-outline-variant/60",
+              )}
+              style={{ backgroundColor: "#e8ebe6" }}
+              aria-label="Sin color"
+            />
+            {[
+              "#ef4444",
+              "#f97316",
+              "#f59e0b",
+              "#22c55e",
+              "#3b82f6",
+              "#8b5cf6",
+              "#ec4899",
+            ].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => onGuardarColor(c)}
+                className={cn(
+                  "size-6 rounded-full border",
+                  tarea.color === c ? "ring-2 ring-primary" : "border-outline-variant/60",
+                )}
+                style={{ backgroundColor: c }}
+                aria-label={c}
+              />
+            ))}
+          </div>
+        </Campo>
+
+        <Campo etiqueta="Comentarios">
+          <div className="space-y-2">
+            {(detalle?.comentarios ?? []).map((c) => (
+              <div
+                key={c.id}
+                className="rounded-xl bg-surface-container-low px-3 py-2 text-sm"
+              >
+                <p className="text-on-surface">{c.texto}</p>
+                <p className="mt-1 text-[10px] text-on-surface-variant">
+                  {c.creadoEn}
+                  {c.editadoEn ? " · editado" : ""}
+                </p>
+              </div>
+            ))}
+            <div className="flex items-center gap-2">
+              <input
+                value={nuevoComentario}
+                onChange={(e) => setNuevoComentario(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onAgregarComentario();
+                  }
+                }}
+                placeholder="Escribir comentario..."
+                className="h-9 min-w-0 flex-1 rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 text-sm outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={onAgregarComentario}
+                className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-on-primary"
+              >
+                Enviar
+              </button>
+            </div>
+          </div>
+        </Campo>
+
+        <Campo etiqueta="Enlaces y adjuntos">
+          <div className="space-y-2">
+            {(detalle?.adjuntos ?? []).map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-sm"
+              >
+                <a
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 flex-1 truncate text-primary hover:underline"
+                >
+                  {a.nombre}
+                </a>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await eliminarAdjunto(a.id);
+                    const d = await cargarDetalleTarea(tarea.id);
+                    setDetalle(d);
+                  }}
+                  className="text-on-surface-variant hover:text-error"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <div className="flex flex-col gap-2">
+              <input
+                value={nuevoEnlaceNombre}
+                onChange={(e) => setNuevoEnlaceNombre(e.target.value)}
+                placeholder="Nombre del enlace"
+                className="h-9 rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 text-sm outline-none focus:border-primary"
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  value={nuevoEnlaceUrl}
+                  onChange={(e) => setNuevoEnlaceUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="h-9 min-w-0 flex-1 rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 text-sm outline-none focus:border-primary"
+                />
+                <button
+                  type="button"
+                  onClick={onAgregarEnlace}
+                  className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-on-primary"
+                >
+                  Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+        </Campo>
+
+        <Campo etiqueta="Dependencias">
+          <div className="space-y-2">
+            {(detalle?.dependencias ?? []).map((d) => {
+              const esOrigen = d.tareaId === tarea.id;
+              const otraId = esOrigen ? d.dependeDeId : d.tareaId;
+              const otra = (detalle?.disponibles ?? []).find(
+                (t) => t.id === otraId,
+              );
+              return (
+                <div
+                  key={d.id}
+                  className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-sm"
+                >
+                  <span className="min-w-0 flex-1 truncate text-on-surface">
+                    {esOrigen ? "Bloquea a" : "Bloqueada por"} #
+                    {otraId} {otra?.titulo ?? ""}
+                  </span>
+                  <span className="text-[10px] uppercase text-on-surface-variant">
+                    {d.tipo}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await eliminarDependencia(d.id);
+                      const dd = await cargarDetalleTarea(tarea.id);
+                      setDetalle(dd);
+                    }}
+                    className="text-on-surface-variant hover:text-error"
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+            <div className="flex flex-col gap-2">
+              <select
+                value={nuevaDepId ?? ""}
+                onChange={(e) =>
+                  setNuevaDepId(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
+                }
+                className="h-9 rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">Seleccionar tarea...</option>
+                {(detalle?.disponibles ?? []).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    #{t.id} {t.titulo}
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={nuevaDepTipo}
+                  onChange={(e) =>
+                    setNuevaDepTipo(e.target.value as "bloquea" | "relacionada")
+                  }
+                  className="h-9 rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 text-sm outline-none focus:border-primary"
+                >
+                  <option value="bloquea">Bloquea</option>
+                  <option value="relacionada">Relacionada</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={onAgregarDependencia}
+                  className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-on-primary"
+                >
+                  Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+        </Campo>
 
         <Campo etiqueta="Descripción">
           <textarea

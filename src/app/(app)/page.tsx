@@ -19,6 +19,8 @@ import { AnimesWidget, AnimesWidgetSkeleton } from "@/modules/animes/widget";
 import { ComidaWidget, ComidaWidgetSkeleton } from "@/modules/comida/widget";
 import { HubOnboarding } from "@/components/hub-onboarding";
 
+export const instant = false;
+
 export default async function HubPage() {
   // El saludo depende de la hora del servidor: esperamos la request para no
   // congelar un valor "inestable" (new Date()) durante el prerender.

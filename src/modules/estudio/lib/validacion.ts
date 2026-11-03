@@ -63,6 +63,7 @@ export const materiaSchema = z.object({
   anio: enteroOpcional(1, 20),
   cuatrimestre: z.enum(cuatrimestres).nullable().default(null),
   creditos: enteroOpcional(0, 1000),
+  correlativas: z.array(z.number().int().positive()).default([]),
   estado: z.enum(estadosMateria).default("pendiente"),
   notaFinal: notaOpcional,
   profesor: textoOpcional(120),

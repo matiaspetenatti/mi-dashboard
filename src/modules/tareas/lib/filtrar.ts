@@ -130,6 +130,7 @@ export function agruparTareas(
   config: ConfigVista,
   estados: EstadoProyecto[],
   etiquetas: Etiqueta[],
+  hoy: string = new Date().toISOString().slice(0, 10),
 ): GrupoTareas[] {
   if (config.agruparPor === "ninguna") {
     return [
@@ -201,6 +202,46 @@ export function agruparTareas(
       });
     }
     return grupos;
+  }
+
+  if (config.agruparPor === "vencimiento") {
+    const finSemana = finDeSemana(hoy);
+    const proximaSemana = new Date(
+      Date.parse(`${hoy}T00:00:00Z`) + 14 * 86_400_000,
+    )
+      .toISOString()
+      .slice(0, 10);
+    const buckets: { clave: string; titulo: string; test: (t: TareaConDetalle) => boolean }[] = [
+      { clave: "vencida", titulo: "Vencidas", test: (t) => !!t.fechaLimite && t.fechaLimite < hoy },
+      { clave: "hoy", titulo: "Hoy", test: (t) => t.fechaLimite === hoy },
+      {
+        clave: "semana",
+        titulo: "Esta semana",
+        test: (t) => !!t.fechaLimite && t.fechaLimite > hoy && t.fechaLimite <= finSemana,
+      },
+      {
+        clave: "proxima",
+        titulo: "Próxima semana",
+        test: (t) => !!t.fechaLimite && t.fechaLimite > finSemana && t.fechaLimite <= proximaSemana,
+      },
+      {
+        clave: "futuro",
+        titulo: "Más adelante",
+        test: (t) => !!t.fechaLimite && t.fechaLimite > proximaSemana,
+      },
+      { clave: "sin-fecha", titulo: "Sin fecha", test: (t) => !t.fechaLimite },
+    ];
+    return buckets
+      .map((b) => ({
+        clave: `vencimiento-${b.clave}`,
+        titulo: b.titulo,
+        color: null,
+        estado: null,
+        etiqueta: null,
+        prioridad: null,
+        tareas: tareas.filter(b.test),
+      }))
+      .filter((g) => g.tareas.length > 0);
   }
 
   const grupos: GrupoTareas[] = etiquetas

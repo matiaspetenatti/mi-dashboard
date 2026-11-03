@@ -76,6 +76,9 @@ export const materias = sqliteTable(
     anio: integer("anio"),
     cuatrimestre: text("cuatrimestre", { enum: cuatrimestres }),
     creditos: integer("creditos"),
+    correlativas: text("correlativas", { mode: "json" })
+      .$type<number[]>()
+      .default([]),
     estado: text("estado", { enum: estadosMateria })
       .notNull()
       .default("pendiente"),

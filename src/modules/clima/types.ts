@@ -15,6 +15,18 @@ export type ClimaHora = {
   windDirection: number;
   windGusts: number;
   uvIndex: number;
+  uvClearSky: number;
+  aqiUs: number;
+  aqiEuropeo: number;
+  pm25: number;
+  pm10: number;
+  ozono: number;
+  no2: number;
+  so2: number;
+  co: number;
+  polvo: number;
+  aod: number;
+  amoniaco: number;
 };
 
 export type ClimaActual = {
@@ -30,6 +42,18 @@ export type ClimaActual = {
   wind_direction_10m: number;
   wind_gusts_10m: number;
   uv_index: number;
+  uv_index_clear_sky?: number;
+  us_aqi?: number;
+  european_aqi?: number;
+  pm2_5?: number;
+  pm10?: number;
+  ozone?: number;
+  nitrogen_dioxide?: number;
+  sulphur_dioxide?: number;
+  carbon_monoxide?: number;
+  dust?: number;
+  aerosol_optical_depth?: number;
+  ammonia?: number;
 };
 
 export type ClimaData = {
@@ -39,6 +63,8 @@ export type ClimaData = {
     temperature_2m_min: number[];
     weathercode: number[];
     precipitation_probability_max: number[];
+    aqi_us_max: number[];
+    pm2_5_max: number[];
   };
   hourly: {
     time: string[];
@@ -60,6 +86,7 @@ export type ClimaData = {
   timezone: string;
   utc_offset_seconds: number;
   elevation: number;
+  hourlyMerged?: ClimaHora[];
 };
 
 export type ClimaResumen = {

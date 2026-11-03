@@ -119,6 +119,8 @@ export async function GET(req: NextRequest) {
         semana: obtenerRangoSemana(),
         dias: [],
         sinHorarios: [],
+        sinResolver: [],
+        finalizados: [],
         actualizadoEn: new Date().toISOString(),
       });
     }
@@ -126,54 +128,115 @@ export async function GET(req: NextRequest) {
     const { inicio, fin } = obtenerInicioFinSemanaTimestamp();
     
     // Buscar en AniList por títulos
-    const diasMap = new Map<number, any[]>();
+    const diasMap = new Map<number, Array<Record<string, unknown>>>();
     const animesConHorarios = new Set<number>();
-    
+    const noResueltos: Array<{
+      animeId: number;
+      animeVistoId: number;
+      titulo: string;
+      imagen: string;
+    }> = [];
+    const finalizados: Array<{
+      animeId: number;
+      animeVistoId: number;
+      titulo: string;
+      imagen: string;
+    }> = [];
+
+    const consultarAniList = async (query: string) => {
+      const res = await fetch("https://graphql.anilist.co", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({ query }),
+        cache: forzarActualizacion ? "no-store" : "force-cache",
+        next: forzarActualizacion ? { revalidate: 0 } : { revalidate: 3600 },
+      });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data?.Media ?? null;
+    };
+
     await Promise.all(
       animesViendo.map(async (anime) => {
         try {
-          const query = `
-            query {
-              Media(search: "${anime.titulo.replace(/"/g, '\\"')}", type: ANIME, status: RELEASING) {
-                id
-                title { romaji english }
-                airingSchedule {
-                  nodes {
-                    airingAt
-                    episode
+          let media = null;
+
+          if (anime.anilistId) {
+            const queryPorId = `
+              query {
+                Media(id: ${anime.anilistId}) {
+                  id
+                  title { romaji english }
+                  airingSchedule {
+                    nodes {
+                      airingAt
+                      episode
+                    }
                   }
                 }
               }
-            }
-          `;
-          
-          const res = await fetch("https://graphql.anilist.co", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-            },
-            body: JSON.stringify({ query }),
-            cache: forzarActualizacion ? "no-store" : "force-cache",
-            next: forzarActualizacion ? { revalidate: 0 } : { revalidate: 3600 },
-          });
-          
-          if (!res.ok) return;
-          
-          const json = await res.json();
-          const media = json.data?.Media;
-          if (!media) return;
-          
+            `;
+            media = await consultarAniList(queryPorId);
+          }
+
+          if (!media) {
+            const queryPorTitulo = `
+              query {
+                Media(search: "${anime.titulo.replace(/"/g, '\\"')}", type: ANIME, status: RELEASING) {
+                  id
+                  title { romaji english }
+                  airingSchedule {
+                    nodes {
+                      airingAt
+                      episode
+                    }
+                  }
+                }
+              }
+            `;
+            media = await consultarAniList(queryPorTitulo);
+          }
+
+          if (!media) {
+            noResueltos.push({
+              animeId: anime.kitsuId,
+              animeVistoId: anime.id,
+              titulo: anime.titulo,
+              imagen: anime.imagen,
+            });
+            return;
+          }
+
+          const status = (media.status || "").toUpperCase();
           const schedules = media.airingSchedule?.nodes || [];
+
+          // Anime ya finalizado / fuera de aire: apartado separado.
+          if (
+            status === "FINISHED" ||
+            status === "CANCELLED" ||
+            schedules.length === 0
+          ) {
+            finalizados.push({
+              animeId: anime.kitsuId,
+              animeVistoId: anime.id,
+              titulo: anime.titulo,
+              imagen: anime.imagen,
+            });
+            return;
+          }
+
           const ahoraUnix = Math.floor(Date.now() / 1000);
-          
+
           for (const schedule of schedules) {
             if (schedule.airingAt < inicio || schedule.airingAt > fin) continue;
-            
+
             animesConHorarios.add(anime.kitsuId);
             const diaSemana = obtenerDiaSemanaEnArgentina(schedule.airingAt);
             const hora = formatearHoraEnArgentina(schedule.airingAt);
-            
+
             const entrada = {
               id: `${anime.kitsuId}-${schedule.airingAt}`,
               animeId: anime.kitsuId,
@@ -187,7 +250,7 @@ export async function GET(req: NextRequest) {
               estado: anime.estado,
               emitido: schedule.airingAt < ahoraUnix,
             };
-            
+
             if (!diasMap.has(diaSemana)) {
               diasMap.set(diaSemana, []);
             }
@@ -195,6 +258,12 @@ export async function GET(req: NextRequest) {
           }
         } catch (err) {
           console.error(`Error fetching from AniList for ${anime.titulo}:`, err);
+          noResueltos.push({
+            animeId: anime.kitsuId,
+            animeVistoId: anime.id,
+            titulo: anime.titulo,
+            imagen: anime.imagen,
+          });
         }
       })
     );
@@ -202,15 +271,23 @@ export async function GET(req: NextRequest) {
     // Ordenar por hora
     for (const [dia, items] of diasMap.entries()) {
       items.sort((a, b) => {
-        if (a.hora < b.hora) return -1;
-        if (a.hora > b.hora) return 1;
+        const horaA = String((a as { hora?: unknown }).hora ?? "");
+        const horaB = String((b as { hora?: unknown }).hora ?? "");
+        if (horaA < horaB) return -1;
+        if (horaA > horaB) return 1;
         return 0;
       });
       diasMap.set(dia, items);
     }
     
+    const finalizadosIds = new Set(finalizados.map((f) => f.animeId));
+
     const sinHorarios = animesViendo
-      .filter((a) => !animesConHorarios.has(a.kitsuId))
+      .filter(
+        (a) =>
+          !animesConHorarios.has(a.kitsuId) &&
+          !finalizadosIds.has(a.kitsuId),
+      )
       .map((a) => ({
         animeId: a.kitsuId,
         animeVistoId: a.id,
@@ -234,6 +311,8 @@ export async function GET(req: NextRequest) {
       semana: obtenerRangoSemana(),
       dias,
       sinHorarios,
+      sinResolver: noResueltos,
+      finalizados,
       actualizadoEn: new Date().toISOString(),
     });
   } catch (e) {

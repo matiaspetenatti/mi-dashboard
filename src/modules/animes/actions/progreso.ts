@@ -6,13 +6,8 @@ import { db } from "@/db";
 import { animesVistos } from "@/modules/animes/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { updateTag } from "next/cache";
 
-const ANIMES_TAG = "animes";
-
-const invalidarCacheAnimes = () => {
-  updateTag(ANIMES_TAG);
-};
+import { invalidarCacheAnimes } from "@/modules/animes/lib/cache";
 
 export async function actualizarProgresoAnime(id: number, episodiosVistos: number) {
   await requireAuthorizedUser();

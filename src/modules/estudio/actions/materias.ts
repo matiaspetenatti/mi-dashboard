@@ -10,6 +10,7 @@ import {
   type EstadoMateria,
 } from "../schema";
 import { materiaSchema } from "../lib/validacion";
+import { notasAprobado } from "../constantes";
 import {
   errorAccion,
   mensajeError,
@@ -23,11 +24,38 @@ export type DatosMateria = {
   anio?: number | string | null;
   cuatrimestre?: Cuatrimestre | null;
   creditos?: number | string | null;
+  correlativas?: number[];
   estado: EstadoMateria;
   notaFinal?: number | string | null;
   profesor?: string | null;
   notas?: string | null;
 };
+
+type DatosMateriaValidos = {
+  carreraId: number;
+  nombre: string;
+  anio: number | null;
+  cuatrimestre: Cuatrimestre | null;
+  creditos: number | null;
+  correlativas: number[];
+  estado: EstadoMateria;
+  notaFinal: number | null;
+  profesor: string | null;
+  notas: string | null;
+};
+
+/**
+ * Si cargaron una nota final igual o mayor al mínimo de aprobación,
+ * marca la materia como "aprobada" automáticamente.
+ */
+function normalizarEstado(
+  datos: DatosMateriaValidos,
+): DatosMateriaValidos {
+  if (datos.notaFinal !== null && datos.notaFinal >= notasAprobado) {
+    return { ...datos, estado: "aprobada" };
+  }
+  return datos;
+}
 
 export async function obtenerMateriasPorCarrera(
   carreraId: number,
@@ -76,7 +104,7 @@ export async function crearMateria(
   try {
     const [materia] = await db
       .insert(materias)
-      .values(parsed.data)
+      .values(normalizarEstado(parsed.data))
       .returning({ id: materias.id });
     refrescarEstudio(parsed.data.carreraId);
     return { ok: true, id: materia.id };
@@ -104,7 +132,7 @@ export async function actualizarMateria(
   try {
     await db
       .update(materias)
-      .set(parsed.data)
+      .set(normalizarEstado(parsed.data))
       .where(eq(materias.id, id));
     refrescarEstudio(parsed.data.carreraId);
     return { ok: true };

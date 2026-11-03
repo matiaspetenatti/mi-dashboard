@@ -1,0 +1,91 @@
+Ôû▓ Next.js 16.4.2 (webpack)
+- Environments: .env.local, .env
+Ô£ô Running next.config.ts took 28ms
+- Cache Components enabled
+- Partial Prefetching enabled
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 7.3s
+  Running TypeScript ...
+  Finished TypeScript in 4.0s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/29) ...
+No se pudieron leer las ubicaciones del clima: Error: Failed query: select "id", "etiqueta", "latitud", "longitud", "es_activa", "actualizado_en" from "clima_ubicacion" order by "clima_ubicacion"."id" asc
+params: 
+    at ay.queryWithCache (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\5782.js:14:21122)
+    at async ay.values (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\5782.js:14:26767)
+    at async ay.all (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\5782.js:14:25767)
+    at async (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\5380.js:1:3398)
+    at async (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\5380.js:1:3704)
+    at async r (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\5380.js:1:7039)
+    at async h (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\app\api\clima\resumen\route.js:1:476) {
+  query: 'select "id", "etiqueta", "latitud", "longitud", "es_activa", "actualizado_en" from "clima_ubicacion" order by "clima_ubicacion"."id" asc',
+  params: [],
+  [cause]: Error: During prerendering, fetch() rejects when the prerender is complete. Typically these errors are handled by React but if you move fetch() to a different context by using `setTimeout`, `after`, or similar functions you may observe this error and you should handle it in that context. This occurred at route "/api/clima/resumen".
+      at r (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:61:218)
+      at <unknown> (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:21:6726)
+      at <unknown> (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:13631)
+      at <unknown> (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:13911)
+      at e.with (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:22266)
+      at i.with (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:16536)
+      at i.startActiveSpan (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:31446)
+      at e.startActiveSpan (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:31979)
+      at y.runWithActiveSpan (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:13888)
+      at <unknown> (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:13105)
+      at e.with (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:22266)
+      at i.with (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:16536)
+      at y.trace (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:53:13079)
+      at fetch (C:\Users\matias\Desktop\Repositorios\mi-dashboard\mi-dashboard\.next\server\chunks\7266.js:21:4657) {
+    route: '/api/clima/resumen',
+    expression: 'fetch()',
+    digest: 'HANGING_PROMISE_REJECTION'
+  }
+}
+  Generating static pages using 11 workers (7/29) 
+  Generating static pages using 11 workers (14/29) 
+  Generating static pages using 11 workers (21/29) 
+Ô£ô Generating static pages using 11 workers (29/29) in 781ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+Ôöî ÔùÉ /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /acceso-denegado
+Ôö£ ÔùÉ /animes
+Ôö£ ÔùÉ /animes/calendario
+Ôö£ ãÆ /api/animes
+Ôö£ ãÆ /api/animes/calendario
+Ôö£ ãÆ /api/clima/resumen
+Ôö£ ãÆ /api/comida/menu
+Ôö£ ãÆ /api/comida/receta
+Ôö£ ãÆ /api/finanzas/rendimientos
+Ôö£ ãÆ /api/jikan/anime
+Ôö£ ãÆ /api/kitsu/anime
+Ôö£ ãÆ /api/salud/informe
+Ôö£ ÔùÉ /clima
+Ôö£ ÔùÉ /comida
+Ôö£ ÔùÉ /estudio
+Ôö£   /estudio/carreras/[id]
+Ôöé Ôöö ÔùÉ /estudio/carreras/[id]
+Ôö£ ÔùÉ /finanzas
+Ôö£ ÔùÉ /habitos
+Ôö£ ÔùÉ /salud
+Ôö£   /sign-in/[[...sign-in]]
+Ôöé Ôöö ÔùÉ /sign-in/[[...sign-in]]
+Ôö£   /sign-up/[[...sign-up]]
+Ôöé Ôöö ÔùÉ /sign-up/[[...sign-up]]
+Ôö£ ÔùÉ /tareas
+Ôö£ ÔùÉ /tareas/ajustes
+Ôö£   /tareas/proyectos/[slug]
+Ôöé Ôöö ÔùÉ /tareas/proyectos/[slug]
+Ôöö   /tareas/proyectos/[slug]/ajustes
+  Ôöö ÔùÉ /tareas/proyectos/[slug]/ajustes
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)             prerendered as static content
+ÔùÉ  (Partial Prerender)  prerendered as static HTML with dynamic server-streamed content
+ãÆ  (Dynamic)            server-rendered on demand
+

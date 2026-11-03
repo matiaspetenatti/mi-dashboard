@@ -1,46 +1,98 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rejectUnauthorizedRequest } from "@/lib/auth";
 
-function normalizarAnime(item: any, categoriesById: Map<string, string>) {
-  const attrs = item.attributes || {};
-  const titles = attrs.titles || {};
-  const poster = attrs.posterImage || {};
-  const startDate = attrs.startDate || null;
+function normalizarAnime(
+  item: Record<string, unknown>,
+  categoriesById: Map<string, string>,
+  studio: string | null = null,
+) {
+  const attrs = (item.attributes ?? {}) as Record<string, unknown>;
+  const titles = (attrs.titles ?? {}) as Record<string, unknown>;
+  const poster = (attrs.posterImage ?? {}) as Record<string, unknown>;
+  const startDate = (attrs.startDate as string | null) ?? null;
   const year = startDate ? Number(String(startDate).slice(0, 4)) : null;
 
+  const relationships = (item.relationships ?? {}) as Record<string, unknown>;
+  const categoriesRel = (relationships.categories ?? {}) as Record<string, unknown>;
+  const relCats = (categoriesRel.data ?? []) as Array<Record<string, unknown>>;
+
   const genres: string[] = [];
-  const relCats = item.relationships?.categories?.data || [];
   for (const c of relCats) {
-    const name = categoriesById.get(c.id);
+    const name = categoriesById.get(String(c.id));
     if (name && !genres.includes(name)) genres.push(name);
   }
 
   return {
-    kitsu_id: Number(item.id),
-    title: attrs.canonicalTitle || titles.en_jp || titles.en || "",
-    title_english: titles.en || null,
+    kitsu_id: Number(item.id ?? 0),
+    title: (attrs.canonicalTitle as string) || (titles.en_jp as string) || (titles.en as string) || "",
+    title_english: (titles.en as string) || null,
     images: {
-      webp: { large_image_url: poster.large || poster.medium || poster.original || "" },
-      jpg: { large_image_url: poster.large || poster.medium || poster.original || "" },
+      webp: { large_image_url: (poster.large as string) || (poster.medium as string) || (poster.original as string) || "" },
+      jpg: { large_image_url: (poster.large as string) || (poster.medium as string) || (poster.original as string) || "" },
     },
-    type: attrs.subtype ? attrs.subtype.toUpperCase() : null,
-    episodes: attrs.episodeCount ?? null,
+    type: attrs.subtype ? String(attrs.subtype).toUpperCase() : null,
+    episodes: (attrs.episodeCount as number | null) ?? null,
     year,
     aired: { from: startDate },
     genres: genres.map((g) => ({ name: g })),
-    score: attrs.averageRating ? Number((Number(attrs.averageRating) / 10).toFixed(2)) : null,
-    synopsis: attrs.synopsis || null,
+    score: attrs.averageRating
+      ? Number((Number(attrs.averageRating) / 10).toFixed(2))
+      : null,
+    synopsis: (attrs.synopsis as string) || null,
+    studio,
   };
 }
 
-function leerCategorias(included: any[]) {
+function leerCategorias(included: Array<Record<string, unknown>>) {
   const categoriesById = new Map<string, string>();
   for (const inc of included) {
-    if (inc.type === "categories" && inc.attributes?.title) {
-      categoriesById.set(inc.id, inc.attributes.title);
+    const rec = inc as Record<string, unknown>;
+    const attrs = (rec.attributes ?? {}) as Record<string, unknown>;
+    if (rec.type === "categories" && typeof attrs.title === "string") {
+      categoriesById.set(String(rec.id), attrs.title);
     }
   }
   return categoriesById;
+}
+
+async function obtenerStudioKitsu(id: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://kitsu.io/api/edge/anime/${encodeURIComponent(id)}/media-productions?include=producer`,
+      {
+        headers: {
+          Accept: "application/vnd.api+json",
+          "Content-Type": "application/vnd.api+json",
+        },
+        next: { revalidate: 3600 },
+      },
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const included = json.included || [];
+    const producersById = new Map<string, string>();
+    for (const inc of included) {
+      const rec = inc as Record<string, unknown>;
+      const attrs = (rec.attributes ?? {}) as Record<string, unknown>;
+      if (rec.type === "producers" && typeof attrs.name === "string") {
+        producersById.set(String(rec.id), attrs.name);
+      }
+    }
+    const data = json.data || [];
+    for (const item of data) {
+      const rec = item as Record<string, unknown>;
+      const attrs = (rec.attributes ?? {}) as Record<string, unknown>;
+      if (attrs.role !== "studio") continue;
+      const rels = (rec.relationships ?? {}) as Record<string, unknown>;
+      const producerRel = (rels.producer ?? {}) as Record<string, unknown>;
+      const producerData = (producerRel.data ?? {}) as Record<string, unknown>;
+      const name = producersById.get(String(producerData.id));
+      if (name) return name;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -82,13 +134,16 @@ export async function GET(req: NextRequest) {
       if (!json.data) {
         return NextResponse.json({ error: "Anime no encontrado en Kitsu", data: null }, { status: 404 });
       }
-      return NextResponse.json({ data: normalizarAnime(json.data, categoriesById) });
+      const studio = await obtenerStudioKitsu(id.trim());
+      return NextResponse.json({ data: normalizarAnime(json.data, categoriesById, studio) });
     }
 
-    const normalized = (json.data || []).map((item: any) => normalizarAnime(item, categoriesById));
+    const normalized = (json.data || []).map((item: Record<string, unknown>) =>
+      normalizarAnime(item, categoriesById, null),
+    );
 
     return NextResponse.json({ data: normalized });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "No se pudo conectar con Kitsu", data: [] }, { status: 503 });
   }
 }

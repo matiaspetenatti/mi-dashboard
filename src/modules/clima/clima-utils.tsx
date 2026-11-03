@@ -162,3 +162,115 @@ export function posicionEnRango(
 export function formatearCoordenadas(latitud: number, longitud: number): string {
   return `${latitud.toFixed(4)}, ${longitud.toFixed(4)}`;
 }
+
+export type NivelAqi = {
+  label: string;
+  clase: string;
+  recomendacion: string;
+};
+
+/** Nivel de AQI (US) con etiqueta, color y recomendación. */
+export function nivelAqiUs(indice?: number | null): NivelAqi {
+  const valor =
+    indice === undefined || indice === null || !Number.isFinite(indice)
+      ? 0
+      : indice;
+
+  if (valor <= 0) {
+    return {
+      label: "Sin datos",
+      clase: "bg-surface-container text-on-surface-variant",
+      recomendacion: "No hay datos de calidad del aire para esta hora.",
+    };
+  }
+  if (valor <= 50) {
+    return {
+      label: "Buena",
+      clase: "bg-success-container text-on-success-container",
+      recomendacion: "Calidad del aire satisfactoria. Actividad normal al aire libre.",
+    };
+  }
+  if (valor <= 100) {
+    return {
+      label: "Moderada",
+      clase: "bg-warning-container text-on-warning-container",
+      recomendacion: "Aceptable. Personas sensibles podrían molestarse.",
+    };
+  }
+  if (valor <= 150) {
+    return {
+      label: "Insalubre (sensibles)",
+      clase: "bg-warning-container text-on-warning-container",
+      recomendacion: "Grupos sensibles: limitar esfuerzo prolongado al aire libre.",
+    };
+  }
+  if (valor <= 200) {
+    return {
+      label: "Insalubre",
+      clase: "bg-error-container text-on-error-container",
+      recomendacion: "Todos: reducir actividad prolongada al aire libre.",
+    };
+  }
+  if (valor <= 300) {
+    return {
+      label: "Muy insalubre",
+      clase: "bg-error-container text-on-error-container",
+      recomendacion: "Evitar actividad al aire libre. Usar barbijo si salís.",
+    };
+  }
+  return {
+    label: "Peligrosa",
+    clase: "bg-error text-on-error",
+    recomendacion: "Emergencia de salud: quedarse en interiores.",
+  };
+}
+
+/** Texto de recomendación combinado para el día. */
+export function recomendacionClima({
+  aqi,
+  uv,
+  lluvia,
+  weatherCode,
+  mmLluvia,
+}: {
+  aqi?: number | null;
+  uv?: number | null;
+  lluvia?: number | null;
+  weatherCode?: number | null;
+  mmLluvia?: number | null;
+}): string {
+  const partes: string[] = [];
+  const nivelAqi = nivelAqiUs(aqi);
+  if (aqi && aqi > 100) partes.push(nivelAqi.recomendacion);
+
+  const esTormenta =
+    weatherCode === 95 || weatherCode === 96 || weatherCode === 99;
+  const esLluvia =
+    (weatherCode !== null &&
+      weatherCode !== undefined &&
+      ((weatherCode >= 51 && weatherCode <= 67) ||
+        (weatherCode >= 80 && weatherCode <= 82))) ||
+    (lluvia !== null && lluvia !== undefined && lluvia >= 60);
+
+  const mmTexto =
+    mmLluvia && mmLluvia > 0
+      ? ` Se esperan ${mmLluvia.toFixed(1)} mm.`
+      : "";
+
+  if (esTormenta) {
+    partes.push(
+      `Se esperan tormentas: mejor quedarse en interiores y evitar actividades al aire libre.${mmTexto}`,
+    );
+  } else if (esLluvia) {
+    partes.push(`Llevá paraguas: alta probabilidad de lluvia.${mmTexto}`);
+  } else if (mmLluvia && mmLluvia > 0) {
+    partes.push(`Posible lluvia leve (${mmLluvia.toFixed(1)} mm).`);
+  }
+  if (uv && uv >= 8) {
+    partes.push("Usá protector solar y evitá el sol directo entre 11 y 16 h.");
+  }
+  if (partes.length === 0) {
+    return "Buen día para actividades al aire libre.";
+  }
+  return partes.join(" ");
+}

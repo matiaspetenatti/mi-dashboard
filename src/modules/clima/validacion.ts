@@ -6,6 +6,21 @@ const serie = z.preprocess(
   z.array(z.number()),
 );
 
+const serieOpcional = z.preprocess(
+  (valor) =>
+    Array.isArray(valor)
+      ? valor.map((v) => (v == null ? 0 : v))
+      : Array.isArray(valor)
+        ? valor
+        : [],
+  z.array(z.number()).default([]),
+);
+
+const numeroOpcional = z.preprocess(
+  (valor) => (valor == null ? 0 : valor),
+  z.number().default(0),
+);
+
 const actualSchema = z.object({
   time: z.string(),
   temperature_2m: z.number(),
@@ -60,4 +75,45 @@ export const climaResumenSchema = z.object({
     precipitation_probability_max: z.array(z.number()).min(1),
   }),
   timezone: z.string(),
+});
+
+const aireActualSchema = z.object({
+  time: z.string(),
+  us_aqi: numeroOpcional,
+  european_aqi: numeroOpcional,
+  pm10: numeroOpcional,
+  pm2_5: numeroOpcional,
+  carbon_monoxide: numeroOpcional,
+  nitrogen_dioxide: numeroOpcional,
+  sulphur_dioxide: numeroOpcional,
+  ozone: numeroOpcional,
+  aerosol_optical_depth: numeroOpcional,
+  dust: numeroOpcional,
+  uv_index: numeroOpcional,
+  uv_index_clear_sky: numeroOpcional,
+  ammonia: numeroOpcional,
+});
+
+export const aireDataSchema = z.object({
+  hourly: z
+    .object({
+      time: z.array(z.string()),
+      us_aqi: serieOpcional,
+      european_aqi: serieOpcional,
+      pm10: serieOpcional,
+      pm2_5: serieOpcional,
+      carbon_monoxide: serieOpcional,
+      nitrogen_dioxide: serieOpcional,
+      sulphur_dioxide: serieOpcional,
+      ozone: serieOpcional,
+      aerosol_optical_depth: serieOpcional,
+      dust: serieOpcional,
+      uv_index: serieOpcional,
+      uv_index_clear_sky: serieOpcional,
+      ammonia: serieOpcional,
+    })
+    .optional(),
+  current: aireActualSchema.optional(),
+  timezone: z.string().optional(),
+  utc_offset_seconds: z.number().optional(),
 });

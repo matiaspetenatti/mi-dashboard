@@ -9,6 +9,8 @@ import {
 } from "@/modules/tareas/queries";
 import { Workspace } from "@/modules/tareas/components/workspace";
 
+export const instant = false;
+
 type Params = { slug: string };
 type Search = { vista?: string; tarea?: string; mes?: string };
 

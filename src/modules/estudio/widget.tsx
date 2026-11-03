@@ -40,8 +40,9 @@ export async function EstudioWidget() {
     return <EstudioWidgetError />;
   }
 
-  const { resumen, proximo, hoy } = widget;
+  const { resumen, proximo, enSieteDias, hoy } = widget;
   const dias = proximo ? Math.max(0, diasHasta(proximo.fecha, hoy)) : 0;
+  const esUrgente = proximo !== null && dias <= 7;
   const restantes =
     dias === 0
       ? "es hoy"
@@ -59,8 +60,12 @@ export async function EstudioWidget() {
       footer={
         <>
           <span>{resumen.totalMaterias} materias cargadas</span>
-          <span>
-            {proximo ? `(${textoDiasRelativo(dias)})` : "Sin exámenes"}
+          <span className={esUrgente ? "font-semibold text-warning" : undefined}>
+            {proximo
+              ? `(${textoDiasRelativo(dias)})`
+              : enSieteDias > 0
+                ? `${enSieteDias} en 7 días`
+                : "Sin exámenes"}
           </span>
         </>
       }
@@ -98,7 +103,13 @@ export async function EstudioWidget() {
         </p>
       </div>
 
-      <div className="mt-4 rounded-[16px] border border-outline-variant/60 bg-surface-container p-3.5">
+      <div
+        className={`mt-4 rounded-[16px] border bg-surface-container p-3.5 ${
+          esUrgente
+            ? "border-warning/50 bg-warning-container/20"
+            : "border-outline-variant/60"
+        }`}
+      >
         {proximo ? (
           <>
             <div className="flex items-center justify-between gap-2">
@@ -107,7 +118,7 @@ export async function EstudioWidget() {
               </p>
               <BellRing
                 size={14}
-                className="shrink-0 text-primary"
+                className={`shrink-0 ${esUrgente ? "text-warning" : "text-primary"}`}
                 aria-hidden="true"
               />
             </div>

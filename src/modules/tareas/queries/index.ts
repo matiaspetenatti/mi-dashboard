@@ -24,3 +24,7 @@ export {
   type VistaConConfig,
 } from "./proyectos";
 export { getVistasProyecto } from "./vistas";
+export * from "./comentarios";
+export * from "./adjuntos";
+export * from "./dependencias";
+export * from "./vistas-guardadas";

@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { fechaHoy } from "@/lib/format";
 import {
   Pause,
   Play,
@@ -129,6 +131,7 @@ export function PomodoroTimer({
   carreras?: { id: number; nombre: string }[];
 } = {}) {
   const toast = useToast();
+  const router = useRouter();
   const [config, setConfig] = useState<ConfigPomodoro>(leerConfig);
   const seleccionInicial = leerSeleccion();
 
@@ -180,8 +183,8 @@ export function PomodoroTimer({
           materiaId,
           tipo: "trabajo",
           duracionMinutos: config.trabajoMinutos,
-          fecha: new Date().toISOString().slice(0, 10),
-        }).catch(() => {});
+          fecha: fechaHoy(),
+        }).then(() => router.refresh()).catch(() => {});
       }
     } else {
       const tipoSesion: "descanso_corto" | "descanso_largo" =
@@ -199,8 +202,8 @@ export function PomodoroTimer({
           materiaId,
           tipo: tipoSesion,
           duracionMinutos: duracion,
-          fecha: new Date().toISOString().slice(0, 10),
-        }).catch(() => {});
+          fecha: fechaHoy(),
+        }).then(() => router.refresh()).catch(() => {});
       }
     }
   }, [
@@ -210,6 +213,7 @@ export function PomodoroTimer({
     carreraId,
     materiaId,
     toast,
+    router,
     duracionFase,
   ]);
 

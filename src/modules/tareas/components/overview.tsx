@@ -21,6 +21,8 @@ import { iconoDe } from "@/modules/tareas/iconos";
 import { cn } from "cn";
 import { DialogoProyecto } from "./dialogo-proyecto";
 import { NavTareasMovil } from "./nav-proyectos";
+import { CapturaRapida } from "./captura-rapida";
+import { ImportExport } from "./import-export";
 
 type Tono = "primary" | "neutro" | "error";
 
@@ -67,6 +69,13 @@ const listas = [
     icon: CheckSquare,
     tono: "neutro",
   },
+  {
+    slug: "mi-dia",
+    titulo: "Mi día",
+    descripcion: "Lo que atiendo hoy",
+    icon: Sparkles,
+    tono: "primary",
+  },
 ] as const satisfies ReadonlyArray<{
   slug: string;
   titulo: string;
@@ -100,6 +109,7 @@ function conteo(resumen: ResumenGlobal, slug: string) {
   if (slug === "vencidas") return resumen.vencidas;
   if (slug === "sin-fecha") return resumen.sinFecha;
   if (slug === "completadas") return resumen.completadas;
+  if (slug === "mi-dia") return resumen.hoy + resumen.vencidas + resumen.proximas;
   return resumen.total;
 }
 
@@ -117,6 +127,8 @@ export function TareasOverview({
   return (
     <div className="space-y-7">
       <NavTareasMovil resumen={resumen} />
+      <CapturaRapida />
+      <ImportExport />
 
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>

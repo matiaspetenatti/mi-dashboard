@@ -29,6 +29,20 @@ export async function GET(req: Request) {
     const limite = searchParams.get("limite")
       ? Number(searchParams.get("limite"))
       : ANIMES_POR_PAGINA;
+    const favoritoParam = searchParams.get("favorito");
+    const favorito =
+      favoritoParam === "true" ? true : favoritoParam === "false" ? false : undefined;
+    const estudio = searchParams.get("estudio") || undefined;
+    const fuente = searchParams.get("fuente") || undefined;
+    const formato = searchParams.get("formato") || undefined;
+    const tagsParam = searchParams.get("tags");
+    const tags = tagsParam
+      ? tagsParam.split(",").map((t) => t.trim()).filter(Boolean)
+      : undefined;
+    const puntajeMin = searchParams.get("puntajeMin") ? Number(searchParams.get("puntajeMin")) : undefined;
+    const puntajeMax = searchParams.get("puntajeMax") ? Number(searchParams.get("puntajeMax")) : undefined;
+    const scoreMalMin = searchParams.get("scoreMalMin") ? Number(searchParams.get("scoreMalMin")) : undefined;
+    const scoreMalMax = searchParams.get("scoreMalMax") ? Number(searchParams.get("scoreMalMax")) : undefined;
 
     const [resultado, metadatos] = await Promise.all([
       getAnimesVistos({
@@ -44,6 +58,15 @@ export async function GET(req: Request) {
         temporada,
         pagina,
         limite,
+        favorito,
+        estudio,
+        fuente,
+        formato,
+        tags,
+        puntajeMin,
+        puntajeMax,
+        scoreMalMin,
+        scoreMalMax,
       }),
       getAnimesMetadatos(),
     ]);
@@ -65,7 +88,7 @@ export async function GET(req: Request) {
       {
         animes: [],
         paginacion: { total: 0, pagina: 1, limite: ANIMES_POR_PAGINA, totalPaginas: 1 },
-        metadatos: { tipos: [], generos: [], anos: [], temporadas: [] },
+        metadatos: { tipos: [], generos: [], anos: [], estudios: [], fuentes: [], formatos: [], tags: [], temporadas: [] },
       },
       { status: 200 },
     );

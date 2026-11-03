@@ -4,6 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { CalendarioSemanal } from "@/modules/animes/calendario/calendario-semanal";
 import { requireAuthorizedUser } from "@/lib/auth";
 
+export const instant = false;
+
 export default async function CalendarioAnimesPage() {
   await requireAuthorizedUser();
 

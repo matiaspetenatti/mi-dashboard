@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock3,
   GraduationCap,
+  Lock,
   Pencil,
   Plus,
   Trash2,
@@ -97,6 +98,7 @@ export function DetalleCarrera({
   examenes,
   resumen,
   hoy,
+  graduacionEstimada,
 }: DetalleCarreraData) {
   const router = useRouter();
   const toast = useToast();
@@ -112,6 +114,12 @@ export function DetalleCarrera({
   );
 
   const grupos = agruparMaterias(materias);
+  const estadoPorId = new Map(materias.map((m) => [m.id, m.estado]));
+  const nombrePorId = new Map(materias.map((m) => [m.id, m.nombre]));
+  const correlativasPendientes = (materia: Materia) =>
+    (materia.correlativas ?? []).filter(
+      (id) => estadoPorId.get(id) !== "aprobada",
+    );
   const proximos = examenes.filter(
     (examen) => examen.estado === "programado" && examen.fecha >= hoy,
   );
@@ -298,6 +306,16 @@ export function DetalleCarrera({
                 {resumen.total}
               </p>
             </div>
+            {graduacionEstimada !== null && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
+                  Recibite ~
+                </p>
+                <p className="mt-1 text-2xl font-medium leading-none text-on-surface">
+                  {graduacionEstimada}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -438,6 +456,17 @@ export function DetalleCarrera({
                             {materia.profesor ?? "Sin profesor"}
                             {materia.notas && ` · ${materia.notas}`}
                           </p>
+                          {correlativasPendientes(materia).length > 0 && (
+                            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-warning">
+                              <Lock size={11} className="shrink-0" />
+                              <span className="truncate">
+                                Requiere aprobar:{" "}
+                                {correlativasPendientes(materia)
+                                  .map((id) => nombrePorId.get(id) ?? "?")
+                                  .join(", ")}
+                              </span>
+                            </p>
+                          )}
                         </div>
 
                         {materia.notaFinal !== null && (
@@ -597,6 +626,7 @@ export function DetalleCarrera({
         onOpenChange={setMateriaAbierta}
         carreraId={carrera.id}
         materia={materiaEditando}
+        materias={materias}
       />
       <DialogoExamen
         key={`examen-${examenAbierto ? "abierto" : "cerrado"}-${examenEditando?.id ?? "nuevo"}`}

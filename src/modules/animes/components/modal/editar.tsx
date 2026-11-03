@@ -5,9 +5,10 @@ import { X, RefreshCw, Loader2 } from "lucide-react";
 import {
   actualizarAnimeVisto,
   eliminarAnimeVisto,
+  restaurarAnime,
 } from "@/modules/animes/actions/actualizar";
-import { actualizarAnimeDesdeApi } from "@/modules/animes/actions/actualizar-desde-api";
 import { useToast } from "@/hooks/use-toast";
+import { actualizarAnimeDesdeApi } from "@/modules/animes/actions/actualizar-desde-api";
 import type { AnimeVisto } from "@/modules/animes/schema";
 import {
   CRITERIOS_ANIME,
@@ -37,6 +38,13 @@ export function ModalEditarAnime({
   const [puntajes, setPuntajes] = useState<PuntajesCriterios>(() => extraerPuntajes(anime));
   const [notas, setNotas] = useState(anime.notas || "");
   const [rewatch, setRewatch] = useState(anime.rewatch);
+  const [favorito, setFavorito] = useState(anime.favorito ?? false);
+  const [anilistId, setAnilistId] = useState(anime.anilistId?.toString() || "");
+  const [estudio, setEstudio] = useState(anime.estudio || "");
+  const [fuente, setFuente] = useState(anime.fuente || "");
+  const [formato, setFormato] = useState(anime.formato || "");
+  const [tags, setTags] = useState<string[]>(Array.isArray(anime.tags) ? anime.tags : []);
+  const [tagInput, setTagInput] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isRefrescando, setIsRefrescando] = useState(false);
@@ -124,6 +132,12 @@ export function ModalEditarAnime({
     fd.append("episodiosVistos", String(episodiosVistosFinal));
     fd.append("notas", notas);
     fd.append("rewatch", rewatch ? "true" : "false");
+    fd.append("favorito", favorito ? "true" : "false");
+    fd.append("anilistId", anilistId);
+    fd.append("estudio", estudio);
+    fd.append("fuente", fuente);
+    fd.append("formato", formato);
+    fd.append("tags", JSON.stringify(tags));
     for (const criterio of CRITERIOS_ANIME) {
       const valor = puntajes[criterio.key];
       fd.append(criterio.campo, valor === null ? "" : String(valor));
@@ -143,6 +157,12 @@ export function ModalEditarAnime({
         notas: notas || null,
         rewatch,
         episodiosVistos: episodiosVistosFinal,
+        favorito,
+        anilistId: anilistId ? Number(anilistId) : null,
+        estudio: estudio || null,
+        fuente: fuente || null,
+        formato: formato || null,
+        tags,
       });
       onClose();
     });
@@ -150,10 +170,25 @@ export function ModalEditarAnime({
 
   const eliminar = () => {
     if (!confirm("¿Eliminar este anime de tu catálogo?")) return;
+    const copia = { ...anime };
     startTransition(async () => {
       await eliminarAnimeVisto(anime.id);
       onEliminado?.(anime.id);
       onClose();
+      toast.success("Anime eliminado", {
+        description: "Se eliminó de tu catálogo.",
+        action: {
+          label: "Deshacer",
+          onClick: async () => {
+            try {
+              await restaurarAnime(copia);
+              window.location.reload();
+            } catch {
+              toast.error("No se pudo restaurar el anime");
+            }
+          },
+        },
+      });
     });
   };
 
@@ -237,6 +272,7 @@ export function ModalEditarAnime({
                 onChange={(e) => setEstado(e.target.value as AnimeVisto["estado"])}
                 className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
+                <option value="planeado">Planeado</option>
                 <option value="completado">Completado</option>
                 <option value="viendo">Viendo</option>
                 <option value="en_pausa">En pausa</option>
@@ -256,6 +292,97 @@ export function ModalEditarAnime({
                 className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={favorito}
+                onChange={(e) => setFavorito(e.target.checked)}
+                className="size-4 rounded border-outline-variant accent-primary"
+              />
+              <span className="text-sm text-charcoal">Favorito</span>
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-on-surface-variant">AniList ID</span>
+              <input
+                type="number"
+                value={anilistId}
+                onChange={(e) => setAnilistId(e.target.value)}
+                className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface"
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-on-surface-variant">Estudio</span>
+              <input
+                value={estudio}
+                onChange={(e) => setEstudio(e.target.value)}
+                className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-on-surface-variant">Fuente</span>
+              <input
+                value={fuente}
+                onChange={(e) => setFuente(e.target.value)}
+                className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-on-surface-variant">Formato</span>
+              <input
+                value={formato}
+                onChange={(e) => setFormato(e.target.value)}
+                className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-xs font-medium text-on-surface-variant">Tags</span>
+            <div className="flex flex-wrap gap-1">
+              {tags.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTags(tags.filter((x) => x !== t))}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-medium text-on-primary-container"
+                >
+                  #{t} <X size={10} />
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                placeholder="nuevo tag"
+                className="flex-1 rounded-lg border border-outline-variant/60 bg-card px-3 py-2 text-sm text-on-surface"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const t = tagInput.trim().toLowerCase();
+                    if (t && !tags.includes(t)) setTags([...tags, t]);
+                    setTagInput("");
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const t = tagInput.trim().toLowerCase();
+                  if (t && !tags.includes(t)) setTags([...tags, t]);
+                  setTagInput("");
+                }}
+                className="rounded-full border border-outline-variant/60 bg-card px-3 py-1.5 text-xs font-semibold text-charcoal"
+              >
+                Agregar
+              </button>
+            </div>
           </div>
 
           <PuntajeCriterios

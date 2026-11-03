@@ -5,6 +5,8 @@ import {
   EstudioSkeleton,
 } from "@/modules/estudio/contenido";
 
+export const instant = false;
+
 export default async function EstudioPage() {
   await requireAuthorizedUser();
 

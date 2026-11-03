@@ -14,6 +14,8 @@ import {
   type ListaInteligenteSlug,
 } from "@/modules/tareas/components/lista-inteligente";
 
+export const instant = false;
+
 const listasValidas: ListaInteligenteSlug[] = [
   "hoy",
   "proximas",
@@ -21,6 +23,7 @@ const listasValidas: ListaInteligenteSlug[] = [
   "sin-fecha",
   "completadas",
   "todas",
+  "mi-dia",
 ];
 
 type Params = {

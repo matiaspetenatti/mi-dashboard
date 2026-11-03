@@ -23,9 +23,10 @@ type ResultadoKitsu = {
   genres: { name: string }[];
   score: number | null;
   synopsis: string | null;
+  studio: string | null;
 };
 
-type EstadoAnime = "viendo" | "completado" | "en_pausa" | "abandonado";
+type EstadoAnime = "planeado" | "viendo" | "completado" | "en_pausa" | "abandonado";
 
 export function ModalAgregarAnime({
   onCerrar,
@@ -42,6 +43,13 @@ export function ModalAgregarAnime({
   const [episodiosVistos, setEpisodiosVistos] = useState("0");
   const [puntajes, setPuntajes] = useState<PuntajesCriterios>(crearPuntajesVacios);
   const [notas, setNotas] = useState("");
+  const [favorito, setFavorito] = useState(false);
+  const [anilistId, setAnilistId] = useState("");
+  const [estudio, setEstudio] = useState("");
+  const [fuente, setFuente] = useState("");
+  const [formato, setFormato] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -71,6 +79,13 @@ export function ModalAgregarAnime({
     setEpisodiosVistos("0");
     setPuntajes(crearPuntajesVacios());
     setNotas("");
+    setFavorito(false);
+    setAnilistId("");
+    setEstudio("");
+    setFuente("");
+    setFormato("");
+    setTags([]);
+    setTagInput("");
     setError(null);
   };
 
@@ -86,6 +101,13 @@ export function ModalAgregarAnime({
     setPuntajes(crearPuntajesVacios());
     setNotas("");
     setEstado("completado");
+    setFavorito(false);
+    setAnilistId("");
+    setEstudio("");
+    setFuente("");
+    setFormato("");
+    setTags([]);
+    setTagInput("");
     setError(null);
     onCerrar();
   };
@@ -106,6 +128,12 @@ export function ModalAgregarAnime({
     fd.append("descripcion", seleccionado.synopsis || "");
     fd.append("scoreMal", seleccionado.score?.toString() || "");
     fd.append("episodiosVistos", episodiosVistos || "0");
+    fd.append("favorito", favorito ? "true" : "false");
+    fd.append("anilistId", anilistId);
+    fd.append("estudio", estudio);
+    fd.append("fuente", fuente);
+    fd.append("formato", formato);
+    fd.append("tags", JSON.stringify(tags));
     for (const criterio of CRITERIOS_ANIME) {
       const valor = puntajes[criterio.key];
       fd.append(criterio.campo, valor === null ? "" : String(valor));
@@ -178,7 +206,16 @@ export function ModalAgregarAnime({
               {resultados.map((r) => (
                 <button
                   key={r.kitsu_id}
-                  onClick={() => setSeleccionado(r)}
+                  onClick={() => {
+                    setSeleccionado(r);
+                    setEstudio(r.studio || "");
+                    fetch(`/api/kitsu/anime?id=${r.kitsu_id}`)
+                      .then((res) => res.json())
+                      .then((data) => {
+                        if (data?.data?.studio) setEstudio(data.data.studio);
+                      })
+                      .catch(() => null);
+                  }}
                   className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-surface-container-low"
                 >
                   <img
@@ -236,7 +273,7 @@ export function ModalAgregarAnime({
             <div className="space-y-1">
               <label className="text-xs font-medium text-on-surface-variant">Estado</label>
               <div className="flex flex-wrap gap-1.5">
-                {(["viendo", "completado", "en_pausa", "abandonado"] as EstadoAnime[]).map((e) => (
+                {(["planeado", "viendo", "completado", "en_pausa", "abandonado"] as EstadoAnime[]).map((e) => (
                   <button
                     key={e}
                     onClick={() => setEstado(e)}
@@ -246,7 +283,15 @@ export function ModalAgregarAnime({
                         : "border-outline-variant/60 bg-card text-charcoal hover:bg-surface-container"
                     }`}
                   >
-                    {e === "viendo" ? "Viendo" : e === "completado" ? "Completado" : e === "en_pausa" ? "En pausa" : "Abandonado"}
+                    {e === "planeado"
+                      ? "Planeado"
+                      : e === "viendo"
+                        ? "Viendo"
+                        : e === "completado"
+                          ? "Completado"
+                          : e === "en_pausa"
+                            ? "En pausa"
+                            : "Abandonado"}
                   </button>
                 ))}
               </div>
@@ -265,6 +310,97 @@ export function ModalAgregarAnime({
               {seleccionado.episodes && (
                 <p className="text-xs text-pebble">de {seleccionado.episodes} episodios</p>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={favorito}
+                  onChange={(e) => setFavorito(e.target.checked)}
+                  className="size-4 rounded border-outline-variant accent-primary"
+                />
+                <span className="text-sm text-charcoal">Favorito</span>
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-on-surface-variant">AniList ID</span>
+                <input
+                  type="number"
+                  value={anilistId}
+                  onChange={(e) => setAnilistId(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-1.5 text-sm text-on-surface"
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-on-surface-variant">Estudio</span>
+                <input
+                  value={estudio}
+                  onChange={(e) => setEstudio(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-1.5 text-sm text-on-surface"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-on-surface-variant">Fuente</span>
+                <input
+                  value={fuente}
+                  onChange={(e) => setFuente(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-1.5 text-sm text-on-surface"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-on-surface-variant">Formato</span>
+                <input
+                  value={formato}
+                  onChange={(e) => setFormato(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant/60 bg-card px-3 py-1.5 text-sm text-on-surface"
+                />
+              </label>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs font-medium text-on-surface-variant">Tags</span>
+              <div className="flex flex-wrap gap-1">
+                {tags.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTags(tags.filter((x) => x !== t))}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-medium text-on-primary-container"
+                  >
+                    #{t} <X size={10} />
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  placeholder="nuevo tag"
+                  className="flex-1 rounded-lg border border-outline-variant/60 bg-card px-3 py-1.5 text-sm text-on-surface"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const t = tagInput.trim().toLowerCase();
+                      if (t && !tags.includes(t)) setTags([...tags, t]);
+                      setTagInput("");
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const t = tagInput.trim().toLowerCase();
+                    if (t && !tags.includes(t)) setTags([...tags, t]);
+                    setTagInput("");
+                  }}
+                  className="rounded-full border border-outline-variant/60 bg-card px-3 py-1.5 text-xs font-semibold text-charcoal"
+                >
+                  Agregar
+                </button>
+              </div>
             </div>
 
             <PuntajeCriterios puntajes={puntajes} onChange={cambiarPuntaje} />

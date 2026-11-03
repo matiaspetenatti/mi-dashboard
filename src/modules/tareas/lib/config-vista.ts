@@ -19,6 +19,7 @@ export const agrupaciones = [
   "prioridad",
   "etiqueta",
   "proyecto",
+  "vencimiento",
   "ninguna",
 ] as const;
 export type Agrupacion = (typeof agrupaciones)[number];
@@ -62,6 +63,7 @@ export const etiquetasAgrupacion: Record<Agrupacion, string> = {
   prioridad: "Prioridad",
   etiqueta: "Etiqueta",
   proyecto: "Proyecto",
+  vencimiento: "Vencimiento",
   ninguna: "Sin agrupar",
 };
 

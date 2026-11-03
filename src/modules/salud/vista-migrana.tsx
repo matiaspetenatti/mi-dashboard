@@ -1,4 +1,5 @@
 import { Bitacora } from "./components/bitacora";
+import { CorrelacionClima } from "./components/correlacion-clima";
 import { GraficoIntensidad } from "./components/grafico-intensidad";
 import { SaludKpis } from "./components/kpis";
 import { MapaDesencadenantes } from "./components/mapa-desencadenantes";
@@ -38,6 +39,8 @@ export function VistaMigrana({
       </div>
 
       <Bitacora episodios={data.episodios} ahora={ahora} />
+
+      <CorrelacionClima correlacion={data.correlacionClima} />
     </div>
   );
 }

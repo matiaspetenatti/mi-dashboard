@@ -80,6 +80,14 @@ export function TarjetaCarrera({
           </span>
         </div>
         <BarraProgreso valor={resumen.progreso} color={carrera.color} />
+        {resumen.graduacionEstimada !== null && (
+          <p className="mt-1.5 text-[11px] text-on-surface-variant">
+            Recibite aprox.{" "}
+            <span className="font-semibold text-on-surface">
+              {resumen.graduacionEstimada}
+            </span>
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2">

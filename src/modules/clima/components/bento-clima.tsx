@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowUp,
   Cloud,
+  CloudFog,
   CloudRain,
   Droplets,
   Eye,
@@ -17,6 +18,7 @@ import {
   getWeatherInfo,
   nivelUv,
   UV_COLORS,
+  nivelAqiUs,
   posicionEnRango,
   rotacionViento,
   windDirectionCardinal,
@@ -215,6 +217,11 @@ export function BentoClima({
         <p className={cn("mt-0.5 text-xs font-medium", uv.texto)}>
           {uv.label}
         </p>
+        {dayData?.uvClearSky && dayData.uvClearSky > (dayData.uvIndex ?? 0) ? (
+          <p className="mt-1 text-[11px] text-on-surface-variant">
+            Cielo despejado: {numero(dayData.uvClearSky, decimal)}
+          </p>
+        ) : null}
         <div aria-hidden="true" className="mt-2 grid grid-cols-5 gap-1">
           {Array.from({ length: 5 }).map((_, indice) => {
             const nivelSegmento = indice + 1;
@@ -230,6 +237,32 @@ export function BentoClima({
             );
           })}
         </div>
+      </TarjetaMetrica>
+
+      <TarjetaMetrica etiqueta="Calidad del aire" icono={CloudFog}>
+        {(() => {
+          const nivel = nivelAqiUs(dayData?.aqiUs);
+          return (
+            <>
+              <p className="text-2xl font-semibold tracking-tight text-charcoal tabular-nums">
+                {dayData?.aqiUs && dayData.aqiUs > 0
+                  ? numero(dayData.aqiUs)
+                  : "--"}
+              </p>
+              <p className={cn("mt-0.5 text-xs font-medium", nivel.clase.split(" ")[1])}>
+                {nivel.label}
+              </p>
+              <p className="mt-1 line-clamp-2 text-[11px] text-on-surface-variant">
+                {nivel.recomendacion}
+              </p>
+              {dayData?.pm25 ? (
+                <p className="mt-1 text-[11px] text-on-surface-variant">
+                  PM2.5: {numero(dayData.pm25, decimal)} µg/m³
+                </p>
+              ) : null}
+            </>
+          );
+        })()}
       </TarjetaMetrica>
 
       <TarjetaMetrica etiqueta="Humedad" icono={Droplets}>

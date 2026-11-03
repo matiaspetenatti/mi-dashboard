@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useHotkeys } from "@/modules/tareas/lib/use-hotkeys";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type {
@@ -18,7 +19,7 @@ import {
   type ConfigVista,
   type FiltrosVista,
 } from "@/modules/tareas/lib/config-vista";
-import { alternarCompletada } from "@/modules/tareas/actions/tareas";
+import { alternarCompletada, posponerTarea } from "@/modules/tareas/actions/tareas";
 import { actualizarVista } from "@/modules/tareas/actions/vistas";
 import { estadoInicial } from "@/modules/tareas/lib/orden";
 import {
@@ -69,6 +70,10 @@ export function Workspace({
 }: WorkspaceProps) {
   const toast = useToast();
   const [, startTransition] = useTransition();
+
+  useHotkeys([
+    { tecla: "Escape", handler: () => cerrarTarea() },
+  ]);
 
   const [vistaId, setVistaId] = useState<number | null>(vistaInicial);
   const [tareaId, setTareaId] = useState<number | null>(tareaAbierta);
@@ -272,6 +277,9 @@ export function Workspace({
               onAbrir={abrirTarea}
               onAlternar={alternar}
               onCambiarMes={cambiarMes}
+              onMoverFecha={(id, fecha) => {
+                posponerTarea(id, fecha).then(() => programar());
+              }}
             />
           </>
         ) : (
@@ -310,6 +318,7 @@ function ContenidoVista({
   onAbrir,
   onAlternar,
   onCambiarMes,
+  onMoverFecha,
 }: {
   proyecto: Proyecto;
   vista: VistaConConfig;
@@ -321,6 +330,7 @@ function ContenidoVista({
   onAbrir: (id: number) => void;
   onAlternar: (id: number) => void;
   onCambiarMes: (mes: string) => void;
+  onMoverFecha?: (id: number, fecha: string) => void;
 }) {
   const router = useRouter();
   const [config, setConfig] = useState<ConfigVista>(vista.config);
@@ -443,6 +453,7 @@ function ContenidoVista({
           hoy={hoy}
           onCambiarMes={onCambiarMes}
           onAbrir={onAbrir}
+          onMoverFecha={onMoverFecha}
         />
       )}
       {vista.tipo === "cronograma" && (

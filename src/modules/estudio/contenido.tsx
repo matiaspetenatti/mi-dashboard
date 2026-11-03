@@ -1,4 +1,5 @@
 import {
+  AlarmClock,
   BookOpenCheck,
   CalendarClock,
   GraduationCap,
@@ -6,11 +7,12 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatNota } from "@/lib/format";
-import { getEstudioData } from "./queries";
+import { diasHasta, formatNota } from "@/lib/format";
+import { getEstadisticasTiempo, getEstudioData } from "./queries";
 import { BotonNuevaCarrera } from "./components/boton-nueva-carrera";
 import { TarjetaCarrera } from "./components/tarjeta-carrera";
 import { FilaExamen } from "./components/fila-examen";
+import { PanelTiempoEstudio } from "./components/panel-tiempo-estudio";
 import { PomodoroTimer } from "./components/pomodoro-timer";
 
 export function EstudioSkeleton() {
@@ -36,7 +38,14 @@ export function EstudioSkeleton() {
 }
 
 export async function EstudioContenido() {
-  const { carreras, proximosExamenes, resumen, hoy } = await getEstudioData();
+  const [
+    { carreras, proximosExamenes, resumen, hoy },
+    tiempo,
+  ] = await Promise.all([getEstudioData(), getEstadisticasTiempo()]);
+
+  const proximosSieteDias = proximosExamenes.filter(
+    (examen) => diasHasta(examen.fecha, hoy) <= 7,
+  );
 
   const estadisticas = [
     {
@@ -152,6 +161,44 @@ export async function EstudioContenido() {
               ))}
             </div>
           </section>
+
+          <section className="space-y-3">
+            <div className="flex items-end justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
+                Tiempo de estudio
+              </h2>
+              <span className="text-[11px] text-on-surface-variant">
+                Sesiones de Pomodoro
+              </span>
+            </div>
+            <PanelTiempoEstudio datos={tiempo} hoy={hoy} />
+          </section>
+
+          {proximosSieteDias.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-end justify-between">
+                <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
+                  <AlarmClock size={13} className="text-warning" />
+                  Recordatorios · próximos 7 días
+                </h2>
+                <span className="text-[11px] text-warning">
+                  {proximosSieteDias.length}{" "}
+                  {proximosSieteDias.length === 1 ? "examen" : "exámenes"}
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {proximosSieteDias.map((examen) => (
+                  <FilaExamen
+                    key={examen.id}
+                    examen={examen}
+                    hoy={hoy}
+                    mostrarCarrera
+                    urgente
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="space-y-3">
             <div className="flex items-end justify-between">

@@ -4,6 +4,8 @@ import { requireAuthorizedUser } from "@/lib/auth";
 import { getEtiquetasConUso } from "@/modules/tareas/queries";
 import { AjustesGlobales } from "@/modules/tareas/components/ajustes-globales";
 
+export const instant = false;
+
 export default async function AjustesTareasPage() {
   await requireAuthorizedUser();
 

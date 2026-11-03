@@ -47,31 +47,49 @@ export const estadoSchema = z.object({
   categoria: z.enum(categoriasEstado),
 });
 
-export const tareaCrearSchema = z.object({
-  proyectoId: z.number().int().positive(),
-  estadoId: z.number().int().positive(),
-  parentId: z.number().int().positive().nullable().optional(),
-  titulo: tituloSchema,
-  descripcion: descripcionSchema.nullable().optional(),
-  prioridad: z.enum(prioridades).nullable().optional(),
-  fechaInicio: fechaSchema.nullable().optional(),
-  fechaLimite: fechaSchema.nullable().optional(),
-  recurrencia: z.enum(unidadesRecurrencia).nullable().optional(),
-  recurrenciaCada: z.number().int().min(1).max(365).optional(),
-  etiquetaIds: z.array(z.number().int().positive()).max(20).optional(),
-});
+export const tareaCrearSchema = z
+  .object({
+    proyectoId: z.number().int().positive(),
+    estadoId: z.number().int().positive(),
+    parentId: z.number().int().positive().nullable().optional(),
+    titulo: tituloSchema,
+    descripcion: descripcionSchema.nullable().optional(),
+    prioridad: z.enum(prioridades).nullable().optional(),
+    fechaInicio: fechaSchema.nullable().optional(),
+    fechaLimite: fechaSchema.nullable().optional(),
+    recurrencia: z.enum(unidadesRecurrencia).nullable().optional(),
+    recurrenciaCada: z.number().int().min(1).max(365).optional(),
+    etiquetaIds: z.array(z.number().int().positive()).max(20).optional(),
+  })
+  .refine(
+    (v) =>
+      !v.fechaInicio ||
+      !v.fechaLimite ||
+      v.fechaInicio <= v.fechaLimite,
+    { message: "La fecha de inicio no puede ser posterior a la fecha límite" },
+  );
 
-export const tareaActualizarSchema = z.object({
-  titulo: tituloSchema.optional(),
-  descripcion: descripcionSchema.nullable().optional(),
-  estadoId: z.number().int().positive().optional(),
-  prioridad: z.enum(prioridades).nullable().optional(),
-  fechaInicio: fechaSchema.nullable().optional(),
-  fechaLimite: fechaSchema.nullable().optional(),
-  recurrencia: z.enum(unidadesRecurrencia).nullable().optional(),
-  recurrenciaCada: z.number().int().min(1).max(365).optional(),
-  etiquetaIds: z.array(z.number().int().positive()).max(20).optional(),
-});
+export const tareaActualizarSchema = z
+  .object({
+    titulo: tituloSchema.optional(),
+    descripcion: descripcionSchema.nullable().optional(),
+    estadoId: z.number().int().positive().optional(),
+    prioridad: z.enum(prioridades).nullable().optional(),
+    fechaInicio: fechaSchema.nullable().optional(),
+    fechaLimite: fechaSchema.nullable().optional(),
+    recurrencia: z.enum(unidadesRecurrencia).nullable().optional(),
+    recurrenciaCada: z.number().int().min(1).max(365).optional(),
+    etiquetaIds: z.array(z.number().int().positive()).max(20).optional(),
+  })
+  .refine(
+    (v) =>
+      v.fechaInicio === undefined ||
+      v.fechaLimite === undefined ||
+      !v.fechaInicio ||
+      !v.fechaLimite ||
+      v.fechaInicio <= v.fechaLimite,
+    { message: "La fecha de inicio no puede ser posterior a la fecha límite" },
+  );
 
 export const etiquetaSchema = z.object({
   nombre: z

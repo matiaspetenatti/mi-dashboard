@@ -20,6 +20,8 @@ import {
   type EpisodioSalud,
   type RegistroDiarioSalud,
 } from "./schema";
+import type { ResumenClimaDia } from "@/modules/clima/queries";
+import { getClimaHistoricoParaSalud } from "@/modules/clima/queries";
 
 export type EpisodioConFactores = EpisodioSalud & {
   factores: string[];
@@ -56,6 +58,21 @@ export type CorrelacionHabitos = {
   metricas: MetricaCorrelacion[];
 };
 
+export type MetricaCorrelacionClima = {
+  clave: string;
+  etiqueta: string;
+  unidad: string;
+  conCrisis: number | null;
+  sinCrisis: number | null;
+};
+
+export type CorrelacionClima = {
+  registros: number;
+  registrosConCrisis: number;
+  registrosSinCrisis: number;
+  metricas: MetricaCorrelacionClima[];
+};
+
 export type ResumenSalud = {
   hoy: string;
   mes: string;
@@ -76,6 +93,7 @@ export type ResumenSalud = {
   episodios: EpisodioConFactores[];
   diario: RegistroDiarioSalud[];
   correlacion: CorrelacionHabitos | null;
+  correlacionClima: CorrelacionClima | null;
 };
 
 function promedio(valores: number[]) {
@@ -279,6 +297,66 @@ async function leerSalud(): Promise<ResumenSalud> {
         }
       : null;
 
+  // Correlación Clima ↔ Migraña (solo visualización).
+  let correlacionClima: CorrelacionClima | null = null;
+  try {
+    const historico = await getClimaHistoricoParaSalud(DIAS_ANALISIS);
+    const diasConCrisis: ResumenClimaDia[] = [];
+    const diasSinCrisis: ResumenClimaDia[] = [];
+    for (const [fecha, climaDia] of historico) {
+      if (fecha < desdeAnalisis || fecha > hoy) continue;
+      if (fechasConEpisodio.has(fecha)) {
+        diasConCrisis.push(climaDia);
+      } else {
+        diasSinCrisis.push(climaDia);
+      }
+    }
+
+    const metricasBase: Array<{
+      clave: keyof ResumenClimaDia;
+      etiqueta: string;
+      unidad: string;
+    }> = [
+      { clave: "presionMedia", etiqueta: "Presión media", unidad: "hPa" },
+      { clave: "aqiUsMax", etiqueta: "AQI (US) máx", unidad: "" },
+      { clave: "uvMax", etiqueta: "UV máx", unidad: "" },
+      { clave: "tempMax", etiqueta: "Temp. máx", unidad: "°C" },
+    ];
+
+    if (
+      historico.size >= 7 &&
+      diasConCrisis.length >= 2 &&
+      diasSinCrisis.length >= 2
+    ) {
+      correlacionClima = {
+        registros: historico.size,
+        registrosConCrisis: diasConCrisis.length,
+        registrosSinCrisis: diasSinCrisis.length,
+        metricas: metricasBase
+          .map((metrica) => ({
+            clave: String(metrica.clave),
+            etiqueta: metrica.etiqueta,
+            unidad: metrica.unidad,
+            conCrisis: promedio(
+              diasConCrisis
+                .map((d) => d[metrica.clave])
+                .filter((v): v is number => typeof v === "number"),
+            ),
+            sinCrisis: promedio(
+              diasSinCrisis
+                .map((d) => d[metrica.clave])
+                .filter((v): v is number => typeof v === "number"),
+            ),
+          }))
+          .filter(
+            (m) => m.conCrisis !== null && m.sinCrisis !== null,
+          ),
+      };
+    }
+  } catch (error) {
+    console.error("No se pudo calcular la correlación clima-migraña:", error);
+  }
+
   return {
     hoy,
     mes,
@@ -303,6 +381,7 @@ async function leerSalud(): Promise<ResumenSalud> {
     episodios,
     diario: filasDiario,
     correlacion,
+    correlacionClima,
   };
 }
 

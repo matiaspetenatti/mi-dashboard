@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  CloudFog,
   CloudRain,
   Droplets,
   MapPin,
@@ -184,6 +185,16 @@ export function ClimaWidget() {
           label="UV"
           value={`${Math.round(actual.uv_index)}`}
           color="text-warning"
+        />
+        <Metrica
+          icon={CloudFog}
+          label="AQI"
+          value={
+            actual.us_aqi && actual.us_aqi > 0
+              ? `${Math.round(actual.us_aqi)}`
+              : "--"
+          }
+          color="text-secondary"
         />
       </div>
     </WidgetCard>

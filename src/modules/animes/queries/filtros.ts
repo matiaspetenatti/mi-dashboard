@@ -9,7 +9,7 @@ import {
   animesVistos,
   type AnimesPaginadosResult,
 } from "@/modules/animes/schema";
-import { obtenerTemporadaAnime } from "../lib/utils";
+
 
 const ANIMES_TAG = "animes";
 
@@ -28,18 +28,39 @@ function normalizarLimite(limite?: number) {
 }
 
 export type AnimesFiltros = {
-  estado?: "viendo" | "completado" | "en_pausa" | "abandonado" | "todos";
+  estado?: "planeado" | "viendo" | "completado" | "en_pausa" | "abandonado" | "todos";
   tipo?: string;
   genero?: string;
   anoDesde?: number;
   anoHasta?: number;
   fechaDesde?: string;
   fechaHasta?: string;
-  ordenarPor?: "puntaje_desc" | "puntaje_asc" | "fecha_emision_desc" | "fecha_emision_asc" | "agregado_desc" | "agregado_asc" | "titulo_asc";
+  ordenarPor?:
+    | "puntaje_desc"
+    | "puntaje_asc"
+    | "fecha_emision_desc"
+    | "fecha_emision_asc"
+    | "agregado_desc"
+    | "agregado_asc"
+    | "titulo_asc"
+    | "titulo_desc"
+    | "progreso_desc"
+    | "score_mal_desc"
+    | "episodios_desc"
+    | "favorito_desc";
   q?: string;
   temporada?: string;
   pagina?: number;
   limite?: number;
+  favorito?: boolean;
+  estudio?: string;
+  fuente?: string;
+  formato?: string;
+  tags?: string[];
+  puntajeMin?: number;
+  puntajeMax?: number;
+  scoreMalMin?: number;
+  scoreMalMax?: number;
 };
 
 function ordenarAnimes(ordenarPor: AnimesFiltros["ordenarPor"]) {
@@ -47,6 +68,11 @@ function ordenarAnimes(ordenarPor: AnimesFiltros["ordenarPor"]) {
     case "titulo_asc":
       return [
         sql`${animesVistos.titulo} COLLATE NOCASE`,
+        desc(animesVistos.id),
+      ];
+    case "titulo_desc":
+      return [
+        sql`${animesVistos.titulo} COLLATE NOCASE DESC`,
         desc(animesVistos.id),
       ];
     case "fecha_emision_asc":
@@ -69,6 +95,34 @@ function ordenarAnimes(ordenarPor: AnimesFiltros["ordenarPor"]) {
       return [
         sql`${animesVistos.miPuntaje} IS NULL`,
         asc(animesVistos.miPuntaje),
+        desc(animesVistos.agregadoEn),
+        desc(animesVistos.id),
+      ];
+    case "score_mal_desc":
+      return [
+        sql`${animesVistos.scoreMal} IS NULL`,
+        desc(animesVistos.scoreMal),
+        desc(animesVistos.agregadoEn),
+        desc(animesVistos.id),
+      ];
+    case "episodios_desc":
+      return [
+        sql`${animesVistos.episodios} IS NULL`,
+        desc(animesVistos.episodios),
+        desc(animesVistos.agregadoEn),
+        desc(animesVistos.id),
+      ];
+    case "progreso_desc":
+      return [
+        sql`(${animesVistos.episodios} IS NULL OR ${animesVistos.episodios} = 0)`,
+        desc(sql`CAST(${animesVistos.episodiosVistos} AS REAL) / NULLIF(${animesVistos.episodios}, 0)`),
+        desc(animesVistos.episodiosVistos),
+        desc(animesVistos.id),
+      ];
+    case "favorito_desc":
+      return [
+        desc(animesVistos.favorito),
+        desc(animesVistos.miPuntaje),
         desc(animesVistos.agregadoEn),
         desc(animesVistos.id),
       ];
@@ -113,7 +167,9 @@ async function leerAnimesVistos(
 
   if (filtros.q && filtros.q.trim()) {
     const q = "%" + filtros.q.trim() + "%";
-    condiciones.push(sql`(${animesVistos.titulo} LIKE ${q} OR ${animesVistos.tituloIngles} LIKE ${q})`);
+    condiciones.push(
+      sql`(${animesVistos.titulo} LIKE ${q} OR ${animesVistos.tituloIngles} LIKE ${q} OR ${animesVistos.notas} LIKE ${q} OR ${animesVistos.descripcion} LIKE ${q})`,
+    );
   }
 
   if (filtros.genero) {
@@ -134,6 +190,46 @@ async function leerAnimesVistos(
         condiciones.push(and(gte(animesVistos.fechaEmision, `${año}-10-01`), lte(animesVistos.fechaEmision, `${año}-12-31`)));
       }
     }
+  }
+
+  if (typeof filtros.favorito === "boolean") {
+    condiciones.push(sql`${animesVistos.favorito} = ${filtros.favorito}`);
+  }
+
+  if (filtros.estudio) {
+    condiciones.push(sql`${animesVistos.estudio} = ${filtros.estudio}`);
+  }
+
+  if (filtros.fuente) {
+    condiciones.push(sql`${animesVistos.fuente} = ${filtros.fuente}`);
+  }
+
+  if (filtros.formato) {
+    condiciones.push(sql`${animesVistos.formato} = ${filtros.formato}`);
+  }
+
+  if (filtros.tags && filtros.tags.length > 0) {
+    for (const tag of filtros.tags) {
+      condiciones.push(
+        sql`EXISTS (SELECT 1 FROM json_each(${animesVistos.tags}) WHERE json_each.value = ${tag})`,
+      );
+    }
+  }
+
+  if (typeof filtros.puntajeMin === "number") {
+    condiciones.push(gte(animesVistos.miPuntaje, filtros.puntajeMin));
+  }
+
+  if (typeof filtros.puntajeMax === "number") {
+    condiciones.push(lte(animesVistos.miPuntaje, filtros.puntajeMax));
+  }
+
+  if (typeof filtros.scoreMalMin === "number") {
+    condiciones.push(gte(animesVistos.scoreMal, filtros.scoreMalMin));
+  }
+
+  if (typeof filtros.scoreMalMax === "number") {
+    condiciones.push(lte(animesVistos.scoreMal, filtros.scoreMalMax));
   }
 
   const whereClause = condiciones.length > 0 ? and(...condiciones) : undefined;

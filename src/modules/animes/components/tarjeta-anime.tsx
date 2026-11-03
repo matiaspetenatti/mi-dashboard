@@ -21,10 +21,18 @@ export function TarjetaAnime({
   anime,
   onActualizar,
   onEliminado,
+  seleccionable = false,
+  seleccionado = false,
+  onToggleSeleccion,
+  variante = "grilla",
 }: {
   anime: AnimeVisto;
   onActualizar?: (cambios: Partial<AnimeVisto> & { id: number }) => void;
   onEliminado?: (id: number) => void;
+  seleccionable?: boolean;
+  seleccionado?: boolean;
+  onToggleSeleccion?: (id: number) => void;
+  variante?: "grilla" | "lista";
 }) {
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [mostrarDetalle, setMostrarDetalle] = useState(false);
@@ -103,9 +111,34 @@ export function TarjetaAnime({
             abrirDetalle();
           }
         }}
-        className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1 transition duration-200 hover:-translate-y-0.5 hover:shadow-elevation-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className={`group relative flex cursor-pointer overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1 transition duration-200 hover:shadow-elevation-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+          variante === "lista" ? "flex-row items-center gap-3 p-2" : "flex-col hover:-translate-y-0.5"
+        }`}
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-container">
+        {seleccionable && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSeleccion?.(anime.id);
+            }}
+            className="absolute left-2 top-2 z-10 grid size-6 place-items-center rounded-md bg-card/90 backdrop-blur-sm transition hover:bg-card"
+            aria-label={seleccionado ? "Deseleccionar" : "Seleccionar"}
+          >
+            {seleccionado ? (
+              <span className="text-primary">✓</span>
+            ) : (
+              <span className="text-pebble">□</span>
+            )}
+          </button>
+        )}
+        <div
+          className={
+            variante === "lista"
+              ? "relative h-16 w-12 shrink-0 overflow-hidden rounded-md bg-surface-container"
+              : "relative aspect-[3/4] w-full overflow-hidden bg-surface-container"
+          }
+        >
           <img
             src={anime.imagen}
             alt={titulo}
@@ -152,7 +185,13 @@ export function TarjetaAnime({
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 p-3">
+        <div
+          className={
+            variante === "lista"
+              ? "flex flex-1 flex-col gap-1 py-1"
+              : "flex flex-1 flex-col gap-2 p-3"
+          }
+        >
           <p className="line-clamp-2 text-sm font-semibold leading-snug text-charcoal" title={titulo}>
             {titulo}
           </p>

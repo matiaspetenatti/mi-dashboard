@@ -22,6 +22,14 @@ import {
 import { cn } from "cn";
 import { Menu, MenuEtiqueta, MenuItem, MenuSeparador } from "./ui/menu";
 import { PanelFiltros } from "./filtros-vista";
+import { useEffect, useState } from "react";
+import {
+  guardarVista,
+  listarVistasGuardadas,
+  obtenerVistaGuardada,
+  eliminarVistaGuardada,
+} from "@/modules/tareas/actions/vistas-guardadas";
+import { useToast } from "@/hooks/use-toast";
 
 export function BarraHerramientas({
   config,
@@ -51,6 +59,42 @@ export function BarraHerramientas({
   onGuardar: () => void;
   mostrarToggleCompletadas?: boolean;
 }) {
+  const toast = useToast();
+  const [vistasGuardadas, setVistasGuardadas] = useState<
+    { id: number; nombre: string }[]
+  >([]);
+
+  useEffect(() => {
+    listarVistasGuardadas()
+      .then((lista) => setVistasGuardadas(lista.map((v) => ({ id: v.id, nombre: v.nombre }))))
+      .catch(() => {});
+  }, []);
+
+  async function guardarActual() {
+    const nombre = window.prompt("Nombre de la vista guardada");
+    if (!nombre) return;
+    const r = await guardarVista({
+      nombre,
+      alcance: "global",
+      proyectoId: null,
+      config,
+    });
+    if (!r.ok) {
+      toast.error(r.error ?? "No se pudo guardar");
+      return;
+    }
+    toast.success("Vista guardada");
+    const lista = await listarVistasGuardadas();
+    setVistasGuardadas(lista.map((v) => ({ id: v.id, nombre: v.nombre })));
+  }
+
+  async function cargar(id: number) {
+    const v = await obtenerVistaGuardada(id);
+    if (!v) return;
+    onCambiar(v.config as ConfigVista);
+    toast.success(`Vista "${v.nombre}" cargada`);
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-outline-variant/50 bg-surface-container-low/40 p-1.5">
       <PanelFiltros
@@ -203,6 +247,16 @@ export function BarraHerramientas({
       >
         Restablecer
       </button>
+
+      <button type="button" onClick={guardarActual} className="rounded-full border border-outline-variant/70 bg-surface-container-lowest px-3 py-1.5 text-xs text-on-surface hover:bg-surface-container-low">Guardar vista</button>
+
+      {vistasGuardadas.length > 0 && (
+        <Menu ariaLabel="Vistas guardadas" trigger={<><span className="font-medium">Vistas guardadas</span><ChevronDown size={12} className="text-on-surface-variant" /></>} triggerClassName="rounded-full border border-outline-variant/70 bg-surface-container-lowest px-3 py-1.5 text-xs text-on-surface hover:bg-surface-container-low">
+          {vistasGuardadas.map((v) => (
+            <MenuItem key={v.id} onClick={() => cargar(v.id)}><span className="flex-1">{v.nombre}</span></MenuItem>
+          ))}
+        </Menu>
+      )}
     </div>
   );
 }

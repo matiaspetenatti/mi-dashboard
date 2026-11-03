@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, Clock, RefreshCw } from "lucide-react";
+import { Calendar, Clock, RefreshCw, Check } from "lucide-react";
+import { actualizarProgresoAnime } from "@/modules/animes/actions/progreso";
 
 type ItemCalendario = {
   id: string;
@@ -15,6 +16,8 @@ type ItemCalendario = {
   hora: string;
   fecha: string;
   airingAt: string;
+  emitido: boolean;
+  visto: boolean;
 };
 
 type DiaCalendario = {
@@ -34,6 +37,8 @@ type DatosCalendario = {
   semana: { inicio: string; fin: string };
   dias: DiaCalendario[];
   sinHorarios: AnimeSinHorario[];
+  sinResolver: AnimeSinHorario[];
+  finalizados: AnimeSinHorario[];
   actualizadoEn: string;
 };
 
@@ -42,19 +47,72 @@ export function CalendarioSemanal() {
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [marcando, setMarcando] = useState<string | null>(null);
+
+  const diaActual = (() => {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      weekday: "short",
+    });
+    const dia = formatter.format(new Date());
+    const map: Record<string, number> = {
+      Mon: 0,
+      Tue: 1,
+      Wed: 2,
+      Thu: 3,
+      Fri: 4,
+      Sat: 5,
+      Sun: 6,
+    };
+    return map[dia] ?? -1;
+  })();
+
+  const marcarVisto = async (item: ItemCalendario) => {
+    if (!item.episodio || item.visto) return;
+    setMarcando(item.id);
+    try {
+      await actualizarProgresoAnime(item.animeVistoId, item.episodio);
+      setDatos((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          dias: prev.dias.map((dia) => ({
+            ...dia,
+            items: dia.items.map((it) =>
+              it.id === item.id ? { ...it, visto: true } : it,
+            ),
+          })),
+        };
+      });
+    } catch {
+      // Silencioso: el usuario puede reintentar.
+    } finally {
+      setMarcando(null);
+    }
+  };
 
   const cargarCalendario = async (force = false) => {
     try {
       if (force) setActualizando(true);
-      else setCargando(true);
-      setError(null);
-      
       const res = await fetch(`/api/animes/calendario${force ? "?force=true" : ""}`);
       if (!res.ok) throw new Error("Error al cargar");
       
       const data = await res.json();
-      setDatos(data);
-    } catch (e) {
+      const normalizado: DatosCalendario = {
+        ...data,
+        dias: (data.dias || []).map((dia: DiaCalendario) => ({
+          ...dia,
+          items: (dia.items || []).map((item: ItemCalendario) => ({
+            ...item,
+            visto: false,
+          })),
+        })),
+        sinHorarios: data.sinHorarios || [],
+        sinResolver: data.sinResolver || [],
+        finalizados: data.finalizados || [],
+      };
+      setDatos(normalizado);
+    } catch {
       setError("No se pudo cargar el calendario");
     } finally {
       setCargando(false);
@@ -63,7 +121,10 @@ export function CalendarioSemanal() {
   };
 
   useEffect(() => {
-    cargarCalendario();
+    const timeoutId = window.setTimeout(() => {
+      void cargarCalendario();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   if (cargando && !datos) {
@@ -80,7 +141,11 @@ export function CalendarioSemanal() {
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-outline-variant/50 bg-card px-6 py-12">
         <p className="text-sm font-medium text-on-error-container">{error}</p>
         <button
-          onClick={() => cargarCalendario()}
+          onClick={() => {
+            setCargando(true);
+            setError(null);
+            cargarCalendario();
+          }}
           className="rounded-full border border-outline-variant/60 bg-card px-3.5 py-1.5 text-xs font-semibold text-charcoal transition hover:bg-surface-container"
         >
           Reintentar
@@ -131,10 +196,27 @@ export function CalendarioSemanal() {
         {datos.dias.map((dia) => (
           <div
             key={dia.indice}
-            className="overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1"
+            className={`overflow-hidden rounded-xl border shadow-elevation-1 ${
+              dia.indice === diaActual
+                ? "border-primary bg-primary/10 ring-2 ring-primary/40"
+                : "border-outline-variant/40 bg-card"
+            }`}
           >
-            <div className="border-b border-outline-variant/40 bg-surface-container-low px-3 py-2">
-              <h3 className="text-sm font-semibold text-on-surface">{dia.nombre}</h3>
+            <div
+              className={`border-b px-3 py-2 ${
+                dia.indice === diaActual
+                  ? "border-primary/40 bg-primary/15"
+                  : "border-outline-variant/40 bg-surface-container-low"
+              }`}
+            >
+              <h3 className="text-sm font-semibold text-on-surface">
+                {dia.nombre}
+                {dia.indice === diaActual && (
+                  <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-on-primary">
+                    Hoy
+                  </span>
+                )}
+              </h3>
               {dia.items.length > 0 && (
                 <p className="text-xs text-on-surface-variant">
                   {dia.items.length} {dia.items.length === 1 ? "episodio" : "episodios"}
@@ -172,6 +254,37 @@ export function CalendarioSemanal() {
                             Ep. {item.episodio}
                           </p>
                         )}
+                        {item.emitido && item.episodio && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              marcarVisto(item);
+                            }}
+                            disabled={marcando === item.id || item.visto}
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                              item.visto
+                                ? "bg-success-container text-on-success-container"
+                                : "border border-outline-variant/60 bg-card text-charcoal hover:bg-surface-container disabled:opacity-50"
+                            }`}
+                          >
+                            {item.visto ? (
+                              <>
+                                <Check size={10} /> Visto
+                              </>
+                            ) : marcando === item.id ? (
+                              "Guardando..."
+                            ) : (
+                              "Marcar visto"
+                            )}
+                          </button>
+                        )}
+                        {!item.emitido && item.episodio && (
+                          <span className="text-[10px] font-medium text-pebble">
+                            Próximo
+                          </span>
+                        )}
                       </div>
                     </div>
                   </Link>
@@ -192,6 +305,64 @@ export function CalendarioSemanal() {
           </div>
           <div className="grid gap-2 p-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {datos.sinHorarios.map((anime) => (
+              <Link
+                key={anime.animeId}
+                href="/animes"
+                className="flex items-center gap-2 rounded-lg border border-outline-variant/40 p-2 transition-colors hover:border-outline-variant hover:bg-surface-container-low"
+              >
+                <Image
+                  src={anime.imagen}
+                  alt={anime.titulo}
+                  width={32}
+                  height={44}
+                  className="flex-shrink-0 rounded-md object-cover"
+                />
+                <p className="line-clamp-2 text-xs font-medium text-charcoal">{anime.titulo}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {datos.sinResolver.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1">
+          <div className="border-b border-outline-variant/40 bg-surface-container-low px-4 py-3">
+            <h3 className="text-sm font-semibold text-on-surface">No se pudo resolver el horario</h3>
+            <p className="text-xs text-on-surface-variant">
+              Animes en seguimiento cuyo horario no se encontró en AniList
+            </p>
+          </div>
+          <div className="grid gap-2 p-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {datos.sinResolver.map((anime) => (
+              <Link
+                key={anime.animeId}
+                href="/animes"
+                className="flex items-center gap-2 rounded-lg border border-outline-variant/40 p-2 transition-colors hover:border-outline-variant hover:bg-surface-container-low"
+              >
+                <Image
+                  src={anime.imagen}
+                  alt={anime.titulo}
+                  width={32}
+                  height={44}
+                  className="flex-shrink-0 rounded-md object-cover"
+                />
+                <p className="line-clamp-2 text-xs font-medium text-charcoal">{anime.titulo}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {datos.finalizados.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-outline-variant/40 bg-card shadow-elevation-1">
+          <div className="border-b border-outline-variant/40 bg-surface-container-low px-4 py-3">
+            <h3 className="text-sm font-semibold text-on-surface">Finalizados / fuera de aire</h3>
+            <p className="text-xs text-on-surface-variant">
+              Animes que estás viendo pero ya terminaron de emitirse
+            </p>
+          </div>
+          <div className="grid gap-2 p-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {datos.finalizados.map((anime) => (
               <Link
                 key={anime.animeId}
                 href="/animes"

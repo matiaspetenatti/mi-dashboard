@@ -26,7 +26,7 @@ export function VistaLista({
   mostrarProyecto?: boolean;
 }) {
   const filtradas = ordenarTareas(filtrarTareas(tareas, config, hoy), config);
-  const grupos = agruparTareas(filtradas, config, estados, etiquetas);
+  const grupos = agruparTareas(filtradas, config, estados, etiquetas, hoy);
 
   if (filtradas.length === 0) {
     return (

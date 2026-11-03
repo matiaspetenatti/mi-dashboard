@@ -3,6 +3,8 @@ import { requireAuthorizedUser } from "@/lib/auth";
 import { DetalleCarrera } from "@/modules/estudio/components/detalle-carrera";
 import { getCarreraDetalle } from "@/modules/estudio/queries";
 
+export const instant = false;
+
 export default async function CarreraPage({
   params,
 }: {

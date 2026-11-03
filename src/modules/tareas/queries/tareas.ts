@@ -77,6 +77,7 @@ async function cargarTareas(proyectoId?: number) {
         nombre: etiquetas.nombre,
         color: etiquetas.color,
         icono: etiquetas.icono,
+        proyectoId: etiquetas.proyectoId,
       })
       .from(tareasEtiquetas)
       .innerJoin(etiquetas, eq(tareasEtiquetas.etiquetaId, etiquetas.id))

@@ -22,6 +22,7 @@ export async function getEtiquetasConUso() {
       nombre: etiquetas.nombre,
       color: etiquetas.color,
       icono: etiquetas.icono,
+      proyectoId: etiquetas.proyectoId,
       usos: count(tareasEtiquetas.tareaId),
     })
     .from(etiquetas)

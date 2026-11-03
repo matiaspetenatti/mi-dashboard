@@ -93,6 +93,10 @@ export function AnimesPageWrapper() {
     tipos: [],
     generos: [],
     anos: [],
+    estudios: [],
+    fuentes: [],
+    formatos: [],
+    tags: [],
     temporadas: [],
   });
   const [cargando, setCargando] = useState(true);

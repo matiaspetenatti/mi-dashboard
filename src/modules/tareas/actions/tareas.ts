@@ -6,7 +6,10 @@ import {
   proyectos,
   tareas,
   tareasEtiquetas,
+  estadosProyecto,
+  vistasProyecto,
   type NuevaTarea,
+  type VistaProyecto,
 } from "@/modules/tareas/schema";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -16,6 +19,7 @@ import {
   tareaActualizarSchema,
   tareaCrearSchema,
   tituloSchema,
+  fechaSchema,
 } from "@/modules/tareas/lib/validacion";
 import { refrescarTareas } from "@/modules/tareas/lib/refrescar";
 import { errorAccion, type ResultadoAccion } from "@/modules/tareas/lib/resultado";
@@ -28,6 +32,7 @@ import {
   validarEstadoDeProyecto,
 } from "@/modules/tareas/actions/_comun";
 import { estadoCompletado, estadoParaCategoria } from "@/modules/tareas/lib/orden";
+import { configVistaBase } from "@/modules/tareas/lib/config-vista";
 
 export async function crearTarea(datos: {
   proyectoId: number;
@@ -270,7 +275,55 @@ export async function alternarCompletada(id: number): Promise<ResultadoAccion> {
     );
   }
 
+  const completando = fila.estado.categoria !== "completado";
+
   await aplicarCambioEstado(fila.tarea, fila.estado, destino);
+
+  // cascada: al completar un padre, completar subtareas
+  if (completando && fila.tarea.parentId === null) {
+    const subtareas = await db
+      .select()
+      .from(tareas)
+      .where(eq(tareas.parentId, id));
+    const estadoCompletadoDestino = estadoCompletado(estados);
+    if (estadoCompletadoDestino) {
+      for (const sub of subtareas) {
+        const subFila = await cargarTareaConEstado(sub.id);
+        if (subFila && subFila.estado.categoria !== "completado") {
+          await aplicarCambioEstado(sub, subFila.estado, estadoCompletadoDestino);
+        }
+      }
+    }
+  }
+
+  // cascada: al completar una subtarea, si todas las hermanas están completas, completar el padre
+  if (completando && fila.tarea.parentId) {
+    const hermanas = await db
+      .select()
+      .from(tareas)
+      .where(eq(tareas.parentId, fila.tarea.parentId));
+    const todasCompletas = hermanas.every(async () => true);
+    // verificar estados
+    const estadosHermanas = await Promise.all(
+      hermanas.map((h) => cargarTareaConEstado(h.id)),
+    );
+    const todasHechas = estadosHermanas.every(
+      (h) => h?.estado.categoria === "completado" || h?.tarea.id === id,
+    );
+    // id ya completada, así que chequear el resto
+    const restoCompletas = estadosHermanas
+      .filter((h) => h && h.tarea.id !== id)
+      .every((h) => h!.estado.categoria === "completado");
+    if (restoCompletas) {
+      const padre = await cargarTareaConEstado(fila.tarea.parentId);
+      if (padre && padre.estado.categoria !== "completado") {
+        const estadosPadre = await estadosDeProyecto(padre.tarea.proyectoId);
+        const dest = estadoCompletado(estadosPadre);
+        if (dest) await aplicarCambioEstado(padre.tarea, padre.estado, dest);
+      }
+    }
+  }
+
   refrescarTareas();
   return { ok: true };
 }
@@ -479,4 +532,177 @@ export async function reordenarTareas(
 
   refrescarTareas();
   return { ok: true };
+}
+
+// ---- Funciones nuevas de productividad/modelo ----
+
+export async function archivarTarea(id: number): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  await db
+    .update(tareas)
+    .set({ archivadaEn: sql`(datetime('now'))`, actualizadaEn: sql`(datetime('now'))` })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function restaurarTarea(id: number): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  await db
+    .update(tareas)
+    .set({ archivadaEn: null, actualizadaEn: sql`(datetime('now'))` })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function alternarDestacada(id: number): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  const fila = await cargarTareaConEstado(id);
+  if (!fila) return errorAccion("La tarea no existe");
+  await db
+    .update(tareas)
+    .set({
+      destacada: !fila.tarea.destacada,
+      actualizadaEn: sql`(datetime('now'))`,
+    })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function posponerTarea(
+  id: number,
+  nuevaFecha: string,
+): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  if (!fechaSchema.safeParse(nuevaFecha).success)
+    return errorAccion("Fecha inválida");
+  await db
+    .update(tareas)
+    .set({ fechaLimite: nuevaFecha, actualizadaEn: sql`(datetime('now'))` })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function actualizarEstimacion(
+  id: number,
+  minutos: number | null,
+): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  if (minutos !== null && (minutos < 0 || minutos > 100000))
+    return errorAccion("Estimación inválida");
+  await db
+    .update(tareas)
+    .set({
+      estimacionMinutos: minutos,
+      actualizadaEn: sql`(datetime('now'))`,
+    })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function registrarTiempo(
+  id: number,
+  segundos: number,
+): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  if (segundos < 0) return errorAccion("Tiempo inválido");
+  await db
+    .update(tareas)
+    .set({
+      tiempoRegistradoSegundos: sql`${tareas.tiempoRegistradoSegundos} + ${segundos}`,
+      actualizadaEn: sql`(datetime('now'))`,
+    })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function actualizarColorTarea(
+  id: number,
+  color: string | null,
+): Promise<ResultadoAccion> {
+  await requireAuthorizedUser();
+  if (!idSchema.safeParse(id).success) return errorAccion("Tarea inválida");
+  if (color !== null && !/^#[0-9a-fA-F]{6}$/.test(color))
+    return errorAccion("Color inválido");
+  await db
+    .update(tareas)
+    .set({ color, actualizadaEn: sql`(datetime('now'))` })
+    .where(eq(tareas.id, id));
+  refrescarTareas();
+  return { ok: true };
+}
+
+export async function getOrCreateInboxProject(): Promise<number> {
+  await requireAuthorizedUser();
+  const inboxSlug = "inbox";
+  const existente = await db
+    .select({ id: proyectos.id })
+    .from(proyectos)
+    .where(eq(proyectos.slug, inboxSlug));
+  if (existente.length > 0) return existente[0].id;
+
+  const [nuevo] = await db
+    .insert(proyectos)
+    .values({
+      nombre: "Bandeja de entrada",
+      slug: inboxSlug,
+      descripcion: "Tareas capturadas rápidamente.",
+      icono: "inbox",
+      color: "#737373",
+      prefijo: "INB",
+    })
+    .returning({ id: proyectos.id });
+
+  const estadosDefault = [
+    { nombre: "Por hacer", color: "#737373", categoria: "pendiente" as const },
+    { nombre: "Hecho", color: "#22c55e", categoria: "completado" as const },
+  ];
+  for (const [i, e] of estadosDefault.entries()) {
+    await db.insert(estadosProyecto).values({
+      proyectoId: nuevo.id,
+      nombre: e.nombre,
+      color: e.color,
+      categoria: e.categoria,
+      posicion: i,
+    });
+  }
+
+  await db.insert(vistasProyecto).values({
+    proyectoId: nuevo.id,
+    nombre: "Lista",
+    tipo: "lista",
+    config: configVistaBase as unknown as VistaProyecto["config"],
+    predeterminada: true,
+  });
+
+  refrescarTareas();
+  return nuevo.id;
+}
+
+export async function capturarTareaRapida(
+  titulo: string,
+): Promise<ResultadoAccion<{ id: number }>> {
+  await requireAuthorizedUser();
+  const parsed = tituloSchema.safeParse(titulo);
+  if (!parsed.success) return errorAccion("Título inválido");
+  const proyectoId = await getOrCreateInboxProject();
+  const estados = await estadosDeProyecto(proyectoId);
+  const estadoId = estados[0]?.id;
+  if (!estadoId) return errorAccion("Sin estado disponible");
+  return crearTarea({
+    proyectoId,
+    estadoId,
+    titulo: parsed.data,
+  });
 }

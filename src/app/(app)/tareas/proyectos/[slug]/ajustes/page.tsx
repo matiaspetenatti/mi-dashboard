@@ -7,6 +7,8 @@ import {
 } from "@/modules/tareas/queries";
 import { AjustesProyecto } from "@/modules/tareas/components/ajustes-proyecto";
 
+export const instant = false;
+
 export default async function AjustesProyectoPage({
   params,
 }: {

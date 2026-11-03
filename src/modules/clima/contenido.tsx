@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, Clock, CloudRain, RefreshCw } from "lucide-react";
 import { cn } from "cn";
 import type { ClimaData, ClimaHora } from "./types";
-import { formatDateLabel, getWeatherInfo } from "./clima-utils";
+import { formatDateLabel, getWeatherInfo, recomendacionClima } from "./clima-utils";
 import { ClimaGraficoCombinado } from "./clima-grafico-combinado";
 import { BentoClima } from "./components/bento-clima";
 import { actualizarClima } from "./actions";
 import { Button } from "@/components/ui/button";
+import { FadeIn } from "@/components/motion/fade-in";
 
 const entero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const unDecimal = new Intl.NumberFormat("es-AR", {
@@ -32,6 +33,16 @@ function claseUv(indice: number): string {
   if (indice >= 8) return "bg-error-container text-on-error-container";
   if (indice >= 3) return "bg-warning-container text-on-warning-container";
   return "bg-success-container text-on-success-container";
+}
+
+/** Colores del AQI (US) para chips. */
+function claseAqi(indice: number): string {
+  if (indice <= 0) return "bg-surface-container text-on-surface-variant";
+  if (indice <= 50) return "bg-success-container text-on-success-container";
+  if (indice <= 100) return "bg-warning-container text-on-warning-container";
+  if (indice <= 150) return "bg-warning-container text-on-warning-container";
+  if (indice <= 200) return "bg-error-container text-on-error-container";
+  return "bg-error-container text-on-error-container";
 }
 
 function buscarHora<T extends { fullTimeStr: string }>(
@@ -61,33 +72,45 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
   const esDiaActual = selectedDayIndex === indiceHoy;
   const selectedDateStr = daily.time[selectedDayIndex] ?? fechaActual;
 
-  const hourlyItems = useMemo(
-    () =>
-      hourly.time
-        .map((timeStr, index) => {
-          const [datePart, timePart] = timeStr.split("T");
-          return {
-            datePart,
-            timePart,
-            fullTimeStr: timeStr,
-            temperature: hourly.temperature_2m[index],
-            humidity: hourly.relativehumidity_2m[index],
-            dewpoint: hourly.dewpoint_2m[index],
-            apparentTemperature: hourly.apparent_temperature[index],
-            precipitationProb: hourly.precipitation_probability[index],
-            precipitation: hourly.precipitation[index],
-            pressure: hourly.pressure_msl[index],
-            cloudcover: hourly.cloudcover[index],
-            visibility: hourly.visibility[index],
-            windSpeed: hourly.windspeed_10m[index],
-            windDirection: hourly.winddirection_10m[index],
-            windGusts: hourly.windgusts_10m[index],
-            uvIndex: hourly.uv_index[index],
-          };
-        })
-        .filter((item) => item.datePart === selectedDateStr),
-    [hourly, selectedDateStr],
-  );
+  const hourlyItems = useMemo(() => {
+    const base =
+      data.hourlyMerged && data.hourlyMerged.length > 0
+        ? data.hourlyMerged
+        : hourly.time.map((timeStr, index) => {
+            const [datePart, timePart] = timeStr.split("T");
+            return {
+              datePart,
+              timePart: timePart?.slice(0, 5) ?? "",
+              fullTimeStr: timeStr,
+              temperature: hourly.temperature_2m[index],
+              humidity: hourly.relativehumidity_2m[index],
+              dewpoint: hourly.dewpoint_2m[index],
+              apparentTemperature: hourly.apparent_temperature[index],
+              precipitationProb: hourly.precipitation_probability[index],
+              precipitation: hourly.precipitation[index],
+              pressure: hourly.pressure_msl[index],
+              cloudcover: hourly.cloudcover[index],
+              visibility: hourly.visibility[index],
+              windSpeed: hourly.windspeed_10m[index],
+              windDirection: hourly.winddirection_10m[index],
+              windGusts: hourly.windgusts_10m[index],
+              uvIndex: hourly.uv_index[index],
+              uvClearSky: 0,
+              aqiUs: 0,
+              aqiEuropeo: 0,
+              pm25: 0,
+              pm10: 0,
+              ozono: 0,
+              no2: 0,
+              so2: 0,
+              co: 0,
+              polvo: 0,
+              aod: 0,
+              amoniaco: 0,
+            };
+          });
+    return base.filter((item) => item.datePart === selectedDateStr);
+  }, [data.hourlyMerged, hourly, selectedDateStr]);
 
   // Hoy mostramos la hora en curso; los días futuros, el mediodía.
   const referenciaHora = esDiaActual
@@ -128,13 +151,31 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
         </Button>
       </div>
 
-      <BentoClima
-        data={data}
-        selectedDayIndex={selectedDayIndex}
-        dayData={dayData}
-        esDiaActual={esDiaActual}
-        horaReferencia={horaReferencia}
-      />
+      <FadeIn>
+        <BentoClima
+          data={data}
+          selectedDayIndex={selectedDayIndex}
+          dayData={dayData}
+          esDiaActual={esDiaActual}
+          horaReferencia={horaReferencia}
+        />
+      </FadeIn>
+
+      <FadeIn delay={0.1}>
+        <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 text-sm text-on-surface">
+          <span className="font-semibold">Recomendación: </span>
+        {recomendacionClima({
+          aqi: dayData?.aqiUs,
+          uv: dayData?.uvIndex,
+          lluvia: daily.precipitation_probability_max[selectedDayIndex],
+          weatherCode: daily.weathercode[selectedDayIndex],
+          mmLluvia: hourlyItems.reduce(
+            (suma, item) => suma + (item.precipitation ?? 0),
+            0,
+          ),
+        })}
+      </div>
+      </FadeIn>
 
       {/* Selector de día: control principal, justo debajo del resumen. */}
       <section className="space-y-3">
@@ -235,6 +276,7 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
         onSelectDay={setSelectedDayIndex}
       />
 
+      <FadeIn delay={0.2}>
       {/* Detalle por hora del día seleccionado: cerrado por defecto. */}
       <section className="space-y-3">
         <button
@@ -291,6 +333,7 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
                   <th className="px-4 py-3">Viento</th>
                   <th className="px-4 py-3">Humedad</th>
                   <th className="px-4 py-3">Índice UV</th>
+                  <th className="px-4 py-3">Aire (AQI)</th>
                 </tr>
               </thead>
               <tbody>
@@ -330,17 +373,24 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
                         {grados(item.apparentTemperature)}
                       </td>
                       <td className="px-4 py-2.5">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums",
-                            item.precipitationProb >= 30
-                              ? "bg-secondary-container text-on-secondary-container"
-                              : "bg-surface-container text-on-surface-variant",
-                          )}
-                        >
-                          <CloudRain size={11} aria-hidden="true" />
-                          {numero(item.precipitationProb)}%
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums",
+                              item.precipitationProb >= 30
+                                ? "bg-secondary-container text-on-secondary-container"
+                                : "bg-surface-container text-on-surface-variant",
+                            )}
+                          >
+                            <CloudRain size={11} aria-hidden="true" />
+                            {numero(item.precipitationProb)}%
+                          </span>
+                          {item.precipitation > 0 ? (
+                            <span className="text-[10px] tabular-nums text-on-surface-variant">
+                              {numero(item.precipitation, unDecimal)} mm
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 tabular-nums text-on-surface-variant">
                         {numero(item.windSpeed)} km/h
@@ -358,6 +408,16 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
                           {numero(item.uvIndex, unDecimal)}
                         </span>
                       </td>
+                      <td className="px-4 py-2.5">
+                        <span
+                          className={cn(
+                            "inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+                            claseAqi(item.aqiUs),
+                          )}
+                        >
+                          {item.aqiUs > 0 ? numero(item.aqiUs) : "--"}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })}
@@ -366,6 +426,7 @@ export function ClimaContenido({ data }: { data: ClimaData }) {
           </div>
         </div>
       </section>
+      </FadeIn>
     </div>
   );
 }

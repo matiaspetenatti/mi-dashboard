@@ -141,6 +141,27 @@
       "when": 1793422324923,
       "tag": "0019_lucky_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1793678110660,
+      "tag": "0020_nice_zzzax",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1793680843914,
+      "tag": "0021_fast_mentallo",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1793682437436,
+      "tag": "0022_outstanding_skullbuster",
+      "breakpoints": true
     }
   ]
 }

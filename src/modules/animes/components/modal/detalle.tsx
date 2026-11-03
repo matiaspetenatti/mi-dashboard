@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { Calendar, Check, Edit3, Film, Loader2, Minus, Plus, RotateCcw, Star, X } from "lucide-react";
 import { actualizarProgresoAnime } from "@/modules/animes/actions/progreso";
+import { alternarFavoritoAnime } from "@/modules/animes/actions/favorito";
 import { ModalEditarAnime } from "@/modules/animes/components/modal/editar";
 import { DesglosePuntaje } from "@/modules/animes/components/desglose-puntaje";
 import type { AnimeVisto } from "@/modules/animes/schema";
@@ -42,6 +43,16 @@ export function ModalDetalleAnime({
   const [vistos, setVistos] = useState(anime.episodiosVistos || 0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isFavPending, startFavTransition] = useTransition();
+
+  const toggleFavorito = () => {
+    startFavTransition(async () => {
+      const res = await alternarFavoritoAnime(anime.id);
+      if (res?.success) {
+        onActualizar?.({ id: anime.id, favorito: res.favorito });
+      }
+    });
+  };
 
   const generos = Array.isArray(anime.generos) ? anime.generos : [];
   const titulo = anime.tituloIngles || anime.titulo;
@@ -151,7 +162,52 @@ export function ModalDetalleAnime({
                       Rewatch
                     </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={toggleFavorito}
+                    disabled={isFavPending}
+                    className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] transition-colors ${
+                      anime.favorito
+                        ? "bg-warning-container text-on-warning-container"
+                        : "bg-surface-container text-charcoal hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <Star size={11} fill={anime.favorito ? "currentColor" : "none"} />
+                    {anime.favorito ? "Favorito" : "Marcar favorito"}
+                  </button>
                 </div>
+
+                {(Array.isArray(anime.tags) && anime.tags.length > 0) ||
+                anime.estudio ||
+                anime.fuente ||
+                anime.formato ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {Array.isArray(anime.tags) &&
+                      anime.tags.map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-medium text-on-primary-container"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    {anime.estudio && (
+                      <span className="rounded-full bg-surface-container px-2 py-0.5 text-[10px] text-charcoal">
+                        {anime.estudio}
+                      </span>
+                    )}
+                    {anime.fuente && (
+                      <span className="rounded-full bg-surface-container px-2 py-0.5 text-[10px] text-charcoal">
+                        {anime.fuente}
+                      </span>
+                    )}
+                    {anime.formato && (
+                      <span className="rounded-full bg-surface-container px-2 py-0.5 text-[10px] text-charcoal">
+                        {anime.formato}
+                      </span>
+                    )}
+                  </div>
+                ) : null}
 
                 <div className="flex flex-wrap items-center gap-4">
                   {miPuntaje !== null && (
@@ -200,6 +256,15 @@ export function ModalDetalleAnime({
                     style={{ width: `${porcentaje}%` }}
                   />
                 </div>
+              ) : null}
+              {total && vistos < total ? (
+                <button
+                  type="button"
+                  onClick={() => guardarProgreso(total)}
+                  className="mt-2 rounded-full border border-outline-variant/60 bg-card px-3 py-1 text-xs font-semibold text-charcoal transition-colors hover:bg-surface-container"
+                >
+                  Marcar todos vistos
+                </button>
               ) : null}
             </div>
 

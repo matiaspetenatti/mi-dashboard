@@ -5,19 +5,14 @@ import { requireAuthorizedUser } from "@/lib/auth";
 import { db } from "@/db";
 import { animesVistos } from "@/modules/animes/schema";
 import { revalidatePath } from "next/cache";
-import { updateTag } from "next/cache";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   aColumnasPuntaje,
   calcularTotalPuntajes,
 } from "@/modules/animes/lib/criterios";
 import { leerPuntajesFormData } from "./_puntajes";
-
-const ANIMES_TAG = "animes";
-
-const invalidarCacheAnimes = () => {
-  updateTag(ANIMES_TAG);
-};
+import { invalidarCacheAnimes } from "@/modules/animes/lib/cache";
 
 const parseNumero = (raw: FormDataEntryValue | null): number | null => {
   if (raw === null || raw === "") return null;
@@ -37,9 +32,15 @@ const agregarSchema = z.object({
   generos: z.array(z.string()),
   descripcion: z.string().nullable(),
   scoreMal: z.number().nullable(),
-  estado: z.enum(["viendo", "completado", "en_pausa", "abandonado"]),
+  estado: z.enum(["planeado", "viendo", "completado", "en_pausa", "abandonado"]),
   notas: z.string().nullable(),
   episodiosVistos: z.number().int().min(0),
+  favorito: z.boolean(),
+  anilistId: z.number().int().nullable(),
+  estudio: z.string().nullable(),
+  fuente: z.string().nullable(),
+  formato: z.string().nullable(),
+  tags: z.array(z.string()),
 });
 
 export async function agregarAnime(formData: FormData) {
@@ -76,6 +77,35 @@ export async function agregarAnime(formData: FormData) {
       ? null
       : String(formData.get("notas"));
   const episodiosVistosRaw = parseNumero(formData.get("episodiosVistos")) ?? 0;
+  const favorito = formData.get("favorito") === "true";
+  const anilistId = parseNumero(formData.get("anilistId"));
+  const estudio =
+    formData.get("estudio") === null || formData.get("estudio") === ""
+      ? null
+      : String(formData.get("estudio"));
+  const fuente =
+    formData.get("fuente") === null || formData.get("fuente") === ""
+      ? null
+      : String(formData.get("fuente"));
+  const formato =
+    formData.get("formato") === null || formData.get("formato") === ""
+      ? null
+      : String(formData.get("formato"));
+  let tags: string[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("tags") ?? "[]"));
+    tags = Array.isArray(parsed)
+      ? Array.from(
+          new Set(
+            parsed
+              .map((t: unknown) => String(t).trim().toLowerCase())
+              .filter(Boolean),
+          ),
+        )
+      : [];
+  } catch {
+    tags = [];
+  }
 
   let generos: string[] = [];
   try {
@@ -103,6 +133,12 @@ export async function agregarAnime(formData: FormData) {
     estado,
     notas,
     episodiosVistos: episodiosVistosRaw,
+    favorito,
+    anilistId,
+    estudio,
+    fuente,
+    formato,
+    tags,
   });
 
   if (!parsed.success) return { error: "Datos inválidos" };
@@ -123,6 +159,22 @@ export async function agregarAnime(formData: FormData) {
     episodiosVistos: vistos,
     actualizadoEn: new Date().toISOString(),
   };
+
+  // Detección de duplicados por título (además de kitsu_id).
+  const existente = await db
+    .select({ id: animesVistos.id })
+    .from(animesVistos)
+    .where(
+      sql`LOWER(${animesVistos.titulo}) = LOWER(${data.titulo}) OR (${animesVistos.tituloIngles} IS NOT NULL AND LOWER(${animesVistos.tituloIngles}) = LOWER(${data.tituloIngles ?? ""}))`,
+    )
+    .limit(1);
+
+  if (existente.length > 0) {
+    return {
+      error:
+        "Ya tenés un anime con ese título en tu catálogo. Abrí su tarjeta y usá Editar.",
+    };
+  }
 
   try {
     await db.insert(animesVistos).values(data);
