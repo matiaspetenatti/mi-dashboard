@@ -1,25 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { GraduationCap } from "lucide-react"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { z } from "zod"
 
-import { ModulePage } from "@/components/templates/module-page"
+import { WorkspaceEstudio } from "@/features/estudio/components/workspace-estudio"
+import { workspaceEstudioQuery } from "@/features/estudio/api"
+
+const searchSchema = z.object({
+  carrera: z.coerce.number().int().positive().optional(),
+})
 
 export const Route = createFileRoute("/_app/estudio")({
+  validateSearch: searchSchema,
+  head: () => ({ meta: [{ title: "Estudio · Mi Dashboard" }] }),
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(workspaceEstudioQuery)
+  },
   component: EstudioPage,
 })
 
 function EstudioPage() {
+  const { data } = useSuspenseQuery(workspaceEstudioQuery)
+  const { carrera } = Route.useSearch()
+  const navigate = Route.useNavigate()
+
   return (
-    <ModulePage
-      eyebrow="Carrera"
-      title="Estudio"
-      description="Materias, notas, exámenes y tiempo de estudio."
-      icon={GraduationCap}
-      features={[
-        "Carreras, materias y correlatividades",
-        "Notas, promedio y avance de la carrera",
-        "Calendario académico y exámenes",
-        "Pomodoro y registro de sesiones",
-      ]}
+    <WorkspaceEstudio
+      workspace={data}
+      carreraId={carrera ?? null}
+      onSeleccionarCarrera={(id) => {
+        void navigate({
+          search: (prev) => ({ ...prev, carrera: id ?? undefined }),
+          replace: true,
+        })
+      }}
     />
   )
 }

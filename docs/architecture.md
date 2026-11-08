@@ -65,7 +65,7 @@ Componente
 2. Tareas (núcleo hecho): proyectos, estados, vistas lista/tablero/tabla/calendario, detalle, subtareas, etiquetas, ajustes de proyecto y estadísticas. Pendientes: recurrencia, comentarios/adjuntos/dependencias, vistas guardadas y Google Calendar one-way.
 3. Finanzas (núcleo hecho): cuentas, saldos, resumen mensual, evolución, categorías, movimientos y alta de movimientos/cuentas. Pendientes: reconciliación de rendimientos, importación y comparador.
 4. Clima (hecho): ubicaciones, actual, 14 días, gráfico combinado y detalle horario.
-5. Estudio + calendario.
+5. Estudio (hecho): carreras, materias, exámenes, promedio ponderado, avance, graduación estimada, Pomodoro, sesiones y gráfico semanal. Pendiente: Google Calendar one-way.
 6. Animes + Kitsu.
 7. Salud (migraña + bienestar).
 8. Comida.

@@ -71,8 +71,10 @@ El front-end **nunca** accede a la base de datos: todo pasa por server functions
 - **Fase 2 (núcleo) completada**: Tareas con proyectos, estados, vistas lista/tablero/tabla/calendario, detalle, subtareas, etiquetas, ajustes de proyecto y estadísticas con TanStack Charts.
 - **Fase 3 (núcleo) completada**: Finanzas con cuentas, saldos, resumen mensual, rendimientos estimados, evolución del patrimonio, gastos por categoría, movimientos recientes y alta de movimientos/cuentas.
 - **Fase 4 completada**: Clima con ubicaciones guardadas, clima actual, pronóstico de 14 días, gráfico combinado de máximas/mínimas/lluvia y detalle horario.
+- **Fase 5 completada**: Estudio con carreras, materias, exámenes, promedio ponderado, avance y graduación estimada, Pomodoro, registro de sesiones y gráfico semanal de tiempo de estudio.
 - **Pendiente de Tareas**: recurrencia, comentarios, adjuntos, dependencias, vistas guardadas y Google Calendar one-way.
 - **Pendiente de Finanzas**: reconciliación de rendimientos, importación desde MercadoPago, edición de cuentas/categorías y comparador de servicios.
+- **Pendiente de Estudio**: Google Calendar one-way para exámenes y calendario académico.
 - Los módulos restantes siguen en construcción.
 
 ## Deploy
