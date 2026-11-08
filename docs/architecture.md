@@ -69,6 +69,6 @@ Componente
 5. Estudio (hecho): carreras, materias, exámenes, promedio ponderado, avance, graduación estimada, Pomodoro, sesiones y gráfico semanal. Pendiente: Google Calendar one-way.
 6. Animes (hecho): Kitsu, biblioteca, progreso, favoritos, criterios, estadísticas y calendario AniList. Pendientes: filtros avanzados y acciones masivas.
 7. Salud (hecho): bitácora de migraña, EVA, aura, síntomas, desencadenantes, Tetralgin, KPIs, gráfico, correlación con hábitos y diario de bienestar. Pendientes: informe PDF, clima e historial de peso.
-8. Comida.
+8. Comida (hecho): despensa, vencimientos, stock bajo, recetario, menú semanal, compras y reposición de stock. Pendientes: Chef IA, importación y precios.
 9. Hábitos (sección propia).
 10. Polish, PWA y deploy final.

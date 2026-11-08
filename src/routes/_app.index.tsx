@@ -9,6 +9,7 @@ import {
 import { PageHeader } from "@/components/organisms/page-header"
 import { WidgetAnimes } from "@/features/animes/components/widget-animes"
 import { WidgetClima } from "@/features/clima/components/widget-clima"
+import { WidgetComida } from "@/features/comida/components/widget-comida"
 import { WidgetEstudio } from "@/features/estudio/components/widget-estudio"
 import { WidgetFinanzas } from "@/features/finanzas/components/widget-finanzas"
 import { WidgetSalud } from "@/features/salud/components/widget-salud"
@@ -16,6 +17,7 @@ import { WidgetTareas } from "@/features/tareas/components/widget-tareas"
 import { useQuickAdd } from "@/features/tareas/components/quick-add-provider"
 import { resumenAnimesQuery } from "@/features/animes/api"
 import { resumenClimaQuery } from "@/features/clima/api"
+import { resumenComidaQuery } from "@/features/comida/api"
 import { resumenEstudioQuery } from "@/features/estudio/api"
 import { resumenFinanzasQuery } from "@/features/finanzas/api"
 import { resumenSaludQuery } from "@/features/salud/api"
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/_app/")({
       context.queryClient.prefetchQuery(resumenClimaQuery),
       context.queryClient.prefetchQuery(resumenAnimesQuery),
       context.queryClient.prefetchQuery(resumenSaludQuery),
+      context.queryClient.prefetchQuery(resumenComidaQuery),
     ])
   },
   component: InicioPage,
@@ -111,6 +114,7 @@ function InicioPage() {
         <WidgetClima />
         <WidgetAnimes />
         <WidgetSalud />
+        <WidgetComida />
       </section>
     </div>
   )
