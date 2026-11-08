@@ -51,7 +51,8 @@ Componente
 
 - TanStack Query cachea en el cliente con `staleTime` por módulo.
 - Open-Meteo se cachea en memoria 10 minutos en `features/clima/server/queries.ts`.
-- Kitsu y Google Calendar tendrán su propia caché TTL al implementarse.
+- Kitsu (búsqueda y detalle) y AniList (calendario) se cachean en memoria con TTL en `features/animes/server`.
+- Google Calendar tendrá su propia caché TTL al implementarse.
 
 ## Charts
 
@@ -66,7 +67,7 @@ Componente
 3. Finanzas (núcleo hecho): cuentas, saldos, resumen mensual, evolución, categorías, movimientos y alta de movimientos/cuentas. Pendientes: reconciliación de rendimientos, importación y comparador.
 4. Clima (hecho): ubicaciones, actual, 14 días, gráfico combinado y detalle horario.
 5. Estudio (hecho): carreras, materias, exámenes, promedio ponderado, avance, graduación estimada, Pomodoro, sesiones y gráfico semanal. Pendiente: Google Calendar one-way.
-6. Animes + Kitsu.
+6. Animes (hecho): Kitsu, biblioteca, progreso, favoritos, criterios, estadísticas y calendario AniList. Pendientes: filtros avanzados y acciones masivas.
 7. Salud (migraña + bienestar).
 8. Comida.
 9. Hábitos (sección propia).
