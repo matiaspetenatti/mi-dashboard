@@ -4,10 +4,12 @@ import { authMiddleware } from "@/server/auth/middleware"
 import {
   actualizarTareaSchema,
   alternarTareaSchema,
+  crearEtiquetaSchema,
   crearProyectoSchema,
   crearTareaRapidaSchema,
   crearTareaSchema,
   eliminarTareaSchema,
+  etiquetaTareaSchema,
   moverTareaSchema,
 } from "../schemas"
 
@@ -79,4 +81,28 @@ export const crearProyecto = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { crearProyectoEnDb } = await import("./mutations")
     return crearProyectoEnDb(data)
+  })
+
+export const crearEtiqueta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(crearEtiquetaSchema)
+  .handler(async ({ data }) => {
+    const { crearEtiquetaEnDb } = await import("./mutations")
+    return crearEtiquetaEnDb(data)
+  })
+
+export const asignarEtiqueta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(etiquetaTareaSchema)
+  .handler(async ({ data }) => {
+    const { asignarEtiquetaEnDb } = await import("./mutations")
+    return asignarEtiquetaEnDb(data)
+  })
+
+export const quitarEtiqueta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(etiquetaTareaSchema)
+  .handler(async ({ data }) => {
+    const { quitarEtiquetaEnDb } = await import("./mutations")
+    return quitarEtiquetaEnDb(data)
   })

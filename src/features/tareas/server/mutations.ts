@@ -5,16 +5,20 @@ import { and, asc, eq, sql } from "drizzle-orm"
 import { getDb } from "@/server/db/client"
 import {
   estadosProyecto,
+  etiquetas,
   proyectos,
   tareas,
+  tareasEtiquetas,
   type EstadoProyecto,
 } from "@/server/db/schema"
 import { prefijoDe, slugify } from "../constantes"
 import type {
   ActualizarTareaInput,
   AlternarTareaInput,
+  CrearEtiquetaInput,
   CrearProyectoInput,
   CrearTareaInput,
+  EtiquetaTareaInput,
   MoverTareaInput,
 } from "../schemas"
 
@@ -245,4 +249,40 @@ export async function crearProyectoEnDb(input: CrearProyectoInput) {
   ])
 
   return proyecto
+}
+
+export async function crearEtiquetaEnDb(input: CrearEtiquetaInput) {
+  const db = getDb()
+  const [etiqueta] = await db
+    .insert(etiquetas)
+    .values({
+      nombre: input.nombre,
+      color: input.color,
+      proyectoId: input.proyectoId ?? null,
+    })
+    .returning({ id: etiquetas.id })
+
+  return { id: etiqueta.id }
+}
+
+export async function asignarEtiquetaEnDb(input: EtiquetaTareaInput) {
+  const db = getDb()
+  await db
+    .insert(tareasEtiquetas)
+    .values({ tareaId: input.tareaId, etiquetaId: input.etiquetaId })
+    .onConflictDoNothing()
+  return { ok: true }
+}
+
+export async function quitarEtiquetaEnDb(input: EtiquetaTareaInput) {
+  const db = getDb()
+  await db
+    .delete(tareasEtiquetas)
+    .where(
+      and(
+        eq(tareasEtiquetas.tareaId, input.tareaId),
+        eq(tareasEtiquetas.etiquetaId, input.etiquetaId),
+      ),
+    )
+  return { ok: true }
 }

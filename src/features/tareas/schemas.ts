@@ -73,9 +73,25 @@ export const crearProyectoSchema = z.object({
   icono: z.string().max(40).default("carpeta"),
 })
 
+export const crearEtiquetaSchema = z.object({
+  nombre: z.string().trim().min(1, "Poné un nombre").max(40),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Color inválido")
+    .default("#737373"),
+  proyectoId: z.number().int().positive().nullable().optional(),
+})
+
+export const etiquetaTareaSchema = z.object({
+  tareaId: z.number().int().positive(),
+  etiquetaId: z.number().int().positive(),
+})
+
 export type CrearTareaRapidaInput = z.infer<typeof crearTareaRapidaSchema>
 export type CrearTareaInput = z.infer<typeof crearTareaSchema>
 export type ActualizarTareaInput = z.infer<typeof actualizarTareaSchema>
 export type MoverTareaInput = z.infer<typeof moverTareaSchema>
 export type AlternarTareaInput = z.infer<typeof alternarTareaSchema>
 export type CrearProyectoInput = z.infer<typeof crearProyectoSchema>
+export type CrearEtiquetaInput = z.infer<typeof crearEtiquetaSchema>
+export type EtiquetaTareaInput = z.infer<typeof etiquetaTareaSchema>

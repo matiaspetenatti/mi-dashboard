@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, Check, GitBranch, Plus, Trash2 } from "lucide-react"
+import { CalendarDays, Check, GitBranch, Plus, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -30,21 +30,27 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   actualizarTarea,
   alternarTarea,
+  asignarEtiqueta,
+  crearEtiqueta,
   crearTarea,
   eliminarTarea,
+  quitarEtiqueta,
 } from "@/features/tareas/server/functions"
+import { paleta } from "@/features/tareas/constantes"
 import { prioridadesTarea } from "@/features/tareas/schemas"
 import type { TareaConDetalle } from "@/features/tareas/types"
-import type { EstadoProyecto } from "@/server/db/schema"
+import type { EstadoProyecto, Etiqueta } from "@/server/db/schema"
 import { cn } from "cn"
 
 export function PanelTarea({
   tarea,
   estados,
+  etiquetas,
   onOpenChange,
 }: {
   tarea: TareaConDetalle | null
   estados: EstadoProyecto[]
+  etiquetas: Etiqueta[]
   onOpenChange: (open: boolean) => void
 }) {
   return (
@@ -60,6 +66,7 @@ export function PanelTarea({
             key={tarea.id}
             tarea={tarea}
             estados={estados}
+            etiquetas={etiquetas}
             onClose={() => onOpenChange(false)}
           />
         ) : null}
@@ -71,10 +78,12 @@ export function PanelTarea({
 function ContenidoTarea({
   tarea,
   estados,
+  etiquetas,
   onClose,
 }: {
   tarea: TareaConDetalle
   estados: EstadoProyecto[]
+  etiquetas: Etiqueta[]
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
@@ -85,6 +94,9 @@ function ContenidoTarea({
   const [fechaInicio, setFechaInicio] = useState(tarea.fechaInicio ?? "")
   const [fechaLimite, setFechaLimite] = useState(tarea.fechaLimite ?? "")
   const [nuevaSubtarea, setNuevaSubtarea] = useState("")
+  const [mostrarNuevaEtiqueta, setMostrarNuevaEtiqueta] = useState(false)
+  const [nombreEtiqueta, setNombreEtiqueta] = useState("")
+  const [colorEtiqueta, setColorEtiqueta] = useState<string>(paleta[0])
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
 
   const completada = tarea.estado.categoria === "completado"
@@ -94,6 +106,13 @@ function ContenidoTarea({
   const estadoPendiente =
     estadosProyecto.find((estado) => estado.categoria === "pendiente") ??
     estadosProyecto.at(0)
+
+  const etiquetasDisponibles = etiquetas.filter(
+    (etiqueta) =>
+      (etiqueta.proyectoId === null ||
+        etiqueta.proyectoId === tarea.proyectoId) &&
+      !tarea.etiquetas.some((actual) => actual.id === etiqueta.id),
+  )
 
   const guardar = useMutation({
     mutationFn: () =>
@@ -155,6 +174,49 @@ function ContenidoTarea({
       setNuevaSubtarea("")
     },
     onError: () => toast.error("No se pudo crear la subtarea"),
+  })
+
+  const asignar = useMutation({
+    mutationFn: (etiquetaId: number) =>
+      asignarEtiqueta({ data: { tareaId: tarea.id, etiquetaId } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tareas"] })
+      toast.success("Etiqueta agregada")
+    },
+    onError: () => toast.error("No se pudo agregar la etiqueta"),
+  })
+
+  const quitar = useMutation({
+    mutationFn: (etiquetaId: number) =>
+      quitarEtiqueta({ data: { tareaId: tarea.id, etiquetaId } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tareas"] })
+      toast.success("Etiqueta quitada")
+    },
+    onError: () => toast.error("No se pudo quitar la etiqueta"),
+  })
+
+  const crearEtiquetaMutation = useMutation({
+    mutationFn: async () => {
+      const etiqueta = await crearEtiqueta({
+        data: {
+          nombre: nombreEtiqueta,
+          color: colorEtiqueta,
+          proyectoId: tarea.proyectoId,
+        },
+      })
+      await asignarEtiqueta({
+        data: { tareaId: tarea.id, etiquetaId: etiqueta.id },
+      })
+      return etiqueta
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tareas"] })
+      toast.success("Etiqueta creada")
+      setNombreEtiqueta("")
+      setMostrarNuevaEtiqueta(false)
+    },
+    onError: () => toast.error("No se pudo crear la etiqueta"),
   })
 
   return (
@@ -265,26 +327,100 @@ function ContenidoTarea({
           </div>
         </div>
 
-        {tarea.etiquetas.length > 0 ? (
-          <div className="space-y-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <Label>Etiquetas</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {tarea.etiquetas.map((etiqueta) => (
-                <Badge
-                  key={etiqueta.id}
-                  variant="outline"
-                  className="rounded-full px-2 py-0.5 text-[9px] font-bold"
-                  style={{
-                    backgroundColor: `${etiqueta.color}1f`,
-                    color: etiqueta.color,
-                  }}
-                >
-                  {etiqueta.nombre}
-                </Badge>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setMostrarNuevaEtiqueta((valor) => !valor)}
+              className="text-[10px] font-bold text-muted-foreground hover:text-heading"
+            >
+              {mostrarNuevaEtiqueta ? "Cancelar" : "+ Nueva"}
+            </button>
           </div>
-        ) : null}
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {tarea.etiquetas.map((etiqueta) => (
+              <Badge
+                key={etiqueta.id}
+                variant="outline"
+                className="gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold"
+                style={{
+                  backgroundColor: `${etiqueta.color}1f`,
+                  color: etiqueta.color,
+                }}
+              >
+                {etiqueta.nombre}
+                <button
+                  type="button"
+                  aria-label={`Quitar ${etiqueta.nombre}`}
+                  onClick={() => quitar.mutate(etiqueta.id)}
+                  className="rounded-full p-0.5 hover:bg-black/10"
+                >
+                  <X className="size-2.5" />
+                </button>
+              </Badge>
+            ))}
+
+            {etiquetasDisponibles.length > 0 ? (
+              <select
+                value=""
+                onChange={(event) => {
+                  const id = Number(event.target.value)
+                  if (id) asignar.mutate(id)
+                }}
+                aria-label="Agregar etiqueta"
+                className="h-7 rounded-full border border-outline-variant/70 bg-card px-2 text-[9px] font-bold text-muted-foreground outline-none focus:border-ring"
+              >
+                <option value="">+ Agregar</option>
+                {etiquetasDisponibles.map((etiqueta) => (
+                  <option key={etiqueta.id} value={etiqueta.id}>
+                    {etiqueta.nombre}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
+
+          {mostrarNuevaEtiqueta ? (
+            <div className="space-y-2 rounded-2xl bg-surface-container-low p-3">
+              <Input
+                value={nombreEtiqueta}
+                onChange={(event) => setNombreEtiqueta(event.target.value)}
+                placeholder="Nombre de la etiqueta"
+                className="h-8 text-xs"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {paleta.slice(0, 8).map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    aria-label={`Color ${color}`}
+                    onClick={() => setColorEtiqueta(color)}
+                    className={cn(
+                      "size-4 rounded-full border-2",
+                      colorEtiqueta === color
+                        ? "border-heading ring-1 ring-lime-voltage"
+                        : "border-transparent",
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 rounded-full px-3 text-[10px]"
+                onClick={() => crearEtiquetaMutation.mutate()}
+                disabled={
+                  !nombreEtiqueta.trim() || crearEtiquetaMutation.isPending
+                }
+              >
+                Crear y asignar
+              </Button>
+            </div>
+          ) : null}
+        </div>
 
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">

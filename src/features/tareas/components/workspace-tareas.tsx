@@ -427,6 +427,7 @@ export function WorkspaceTareas({
       <PanelTarea
         tarea={tareaSeleccionada}
         estados={workspace.estados}
+        etiquetas={workspace.etiquetas}
         onOpenChange={(open) => {
           if (!open) setTareaSeleccionadaId(null)
         }}
