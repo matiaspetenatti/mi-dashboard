@@ -18,6 +18,7 @@ import { Route as AppAjustesRouteImport } from './routes/_app.ajustes'
 import { Route as AppAnimesRouteImport } from './routes/_app.animes'
 import { Route as AppClimaRouteImport } from './routes/_app.clima'
 import { Route as AppComidaRouteImport } from './routes/_app.comida'
+import { Route as AppDisenoRouteImport } from './routes/_app.diseno'
 import { Route as AppEstudioRouteImport } from './routes/_app.estudio'
 import { Route as AppFinanzasRouteImport } from './routes/_app.finanzas'
 import { Route as AppHabitosRouteImport } from './routes/_app.habitos'
@@ -68,6 +69,11 @@ const AppComidaRoute = AppComidaRouteImport.update({
   path: '/comida',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDisenoRoute = AppDisenoRouteImport.update({
+  id: '/diseno',
+  path: '/diseno',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstudioRoute = AppEstudioRouteImport.update({
   id: '/estudio',
   path: '/estudio',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/animes': typeof AppAnimesRoute
   '/clima': typeof AppClimaRoute
   '/comida': typeof AppComidaRoute
+  '/diseno': typeof AppDisenoRoute
   '/estudio': typeof AppEstudioRoute
   '/finanzas': typeof AppFinanzasRoute
   '/habitos': typeof AppHabitosRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/animes': typeof AppAnimesRoute
   '/clima': typeof AppClimaRoute
   '/comida': typeof AppComidaRoute
+  '/diseno': typeof AppDisenoRoute
   '/estudio': typeof AppEstudioRoute
   '/finanzas': typeof AppFinanzasRoute
   '/habitos': typeof AppHabitosRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/_app/animes': typeof AppAnimesRoute
   '/_app/clima': typeof AppClimaRoute
   '/_app/comida': typeof AppComidaRoute
+  '/_app/diseno': typeof AppDisenoRoute
   '/_app/estudio': typeof AppEstudioRoute
   '/_app/finanzas': typeof AppFinanzasRoute
   '/_app/habitos': typeof AppHabitosRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/animes'
     | '/clima'
     | '/comida'
+    | '/diseno'
     | '/estudio'
     | '/finanzas'
     | '/habitos'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/animes'
     | '/clima'
     | '/comida'
+    | '/diseno'
     | '/estudio'
     | '/finanzas'
     | '/habitos'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/_app/animes'
     | '/_app/clima'
     | '/_app/comida'
+    | '/_app/diseno'
     | '/_app/estudio'
     | '/_app/finanzas'
     | '/_app/habitos'
@@ -262,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComidaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/diseno': {
+      id: '/_app/diseno'
+      path: '/diseno'
+      fullPath: '/diseno'
+      preLoaderRoute: typeof AppDisenoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/estudio': {
       id: '/_app/estudio'
       path: '/estudio'
@@ -305,6 +324,7 @@ interface AppRouteChildren {
   AppAnimesRoute: typeof AppAnimesRoute
   AppClimaRoute: typeof AppClimaRoute
   AppComidaRoute: typeof AppComidaRoute
+  AppDisenoRoute: typeof AppDisenoRoute
   AppEstudioRoute: typeof AppEstudioRoute
   AppFinanzasRoute: typeof AppFinanzasRoute
   AppHabitosRoute: typeof AppHabitosRoute
@@ -318,6 +338,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnimesRoute: AppAnimesRoute,
   AppClimaRoute: AppClimaRoute,
   AppComidaRoute: AppComidaRoute,
+  AppDisenoRoute: AppDisenoRoute,
   AppEstudioRoute: AppEstudioRoute,
   AppFinanzasRoute: AppFinanzasRoute,
   AppHabitosRoute: AppHabitosRoute,

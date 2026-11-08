@@ -22,6 +22,7 @@ export function AppClerkProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
       signInUrl="/sign-in"
+      signUpUrl="/sign-up"
       appearance={appearance}
     >
       {children}

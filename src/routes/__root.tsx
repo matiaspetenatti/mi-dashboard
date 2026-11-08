@@ -10,6 +10,7 @@ import { ThemeProvider } from "next-themes"
 import type { ReactNode } from "react"
 
 import { AppClerkProvider } from "@/components/providers/clerk-provider"
+import { NotFound, RootError } from "@/components/templates/error-page"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import appCss from "@/styles/app.css?url"
@@ -17,6 +18,8 @@ import appCss from "@/styles/app.css?url"
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
+  errorComponent: RootError,
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
