@@ -1,1 +1,0 @@
-ALTER TABLE `examenes` ADD `resultado` text;

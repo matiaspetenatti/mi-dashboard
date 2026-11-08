@@ -1,1 +1,0 @@
-ALTER TABLE `comida_recetas` ADD `puntaje` integer DEFAULT 0 NOT NULL;
