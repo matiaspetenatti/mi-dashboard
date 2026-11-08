@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, Check, GitBranch, Trash2 } from "lucide-react"
+import { CalendarDays, Check, GitBranch, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   actualizarTarea,
   alternarTarea,
+  crearTarea,
   eliminarTarea,
 } from "@/features/tareas/server/functions"
 import { prioridadesTarea } from "@/features/tareas/schemas"
@@ -83,12 +84,16 @@ function ContenidoTarea({
   const [prioridad, setPrioridad] = useState(tarea.prioridad)
   const [fechaInicio, setFechaInicio] = useState(tarea.fechaInicio ?? "")
   const [fechaLimite, setFechaLimite] = useState(tarea.fechaLimite ?? "")
+  const [nuevaSubtarea, setNuevaSubtarea] = useState("")
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
 
   const completada = tarea.estado.categoria === "completado"
   const estadosProyecto = estados
     .filter((estado) => estado.proyectoId === tarea.proyectoId)
     .sort((a, b) => a.posicion - b.posicion)
+  const estadoPendiente =
+    estadosProyecto.find((estado) => estado.categoria === "pendiente") ??
+    estadosProyecto.at(0)
 
   const guardar = useMutation({
     mutationFn: () =>
@@ -130,6 +135,26 @@ function ContenidoTarea({
       onClose()
     },
     onError: () => toast.error("No se pudo eliminar la tarea"),
+  })
+
+  const crearSubtarea = useMutation({
+    mutationFn: (tituloSubtarea: string) => {
+      if (!estadoPendiente) throw new Error("El proyecto no tiene estados")
+      return crearTarea({
+        data: {
+          proyectoId: tarea.proyectoId,
+          estadoId: estadoPendiente.id,
+          parentId: tarea.id,
+          titulo: tituloSubtarea,
+        },
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tareas"] })
+      toast.success("Subtarea creada")
+      setNuevaSubtarea("")
+    },
+    onError: () => toast.error("No se pudo crear la subtarea"),
   })
 
   return (
@@ -261,12 +286,13 @@ function ContenidoTarea({
           </div>
         ) : null}
 
-        {tarea.subtareas.length > 0 ? (
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <GitBranch className="size-3.5" aria-hidden="true" />
-              Subtareas ({tarea.subtareasCompletadas}/{tarea.subtareas.length})
-            </Label>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <GitBranch className="size-3.5" aria-hidden="true" />
+            Subtareas ({tarea.subtareasCompletadas}/{tarea.subtareas.length})
+          </Label>
+
+          {tarea.subtareas.length > 0 ? (
             <ul className="space-y-1">
               {tarea.subtareas.map((subtarea) => (
                 <li
@@ -293,8 +319,38 @@ function ContenidoTarea({
                 </li>
               ))}
             </ul>
-          </div>
-        ) : null}
+          ) : null}
+
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (!nuevaSubtarea.trim()) return
+              crearSubtarea.mutate(nuevaSubtarea.trim())
+            }}
+          >
+            <Input
+              value={nuevaSubtarea}
+              onChange={(event) => setNuevaSubtarea(event.target.value)}
+              placeholder="Agregar subtarea..."
+              className="h-9 text-xs"
+              disabled={!estadoPendiente}
+            />
+            <Button
+              type="submit"
+              size="icon"
+              className="size-9 shrink-0"
+              aria-label="Agregar subtarea"
+              disabled={
+                !nuevaSubtarea.trim() ||
+                crearSubtarea.isPending ||
+                !estadoPendiente
+              }
+            >
+              <Plus className="size-4" aria-hidden="true" />
+            </Button>
+          </form>
+        </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-outline-variant/50 pt-4">
           <Button

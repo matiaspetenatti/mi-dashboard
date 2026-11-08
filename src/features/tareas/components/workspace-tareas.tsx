@@ -79,8 +79,9 @@ export function WorkspaceTareas({
     vencimiento: "todas",
     mostrarCompletadas: false,
   })
-  const [tareaSeleccionada, setTareaSeleccionada] =
-    useState<TareaConDetalle | null>(null)
+  const [tareaSeleccionadaId, setTareaSeleccionadaId] = useState<number | null>(
+    null,
+  )
   const [tareaAEliminar, setTareaAEliminar] =
     useState<TareaConDetalle | null>(null)
   const [nuevaTarea, setNuevaTarea] = useState<{
@@ -129,6 +130,17 @@ export function WorkspaceTareas({
 
   const estadosActuales = proyectoActual?.estados ?? workspace.estados
 
+  const tareaSeleccionada = useMemo(
+    () =>
+      workspace.tareas.find((tarea) => tarea.id === tareaSeleccionadaId) ??
+      null,
+    [workspace.tareas, tareaSeleccionadaId],
+  )
+
+  const abrirTarea = (tarea: TareaConDetalle) => {
+    setTareaSeleccionadaId(tarea.id)
+  }
+
   const invalidar = () => {
     void queryClient.invalidateQueries({ queryKey: ["tareas"] })
   }
@@ -175,7 +187,7 @@ export function WorkspaceTareas({
   }
 
   const onSeleccionar = (slug: string | null) => {
-    setTareaSeleccionada(null)
+    setTareaSeleccionadaId(null)
     onSeleccionarProyecto(slug)
   }
 
@@ -341,7 +353,7 @@ export function WorkspaceTareas({
               estados={estadosActuales}
               agruparPor={proyectoActual ? "estado" : "proyecto"}
               mostrarProyecto={!proyectoActual}
-              onAbrir={setTareaSeleccionada}
+              onAbrir={abrirTarea}
               onAlternar={onAlternar}
               onEliminar={setTareaAEliminar}
             />
@@ -385,7 +397,7 @@ export function WorkspaceTareas({
             <TableroTareas
               tareas={tareasFiltradas}
               estados={estadosActuales}
-              onAbrir={setTareaSeleccionada}
+              onAbrir={abrirTarea}
               onMover={(id, estadoId) => mover.mutate({ id, estadoId })}
               onAlternar={onAlternar}
               onCrearEnEstado={(estadoId) =>
@@ -397,7 +409,7 @@ export function WorkspaceTareas({
           {vista === "tabla" ? (
             <TablaTareas
               tareas={tareasFiltradas}
-              onAbrir={setTareaSeleccionada}
+              onAbrir={abrirTarea}
               onAlternar={onAlternar}
             />
           ) : null}
@@ -405,7 +417,7 @@ export function WorkspaceTareas({
           {vista === "calendario" ? (
             <CalendarioTareas
               tareas={tareasFiltradas}
-              onAbrir={setTareaSeleccionada}
+              onAbrir={abrirTarea}
               onCrearEnFecha={(fecha) => setNuevaTarea({ open: true, fecha })}
             />
           ) : null}
@@ -416,7 +428,7 @@ export function WorkspaceTareas({
         tarea={tareaSeleccionada}
         estados={workspace.estados}
         onOpenChange={(open) => {
-          if (!open) setTareaSeleccionada(null)
+          if (!open) setTareaSeleccionadaId(null)
         }}
       />
 
