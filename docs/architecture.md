@@ -70,5 +70,5 @@ Componente
 6. Animes (hecho): Kitsu, biblioteca, progreso, favoritos, criterios, estadísticas y calendario AniList. Pendientes: filtros avanzados y acciones masivas.
 7. Salud (hecho): bitácora de migraña, EVA, aura, síntomas, desencadenantes, Tetralgin, KPIs, gráfico, correlación con hábitos y diario de bienestar. Pendientes: informe PDF, clima e historial de peso.
 8. Comida (hecho): despensa, vencimientos, stock bajo, recetario, menú semanal, compras y reposición de stock. Pendientes: Chef IA, importación y precios.
-9. Hábitos (sección propia).
+9. Hábitos (hecho): check-in diario, rachas, heatmap anual, archivo y GitHub. Pendientes: frecuencias semanales, recordatorios y metas.
 10. Polish, PWA y deploy final.

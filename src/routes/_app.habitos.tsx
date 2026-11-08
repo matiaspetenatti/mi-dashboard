@@ -1,25 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { Activity } from "lucide-react"
+import { useSuspenseQuery } from "@tanstack/react-query"
 
-import { ModulePage } from "@/components/templates/module-page"
+import { WorkspaceHabitos } from "@/features/habitos/components/workspace-habitos"
+import { workspaceHabitosQuery } from "@/features/habitos/api"
 
 export const Route = createFileRoute("/_app/habitos")({
+  head: () => ({ meta: [{ title: "Hábitos · Mi Dashboard" }] }),
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(workspaceHabitosQuery)
+  },
   component: HabitosPage,
 })
 
 function HabitosPage() {
-  return (
-    <ModulePage
-      eyebrow="Rutina"
-      title="Hábitos"
-      description="Seguimiento diario, rachas y mapas de constancia."
-      icon={Activity}
-      features={[
-        "Hábitos personalizados y frecuencia",
-        "Check-in diario y rachas",
-        "Heatmap de constancia",
-        "Actividad de GitHub integrada",
-      ]}
-    />
-  )
+  const { data } = useSuspenseQuery(workspaceHabitosQuery)
+  return <WorkspaceHabitos workspace={data} />
 }

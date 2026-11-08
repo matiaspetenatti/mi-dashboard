@@ -75,13 +75,15 @@ El front-end **nunca** accede a la base de datos: todo pasa por server functions
 - **Fase 6 completada**: Animes con biblioteca, búsqueda en Kitsu, estados, progreso, favoritos, puntajes por criterios, estadísticas y calendario semanal de emisiones con AniList.
 - **Fase 7 completada**: Salud con bitácora de migraña, intensidad EVA, duración, aura, síntomas, desencadenantes, Tetralgin, KPIs, gráfico de evolución, correlación con hábitos y diario de bienestar.
 - **Fase 8 completada**: Comida con despensa, vencimientos y stock bajo, recetario, menú semanal, lista de compras y reposición automática de stock al marcar compras.
+- **Fase 9 completada**: Hábitos con check-in diario, rachas actual/máxima, heatmap de último año, archivo/reactivación y sincronización de actividad de GitHub.
 - **Pendiente de Tareas**: recurrencia, comentarios, adjuntos, dependencias, vistas guardadas y Google Calendar one-way.
 - **Pendiente de Finanzas**: reconciliación de rendimientos, importación desde MercadoPago, edición de cuentas/categorías y comparador de servicios.
 - **Pendiente de Estudio**: Google Calendar one-way para exámenes y calendario académico.
 - **Pendiente de Animes**: filtros por tags/temporada, acciones masivas y comparador de puntajes.
 - **Pendiente de Salud**: informe PDF, correlación con clima e historial de peso.
 - **Pendiente de Comida**: Chef IA, importación de recetas y seguimiento de precios.
-- Los módulos restantes siguen en construcción.
+- **Pendiente de Hábitos**: frecuencias semanales, recordatorios y metas.
+- Queda el polish final, PWA y deploy.
 
 ## Deploy
 
