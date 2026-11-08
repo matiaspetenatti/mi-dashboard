@@ -2,8 +2,11 @@ import { createServerFn } from "@tanstack/react-start"
 
 import { authMiddleware } from "@/server/auth/middleware"
 import {
+  actualizarEstadoSchema,
+  actualizarProyectoSchema,
   actualizarTareaSchema,
   alternarTareaSchema,
+  crearEstadoSchema,
   crearEtiquetaSchema,
   crearProyectoSchema,
   crearTareaRapidaSchema,
@@ -81,6 +84,30 @@ export const crearProyecto = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { crearProyectoEnDb } = await import("./mutations")
     return crearProyectoEnDb(data)
+  })
+
+export const actualizarProyecto = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(actualizarProyectoSchema)
+  .handler(async ({ data }) => {
+    const { actualizarProyectoEnDb } = await import("./mutations")
+    return actualizarProyectoEnDb(data)
+  })
+
+export const crearEstado = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(crearEstadoSchema)
+  .handler(async ({ data }) => {
+    const { crearEstadoEnDb } = await import("./mutations")
+    return crearEstadoEnDb(data)
+  })
+
+export const actualizarEstado = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(actualizarEstadoSchema)
+  .handler(async ({ data }) => {
+    const { actualizarEstadoEnDb } = await import("./mutations")
+    return actualizarEstadoEnDb(data)
   })
 
 export const crearEtiqueta = createServerFn({ method: "POST" })

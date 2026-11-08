@@ -43,7 +43,12 @@ export type WorkspaceTareas = {
   tareas: TareaConDetalle[]
 }
 
-export type VistaTareas = "lista" | "tablero" | "tabla" | "calendario"
+export type VistaTareas =
+  | "lista"
+  | "tablero"
+  | "tabla"
+  | "calendario"
+  | "estadisticas"
 
 export type FiltroVencimiento = "todas" | "hoy" | "vencidas" | "sin_fecha"
 

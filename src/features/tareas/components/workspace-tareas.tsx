@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
+  BarChart3,
   CalendarDays,
   CheckCheck,
   Kanban,
   List,
   Plus,
   Search,
+  Settings2,
   Table2,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -28,7 +30,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DialogoNuevaTarea } from "@/features/tareas/components/dialogo-nueva-tarea"
 import { DialogoProyecto } from "@/features/tareas/components/dialogo-proyecto"
+import { DialogoAjustesProyecto } from "@/features/tareas/components/dialogo-ajustes-proyecto"
 import { CalendarioTareas } from "@/features/tareas/components/calendario-tareas"
+import { EstadisticasTareas } from "@/features/tareas/components/estadisticas-tareas"
 import { ListaTareas } from "@/features/tareas/components/lista-tareas"
 import { NavProyectos } from "@/features/tareas/components/nav-proyectos"
 import { PanelTarea } from "@/features/tareas/components/panel-tarea"
@@ -60,6 +64,7 @@ const vistas: Array<{
   { value: "tablero", label: "Tablero", icon: Kanban },
   { value: "tabla", label: "Tabla", icon: Table2 },
   { value: "calendario", label: "Calendario", icon: CalendarDays },
+  { value: "estadisticas", label: "Stats", icon: BarChart3 },
 ]
 
 export function WorkspaceTareas({
@@ -90,6 +95,7 @@ export function WorkspaceTareas({
     fecha?: string
   }>({ open: false })
   const [nuevoProyecto, setNuevoProyecto] = useState(false)
+  const [ajustesProyecto, setAjustesProyecto] = useState(false)
 
   const proyectoActual = useMemo(
     () =>
@@ -202,17 +208,30 @@ export function WorkspaceTareas({
         }
         meta={`${resumenActual.pendientes} pendientes`}
         actions={
-          workspace.proyectos.length === 0 ? (
-            <Button onClick={() => setNuevoProyecto(true)}>
-              <Plus className="size-4" aria-hidden="true" />
-              Nuevo proyecto
-            </Button>
-          ) : (
-            <Button onClick={() => setNuevaTarea({ open: true })}>
-              <Plus className="size-4" aria-hidden="true" />
-              Nueva tarea
-            </Button>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            {proyectoActual ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 rounded-full px-4 text-xs font-bold"
+                onClick={() => setAjustesProyecto(true)}
+              >
+                <Settings2 className="size-4" aria-hidden="true" />
+                Ajustes
+              </Button>
+            ) : null}
+            {workspace.proyectos.length === 0 ? (
+              <Button onClick={() => setNuevoProyecto(true)}>
+                <Plus className="size-4" aria-hidden="true" />
+                Nuevo proyecto
+              </Button>
+            ) : (
+              <Button onClick={() => setNuevaTarea({ open: true })}>
+                <Plus className="size-4" aria-hidden="true" />
+                Nueva tarea
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -421,6 +440,13 @@ export function WorkspaceTareas({
               onCrearEnFecha={(fecha) => setNuevaTarea({ open: true, fecha })}
             />
           ) : null}
+
+          {vista === "estadisticas" ? (
+            <EstadisticasTareas
+              tareas={tareasProyecto}
+              estados={estadosActuales}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -447,6 +473,12 @@ export function WorkspaceTareas({
         open={nuevoProyecto}
         onOpenChange={setNuevoProyecto}
         onCreado={(slug) => onSeleccionar(slug)}
+      />
+
+      <DialogoAjustesProyecto
+        open={ajustesProyecto}
+        onOpenChange={setAjustesProyecto}
+        proyecto={proyectoActual}
       />
 
       <AlertDialog

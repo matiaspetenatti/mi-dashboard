@@ -13,8 +13,11 @@ import {
 } from "@/server/db/schema"
 import { prefijoDe, slugify } from "../constantes"
 import type {
+  ActualizarEstadoInput,
+  ActualizarProyectoInput,
   ActualizarTareaInput,
   AlternarTareaInput,
+  CrearEstadoInput,
   CrearEtiquetaInput,
   CrearProyectoInput,
   CrearTareaInput,
@@ -284,5 +287,55 @@ export async function quitarEtiquetaEnDb(input: EtiquetaTareaInput) {
         eq(tareasEtiquetas.etiquetaId, input.etiquetaId),
       ),
     )
+  return { ok: true }
+}
+
+export async function actualizarProyectoEnDb(input: ActualizarProyectoInput) {
+  const db = getDb()
+  const { id, ...cambios } = input
+  const update: Partial<typeof proyectos.$inferInsert> = {
+    actualizadoEn: ahora(),
+  }
+
+  if (cambios.nombre !== undefined) {
+    update.nombre = cambios.nombre
+    update.prefijo = prefijoDe(cambios.nombre)
+  }
+  if (cambios.descripcion !== undefined)
+    update.descripcion = cambios.descripcion
+  if (cambios.color !== undefined) update.color = cambios.color
+  if (cambios.archivado !== undefined) update.archivado = cambios.archivado
+
+  await db.update(proyectos).set(update).where(eq(proyectos.id, id))
+  return { ok: true }
+}
+
+export async function crearEstadoEnDb(input: CrearEstadoInput) {
+  const db = getDb()
+  const fila = (
+    await db
+      .select({ max: sql<number>`coalesce(max(${estadosProyecto.posicion}), -1)` })
+      .from(estadosProyecto)
+      .where(eq(estadosProyecto.proyectoId, input.proyectoId))
+  ).at(0)
+
+  const [estado] = await db
+    .insert(estadosProyecto)
+    .values({
+      proyectoId: input.proyectoId,
+      nombre: input.nombre,
+      color: input.color,
+      categoria: input.categoria,
+      posicion: Number(fila?.max ?? -1) + 1,
+    })
+    .returning({ id: estadosProyecto.id })
+
+  return { id: estado.id }
+}
+
+export async function actualizarEstadoEnDb(input: ActualizarEstadoInput) {
+  const db = getDb()
+  const { id, ...cambios } = input
+  await db.update(estadosProyecto).set(cambios).where(eq(estadosProyecto.id, id))
   return { ok: true }
 }

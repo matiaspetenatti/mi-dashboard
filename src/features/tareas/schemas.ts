@@ -87,6 +87,38 @@ export const etiquetaTareaSchema = z.object({
   etiquetaId: z.number().int().positive(),
 })
 
+const categoriaEstadoSchema = z.enum([
+  "pendiente",
+  "en_progreso",
+  "completado",
+  "cancelado",
+])
+
+export const actualizarProyectoSchema = z.object({
+  id: z.number().int().positive(),
+  nombre: z.string().trim().min(1).max(80).optional(),
+  descripcion: z.string().max(500).nullable().optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido").optional(),
+  archivado: z.boolean().optional(),
+})
+
+export const crearEstadoSchema = z.object({
+  proyectoId: z.number().int().positive(),
+  nombre: z.string().trim().min(1, "Poné un nombre").max(40),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Color inválido")
+    .default("#737373"),
+  categoria: categoriaEstadoSchema.default("pendiente"),
+})
+
+export const actualizarEstadoSchema = z.object({
+  id: z.number().int().positive(),
+  nombre: z.string().trim().min(1).max(40).optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido").optional(),
+  categoria: categoriaEstadoSchema.optional(),
+})
+
 export type CrearTareaRapidaInput = z.infer<typeof crearTareaRapidaSchema>
 export type CrearTareaInput = z.infer<typeof crearTareaSchema>
 export type ActualizarTareaInput = z.infer<typeof actualizarTareaSchema>
@@ -95,3 +127,6 @@ export type AlternarTareaInput = z.infer<typeof alternarTareaSchema>
 export type CrearProyectoInput = z.infer<typeof crearProyectoSchema>
 export type CrearEtiquetaInput = z.infer<typeof crearEtiquetaSchema>
 export type EtiquetaTareaInput = z.infer<typeof etiquetaTareaSchema>
+export type ActualizarProyectoInput = z.infer<typeof actualizarProyectoSchema>
+export type CrearEstadoInput = z.infer<typeof crearEstadoSchema>
+export type ActualizarEstadoInput = z.infer<typeof actualizarEstadoSchema>

@@ -68,7 +68,8 @@ El front-end **nunca** accede a la base de datos: todo pasa por server functions
 ## Estado
 
 - **Fase 1 completada**: shell, autenticación, Turso, design system, Inicio con datos reales y quick add de tareas.
-- **Fase 2 en curso**: módulo Tareas con proyectos, vistas lista/tablero/tabla/calendario, filtros, detalle de tarea y quick add. Google Calendar queda para el siguiente paso.
+- **Fase 2 (núcleo) completada**: Tareas con proyectos, estados, vistas lista/tablero/tabla/calendario, detalle, subtareas, etiquetas, ajustes de proyecto y estadísticas con TanStack Charts.
+- **Pendiente de Tareas**: recurrencia, comentarios, adjuntos, dependencias, vistas guardadas y Google Calendar one-way.
 - Los módulos restantes siguen en construcción.
 
 ## Deploy

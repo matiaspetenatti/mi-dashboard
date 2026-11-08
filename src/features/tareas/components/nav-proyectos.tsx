@@ -59,7 +59,9 @@ export function NavProyectos({
                 activo
                   ? "bg-primary-container text-on-primary-container"
                   : "text-muted-foreground hover:bg-muted hover:text-heading",
+                item.proyecto.archivado && "opacity-60",
               )}
+              title={item.proyecto.archivado ? "Proyecto archivado" : undefined}
             >
               <span
                 className="size-2.5 shrink-0 rounded-full"
