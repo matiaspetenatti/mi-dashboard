@@ -63,7 +63,7 @@ Componente
 
 1. Base + Inicio (hecho).
 2. Tareas (núcleo hecho): proyectos, estados, vistas lista/tablero/tabla/calendario, detalle, subtareas, etiquetas, ajustes de proyecto y estadísticas. Pendientes: recurrencia, comentarios/adjuntos/dependencias, vistas guardadas y Google Calendar one-way.
-3. Finanzas.
+3. Finanzas (núcleo hecho): cuentas, saldos, resumen mensual, evolución, categorías, movimientos y alta de movimientos/cuentas. Pendientes: reconciliación de rendimientos, importación y comparador.
 4. Clima completo.
 5. Estudio + calendario.
 6. Animes + Kitsu.

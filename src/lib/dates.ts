@@ -43,3 +43,24 @@ export function diasHasta(fecha: string, desde = fechaHoy()): number {
   const b = Date.parse(`${fecha}T00:00:00Z`)
   return Math.round((b - a) / 86_400_000)
 }
+
+export function sumarFecha(
+  fecha: string,
+  unidad: "dia" | "semana" | "mes" | "anio",
+  cada = 1,
+): string {
+  const [anio, mes, dia] = fecha.split("-").map(Number)
+
+  if (unidad === "dia" || unidad === "semana") {
+    const dias = (unidad === "dia" ? 1 : 7) * cada
+    return new Date(Date.UTC(anio, mes - 1, dia + dias))
+      .toISOString()
+      .slice(0, 10)
+  }
+
+  const destino = mes - 1 + (unidad === "mes" ? 1 : 12) * cada
+  const ultimoDia = new Date(Date.UTC(anio, destino + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(anio, destino, Math.min(dia, ultimoDia)))
+    .toISOString()
+    .slice(0, 10)
+}

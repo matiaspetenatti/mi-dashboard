@@ -1,25 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { Wallet } from "lucide-react"
+import { useSuspenseQuery } from "@tanstack/react-query"
 
-import { ModulePage } from "@/components/templates/module-page"
+import { WorkspaceFinanzas } from "@/features/finanzas/components/workspace-finanzas"
+import { workspaceFinanzasQuery } from "@/features/finanzas/api"
 
 export const Route = createFileRoute("/_app/finanzas")({
+  head: () => ({ meta: [{ title: "Finanzas · Mi Dashboard" }] }),
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(workspaceFinanzasQuery)
+  },
   component: FinanzasPage,
 })
 
 function FinanzasPage() {
-  return (
-    <ModulePage
-      eyebrow="Patrimonio"
-      title="Finanzas"
-      description="Cuentas, movimientos y evolución de tu patrimonio."
-      icon={Wallet}
-      features={[
-        "Cuentas y saldos consolidados",
-        "Ingresos, gastos y categorías",
-        "Evolución del patrimonio y rendimientos",
-        "Comparador de servicios y movimientos recurrentes",
-      ]}
-    />
-  )
+  const { data } = useSuspenseQuery(workspaceFinanzasQuery)
+  return <WorkspaceFinanzas workspace={data} />
 }

@@ -69,7 +69,9 @@ El front-end **nunca** accede a la base de datos: todo pasa por server functions
 
 - **Fase 1 completada**: shell, autenticación, Turso, design system, Inicio con datos reales y quick add de tareas.
 - **Fase 2 (núcleo) completada**: Tareas con proyectos, estados, vistas lista/tablero/tabla/calendario, detalle, subtareas, etiquetas, ajustes de proyecto y estadísticas con TanStack Charts.
+- **Fase 3 (núcleo) completada**: Finanzas con cuentas, saldos, resumen mensual, rendimientos estimados, evolución del patrimonio, gastos por categoría, movimientos recientes y alta de movimientos/cuentas.
 - **Pendiente de Tareas**: recurrencia, comentarios, adjuntos, dependencias, vistas guardadas y Google Calendar one-way.
+- **Pendiente de Finanzas**: reconciliación de rendimientos, importación desde MercadoPago, edición de cuentas/categorías y comparador de servicios.
 - Los módulos restantes siguen en construcción.
 
 ## Deploy
