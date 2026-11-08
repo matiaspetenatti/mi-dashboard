@@ -1,26 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { HeartPulse } from "lucide-react"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { z } from "zod"
 
-import { ModulePage } from "@/components/templates/module-page"
+import { WorkspaceSalud } from "@/features/salud/components/workspace-salud"
+import { workspaceSaludQuery } from "@/features/salud/api"
+
+const searchSchema = z.object({
+  vista: z.enum(["migrana", "bienestar"]).optional(),
+})
 
 export const Route = createFileRoute("/_app/salud")({
+  validateSearch: searchSchema,
+  head: () => ({ meta: [{ title: "Salud · Mi Dashboard" }] }),
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(workspaceSaludQuery)
+  },
   component: SaludPage,
 })
 
 function SaludPage() {
+  const { data } = useSuspenseQuery(workspaceSaludQuery)
+  const { vista } = Route.useSearch()
+  const navigate = Route.useNavigate()
+
   return (
-    <ModulePage
-      eyebrow="Bienestar"
-      title="Salud"
-      description="Registro de migraña, desencadenantes y bienestar diario."
-      icon={HeartPulse}
-      features={[
-        "Bitácora completa de episodios de migraña",
-        "Intensidad, duración, síntomas y medicación",
-        "Mapa de desencadenantes y correlaciones",
-        "Estadísticas e informes en PDF",
-        "Registro diario de bienestar",
-      ]}
+    <WorkspaceSalud
+      workspace={data}
+      vista={vista ?? "migrana"}
+      onCambiarVista={(siguiente) => {
+        void navigate({
+          search: (prev) => ({ ...prev, vista: siguiente }),
+          replace: true,
+        })
+      }}
     />
   )
 }
