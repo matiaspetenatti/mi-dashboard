@@ -67,7 +67,9 @@ El front-end **nunca** accede a la base de datos: todo pasa por server functions
 
 ## Estado
 
-Fase 1 completada: shell, autenticación, Turso, design system, Inicio con datos reales y quick add de tareas. Los módulos restantes están en construcción y se irán portando por fases.
+- **Fase 1 completada**: shell, autenticación, Turso, design system, Inicio con datos reales y quick add de tareas.
+- **Fase 2 en curso**: módulo Tareas con proyectos, vistas lista/tablero/tabla/calendario, filtros, detalle de tarea y quick add. Google Calendar queda para el siguiente paso.
+- Los módulos restantes siguen en construcción.
 
 ## Deploy
 

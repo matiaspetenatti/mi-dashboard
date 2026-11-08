@@ -62,7 +62,7 @@ Componente
 ## Fases
 
 1. Base + Inicio (hecho).
-2. Tareas + Google Calendar one-way.
+2. Tareas (en curso): proyectos, estados, vistas lista/tablero/tabla/calendario, detalle y quick add. Google Calendar one-way queda pendiente.
 3. Finanzas.
 4. Clima completo.
 5. Estudio + calendario.
