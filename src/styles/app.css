@@ -1,0 +1,413 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Wise — tonos nombrados */
+  --color-forest-ink: var(--forest-ink);
+  --color-lime-voltage: var(--lime-voltage);
+  --color-spruce: var(--spruce);
+  --color-linen-mist: var(--linen-mist);
+  --color-signal-blue: var(--signal-blue);
+  --color-alarm-red: var(--alarm-red);
+  --color-charcoal: var(--charcoal);
+  --color-obsidian: var(--obsidian);
+  --color-pebble: var(--pebble);
+  --color-slate: var(--slate);
+  --color-fog: var(--fog);
+  --color-paper: var(--paper);
+
+  /* Wise — roles de superficie */
+  --color-heading: var(--heading);
+  --color-card-inverse: var(--card-inverse);
+  --color-card-inverse-foreground: var(--card-inverse-foreground);
+  --color-card-inverse-muted: var(--card-inverse-muted);
+  --color-card-inverse-inset: var(--card-inverse-inset);
+  --color-card-inverse-border: var(--card-inverse-border);
+
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+
+  /* Wise — roles de acento */
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-tertiary: var(--tertiary);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-success: var(--success);
+  --color-on-success: var(--on-success);
+  --color-success-container: var(--success-container);
+  --color-on-success-container: var(--on-success-container);
+  --color-warning: var(--warning);
+  --color-on-warning: var(--on-warning);
+  --color-warning-container: var(--warning-container);
+  --color-on-warning-container: var(--on-warning-container);
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+
+  /* shadcn — roles semánticos */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-chart-finance-line: var(--chart-finance-line);
+  --color-chart-finance-area: var(--chart-finance-area);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Radios Wise: cards 10px, large cards 28px, píldoras 9999px */
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-2xl: 28px;
+  --radius-3xl: 32px;
+  --radius-4xl: 40px;
+  --radius-full: 9999px;
+
+  --shadow-elevation-1: var(--elev-1);
+  --shadow-elevation-2: var(--elev-2);
+  --shadow-elevation-3: var(--elev-3);
+  --shadow-elevation-4: var(--elev-4);
+  --shadow-elevation-5: var(--elev-5);
+
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root {
+  /* Wise — deep moss con una sola punta de Lime Voltage.
+     Tema base: claro, plano (sin gradientes), según Stitch + DESIGN.md. */
+  --background: #f7faf5;
+  --foreground: #454745;
+
+  --forest-ink: #163300;
+  --lime-voltage: #9fe870;
+  --spruce: #054d28;
+  --linen-mist: #e2f6d5;
+  --signal-blue: #0b4c72;
+  --alarm-red: #cb272f;
+  --charcoal: #454745;
+  --obsidian: #0e0f0c;
+  --pebble: #868685;
+  --slate: #6a6c6a;
+  --fog: #e8ebe6;
+  --paper: #ffffff;
+
+  --surface: #f7faf5;
+  --surface-dim: #d8dbd6;
+  --surface-bright: #f7faf5;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f4ef;
+  --surface-container: #ecefea;
+  --surface-container-high: #e6e9e4;
+  --surface-container-highest: #e0e3de;
+  --on-surface: #454745;
+  --on-surface-variant: #43483d;
+  --inverse-surface: #163300;
+  --inverse-on-surface: #ffffff;
+  --outline: #74796c;
+  --outline-variant: #c3c8b9;
+
+  --heading: #091c00;
+  --card-inverse: #163300;
+  --card-inverse-foreground: #ffffff;
+  --card-inverse-muted: #aff2bf;
+  --card-inverse-inset: #0b2400;
+  --card-inverse-border: rgba(226, 246, 213, 0.18);
+
+  --primary: #163300;
+  --on-primary: #ffffff;
+  --primary-container: #e2f6d5;
+  --on-primary-container: #163300;
+  --inverse-primary: #9fe870;
+
+  --secondary: #054d28;
+  --on-secondary: #ffffff;
+  --secondary-container: #e2f6d5;
+  --on-secondary-container: #054d28;
+
+  --tertiary: #163300;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #e2f6d5;
+  --on-tertiary-container: #163300;
+
+  --success: #054d28;
+  --on-success: #ffffff;
+  --success-container: #e2f6d5;
+  --on-success-container: #054d28;
+
+  --warning: #a16207;
+  --on-warning: #ffffff;
+  --warning-container: #fef3c7;
+  --on-warning-container: #a16207;
+
+  --error: #cb272f;
+  --on-error: #ffffff;
+  --error-container: #fdecec;
+  --on-error-container: #cb272f;
+
+  --card: #ffffff;
+  --card-foreground: #454745;
+  --popover: #ffffff;
+  --popover-foreground: #454745;
+  --primary-foreground: #ffffff;
+  --secondary-foreground: #ffffff;
+  --muted: #ecefea;
+  --muted-foreground: #74796c;
+  --accent: #e2f6d5;
+  --accent-foreground: #163300;
+  --destructive: #cb272f;
+  --destructive-foreground: #ffffff;
+  --border: #c3c8b9;
+  --input: #74796c;
+  --ring: #163300;
+
+  --chart-1: #163300;
+  --chart-2: #054d28;
+  --chart-3: #9fe870;
+  --chart-4: #0b4c72;
+  --chart-5: #e2f6d5;
+  --chart-finance-line: #258f38;
+  --chart-finance-area: #9fe870;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #454745;
+  --sidebar-primary: #163300;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e2f6d5;
+  --sidebar-accent-foreground: #163300;
+  --sidebar-border: #c3c8b9;
+  --sidebar-ring: #163300;
+
+  --radius: 10px;
+
+  --elev-1: rgba(22, 51, 0, 0.08) 0px 1px 2px 0, rgba(22, 51, 0, 0.06) 0px 1px 3px 1px;
+  --elev-2: rgba(22, 51, 0, 0.10) 0px 1px 2px 0, rgba(22, 51, 0, 0.08) 0px 2px 6px 2px;
+  --elev-3: rgba(22, 51, 0, 0.10) 0px 4px 8px 3px, rgba(22, 51, 0, 0.12) 0px 1px 3px 0;
+  --elev-4: rgba(22, 51, 0, 0.10) 0px 6px 10px 4px, rgba(22, 51, 0, 0.12) 0px 2px 3px 0;
+  --elev-5: rgba(22, 51, 0, 0.12) 0px 8px 12px 6px, rgba(22, 51, 0, 0.10) 0px 4px 4px 0;
+}
+
+.dark {
+  /* Wise invertido — dark casi negro verdoso del diseño de Stitch. */
+  --background: #0a1404;
+  --foreground: #f2f5ee;
+
+  --forest-ink: #163300;
+  --lime-voltage: #9fe870;
+  --spruce: #054d28;
+  --linen-mist: #1e3b0f;
+  --signal-blue: #38bdf8;
+  --alarm-red: #ff716c;
+  --charcoal: #cbd1c7;
+  --obsidian: #060d02;
+  --pebble: #9ea39a;
+  --slate: #9ea39a;
+  --fog: #0d1f05;
+  --paper: #122206;
+
+  --surface: #0c1805;
+  --surface-dim: #081003;
+  --surface-bright: #1a340b;
+  --surface-container-lowest: #0a1304;
+  --surface-container-low: #0e1c06;
+  --surface-container: #152a08;
+  --surface-container-high: #1b360c;
+  --surface-container-highest: #223d0d;
+  --on-surface: #f2f5ee;
+  --on-surface-variant: #c3c8b9;
+  --inverse-surface: #f2f5ee;
+  --inverse-on-surface: #0a1404;
+  --outline: #4b643a;
+  --outline-variant: rgba(159, 232, 112, 0.15);
+
+  --heading: #f2f5ee;
+  --card-inverse: #102405;
+  --card-inverse-foreground: #f2f5ee;
+  --card-inverse-muted: #aff2bf;
+  --card-inverse-inset: #0a1404;
+  --card-inverse-border: rgba(159, 232, 112, 0.3);
+
+  --primary: #9fe870;
+  --on-primary: #163300;
+  --primary-container: #163300;
+  --on-primary-container: #9fe870;
+  --inverse-primary: #163300;
+
+  --secondary: #9fe870;
+  --on-secondary: #092100;
+  --secondary-container: #0d3800;
+  --on-secondary-container: #9fe870;
+
+  --tertiary: #aff2bf;
+  --on-tertiary: #092100;
+  --tertiary-container: #003418;
+  --on-tertiary-container: #94d5a4;
+
+  --success: #9fe870;
+  --on-success: #163300;
+  --success-container: #0d3800;
+  --on-success-container: #9fe870;
+
+  --warning: #eab308;
+  --on-warning: #163300;
+  --warning-container: #2d5a14;
+  --on-warning-container: #eab308;
+
+  --error: #ffb4ab;
+  --on-error: #ffffff;
+  --error-container: #4e0002;
+  --on-error-container: #ffdad6;
+
+  --card: #122206;
+  --card-foreground: #f2f5ee;
+  --popover: #122206;
+  --popover-foreground: #f2f5ee;
+  --primary-foreground: #163300;
+  --secondary-foreground: #163300;
+  --muted: #152a08;
+  --muted-foreground: #c3c8b9;
+  --accent: #9fe870;
+  --accent-foreground: #163300;
+  --destructive: #cb272f;
+  --destructive-foreground: #ffffff;
+  --border: rgba(159, 232, 112, 0.2);
+  --input: rgba(159, 232, 112, 0.3);
+  --ring: #9fe870;
+
+  --chart-1: #9fe870;
+  --chart-2: #aff2bf;
+  --chart-3: #e2f6d5;
+  --chart-4: #38bdf8;
+  --chart-5: #94d5a4;
+  --chart-finance-line: #9fe870;
+  --chart-finance-area: #9fe870;
+
+  --sidebar: #102006;
+  --sidebar-foreground: #f2f5ee;
+  --sidebar-primary: #9fe870;
+  --sidebar-primary-foreground: #163300;
+  --sidebar-accent: #163300;
+  --sidebar-accent-foreground: #9fe870;
+  --sidebar-border: #1f3f0c;
+  --sidebar-ring: #9fe870;
+
+  --radius: 10px;
+
+  --elev-1: rgba(0, 0, 0, 0.40) 0px 1px 2px 0, rgba(0, 0, 0, 0.24) 0px 1px 3px 1px;
+  --elev-2: rgba(0, 0, 0, 0.44) 0px 1px 2px 0, rgba(0, 0, 0, 0.30) 0px 2px 6px 2px;
+  --elev-3: rgba(0, 0, 0, 0.36) 0px 4px 8px 3px, rgba(0, 0, 0, 0.44) 0px 1px 3px 0;
+  --elev-4: rgba(0, 0, 0, 0.36) 0px 6px 10px 4px, rgba(0, 0, 0, 0.44) 0px 2px 3px 0;
+  --elev-5: rgba(0, 0, 0, 0.40) 0px 8px 12px 6px, rgba(0, 0, 0, 0.36) 0px 4px 4px 0;
+}
+
+@layer base {
+  * {
+    @apply border-outline-variant/60 outline-ring/60;
+  }
+
+  html {
+    @apply font-sans antialiased;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-on-surface;
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--primary-container) 80%, transparent);
+    color: var(--on-primary-container);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
