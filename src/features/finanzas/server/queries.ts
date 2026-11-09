@@ -6,6 +6,7 @@ import {
   desc,
   eq,
   gte,
+  inArray,
   like,
   lte,
   or,
@@ -15,7 +16,12 @@ import {
 
 import { mesActual } from "@/lib/dates"
 import { getDb } from "@/server/db/client"
-import { cuentas, movimientos } from "@/server/db/schema"
+import {
+  categoriasFinanzas,
+  cuentas,
+  movimientos,
+} from "@/server/db/schema"
+import { expandirCategoriaSeleccionada } from "../lib/categorias"
 import { CATEGORIA_AJUSTE } from "../lib/cuentas"
 import type { MovimientosFinanzasInput } from "../schemas"
 import type {
@@ -101,7 +107,20 @@ export async function obtenerMovimientosFinanzas(
   }
 
   if (input.categoria) {
-    condiciones.push(eq(movimientos.categoria, input.categoria))
+    const jerarquia = await db
+      .select({
+        id: categoriasFinanzas.id,
+        nombre: categoriasFinanzas.nombre,
+        parentId: categoriasFinanzas.parentId,
+      })
+      .from(categoriasFinanzas)
+
+    condiciones.push(
+      inArray(
+        movimientos.categoria,
+        expandirCategoriaSeleccionada(jerarquia, input.categoria),
+      ),
+    )
   }
 
   if (input.busqueda) {

@@ -252,6 +252,7 @@ export function WorkspaceFinanzas({
 
       <MovimientosRecientes
         cuentas={workspace.cuentas}
+        categorias={workspace.categoriasDisponibles}
         onAgregar={() => setMovimientoOpen(true)}
         onEliminar={setMovimientoAEliminar}
       />

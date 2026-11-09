@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownLeft,
@@ -18,6 +18,15 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { movimientosFinanzasQuery } from "@/features/finanzas/api"
 import {
@@ -28,17 +37,26 @@ import type {
   CuentaConSaldo,
   MovimientoConCuenta,
 } from "@/features/finanzas/types"
+import type { CategoriaFinanza } from "@/server/db/schema"
 import { formatMonto } from "@/lib/format"
 import { cn } from "cn"
 
 const CATEGORIA_RENDIMIENTOS = "Rendimientos"
 
+const FILTROS_TIPO = [
+  { value: "todos", label: "Todos" },
+  { value: "ingreso", label: "Ingresos" },
+  { value: "gasto", label: "Gastos" },
+] as const
+
 export function MovimientosRecientes({
   cuentas,
+  categorias,
   onAgregar,
   onEliminar,
 }: {
   cuentas: CuentaConSaldo[]
+  categorias: CategoriaFinanza[]
   onAgregar: () => void
   onEliminar: (movimiento: MovimientoConCuenta) => void
 }) {
@@ -70,6 +88,62 @@ export function MovimientosRecientes({
   const { data, isPending, isError, isFetching, isPlaceholderData, refetch } =
     useQuery(movimientosFinanzasQuery(filtros))
 
+  const { gruposCategorias, extrasCategorias, itemsCategoria } = useMemo(() => {
+    const hijosPorPadre = new Map<number, CategoriaFinanza[]>()
+
+    for (const categoria of categorias) {
+      if (categoria.parentId === null) continue
+      const lista = hijosPorPadre.get(categoria.parentId) ?? []
+      lista.push(categoria)
+      hijosPorPadre.set(categoria.parentId, lista)
+    }
+
+    const ordenar = (a: CategoriaFinanza, b: CategoriaFinanza) =>
+      a.orden - b.orden || a.nombre.localeCompare(b.nombre, "es")
+
+    const grupos = categorias
+      .filter((categoria) => categoria.parentId === null)
+      .sort(ordenar)
+      .map((padre) => ({
+        padre,
+        hijos: (hijosPorPadre.get(padre.id) ?? []).sort(ordenar),
+      }))
+
+    const nombresConfigurados = new Set(
+      categorias.map((categoria) => categoria.nombre),
+    )
+    const extras = (data?.categorias ?? [])
+      .filter((nombre) => !nombresConfigurados.has(nombre))
+      .sort((a, b) => a.localeCompare(b, "es"))
+
+    return {
+      gruposCategorias: grupos,
+      extrasCategorias: extras,
+      itemsCategoria: [
+        { value: "todas", label: "Todas las categorías" },
+        ...grupos.flatMap(({ padre, hijos }) => [
+          { value: padre.nombre, label: padre.nombre },
+          ...hijos.map((hijo) => ({
+            value: hijo.nombre,
+            label: hijo.nombre,
+          })),
+        ]),
+        ...extras.map((nombre) => ({ value: nombre, label: nombre })),
+      ],
+    }
+  }, [categorias, data?.categorias])
+
+  const itemsCuenta = useMemo(
+    () => [
+      { value: "todas", label: "Todas las cuentas" },
+      ...cuentas.map((cuenta) => ({
+        value: String(cuenta.id),
+        label: cuenta.nombre,
+      })),
+    ],
+    [cuentas],
+  )
+
   const desde =
     data && data.total > 0 ? (data.pagina - 1) * data.porPagina + 1 : 0
   const hasta = data ? Math.min(data.pagina * data.porPagina, data.total) : 0
@@ -85,7 +159,8 @@ export function MovimientosRecientes({
     setFiltros((actuales) => ({ ...actuales, ...parcial, pagina: 1 }))
   }
 
-  function seleccionarCategoria(categoria: string) {
+  function seleccionarCategoria(valor: string | null) {
+    const categoria = !valor || valor === "todas" ? "" : valor
     const esRendimiento = categoria === CATEGORIA_RENDIMIENTOS
     setFiltros((actuales) => ({
       ...actuales,
@@ -167,20 +242,27 @@ export function MovimientosRecientes({
             >
               Tipo
             </Label>
-            <select
-              id="mov-filtro-tipo"
+            <Select
               value={filtros.tipo}
-              onChange={(event) =>
-                actualizarFiltros({
-                  tipo: event.target.value as MovimientosFinanzasInput["tipo"],
-                })
+              onValueChange={(valor) =>
+                actualizarFiltros({ tipo: valor ?? "todos" })
               }
-              className="h-9 w-full rounded-xl border border-outline-variant/70 bg-card px-3 text-xs font-semibold text-heading outline-none focus:border-ring"
+              items={FILTROS_TIPO}
             >
-              <option value="todos">Todos</option>
-              <option value="ingreso">Ingresos</option>
-              <option value="gasto">Gastos</option>
-            </select>
+              <SelectTrigger
+                id="mov-filtro-tipo"
+                className="h-9 w-full rounded-xl border-outline-variant/70 bg-card px-3 text-xs font-semibold text-heading"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FILTROS_TIPO.map((opcion) => (
+                  <SelectItem key={opcion.value} value={opcion.value}>
+                    {opcion.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
@@ -190,25 +272,35 @@ export function MovimientosRecientes({
             >
               Cuenta
             </Label>
-            <select
-              id="mov-filtro-cuenta"
-              value={filtros.cuentaId ?? ""}
-              onChange={(event) =>
+            <Select
+              value={
+                filtros.cuentaId === null
+                  ? "todas"
+                  : String(filtros.cuentaId)
+              }
+              onValueChange={(valor) =>
                 actualizarFiltros({
-                  cuentaId: event.target.value
-                    ? Number(event.target.value)
-                    : null,
+                  cuentaId:
+                    !valor || valor === "todas" ? null : Number(valor),
                 })
               }
-              className="h-9 w-full rounded-xl border border-outline-variant/70 bg-card px-3 text-xs font-semibold text-heading outline-none focus:border-ring"
+              items={itemsCuenta}
             >
-              <option value="">Todas las cuentas</option>
-              {cuentas.map((cuenta) => (
-                <option key={cuenta.id} value={cuenta.id}>
-                  {cuenta.nombre}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="mov-filtro-cuenta"
+                className="h-9 w-full rounded-xl border-outline-variant/70 bg-card px-3 text-xs font-semibold text-heading"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas las cuentas</SelectItem>
+                {cuentas.map((cuenta) => (
+                  <SelectItem key={cuenta.id} value={String(cuenta.id)}>
+                    {cuenta.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
@@ -218,19 +310,58 @@ export function MovimientosRecientes({
             >
               Categoría
             </Label>
-            <select
-              id="mov-filtro-categoria"
-              value={filtros.categoria}
-              onChange={(event) => seleccionarCategoria(event.target.value)}
-              className="h-9 w-full rounded-xl border border-outline-variant/70 bg-card px-3 text-xs font-semibold text-heading outline-none focus:border-ring"
+            <Select
+              value={filtros.categoria || "todas"}
+              onValueChange={seleccionarCategoria}
+              items={itemsCategoria}
             >
-              <option value="">Todas las categorías</option>
-              {(data?.categorias ?? []).map((categoria) => (
-                <option key={categoria} value={categoria}>
-                  {categoria}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="mov-filtro-categoria"
+                className="h-9 w-full rounded-xl border-outline-variant/70 bg-card px-3 text-xs font-semibold text-heading"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas las categorías</SelectItem>
+
+                {gruposCategorias.map(({ padre, hijos }) => (
+                  <SelectGroup key={padre.id}>
+                    <SelectItem
+                      value={padre.nombre}
+                      className="font-semibold"
+                    >
+                      {padre.nombre}
+                      {hijos.length > 0 ? (
+                        <span className="text-[9px] font-normal text-muted-foreground">
+                          · todos
+                        </span>
+                      ) : null}
+                    </SelectItem>
+
+                    {hijos.map((hijo) => (
+                      <SelectItem
+                        key={hijo.id}
+                        value={hijo.nombre}
+                        className="pl-5 text-xs"
+                      >
+                        {hijo.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+
+                {extrasCategorias.length > 0 ? (
+                  <>
+                    <SelectSeparator />
+                    {extrasCategorias.map((nombre) => (
+                      <SelectItem key={nombre} value={nombre}>
+                        {nombre}
+                      </SelectItem>
+                    ))}
+                  </>
+                ) : null}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
