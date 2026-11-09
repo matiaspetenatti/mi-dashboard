@@ -18,6 +18,7 @@ import {
 import { PageHeader } from "@/components/organisms/page-header"
 import { Button } from "@/components/ui/button"
 import { CategoriasFinanzasChart } from "@/features/finanzas/components/categorias-finanzas-chart"
+import { ComparadorServicios } from "@/features/finanzas/components/comparador-servicios"
 import { DialogoCuenta } from "@/features/finanzas/components/dialogo-cuenta"
 import { DialogoMovimiento } from "@/features/finanzas/components/dialogo-movimiento"
 import { EvolucionFinanzas } from "@/features/finanzas/components/evolucion-finanzas"
@@ -183,6 +184,8 @@ export function WorkspaceFinanzas({
         <EvolucionFinanzas evolucion={workspace.evolucion} />
         <CategoriasFinanzasChart categorias={workspace.categorias} />
       </section>
+
+      <ComparadorServicios comparacion={workspace.servicios} />
 
       <MovimientosRecientes
         cuentas={workspace.cuentas}

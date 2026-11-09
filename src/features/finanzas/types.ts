@@ -19,6 +19,26 @@ export type PuntoEvolucion = {
   saldo: number
 }
 
+export type ServicioComparado = {
+  categoria: string
+  anterior: number | null
+  actual: number | null
+  diferencia: number | null
+  porcentaje: number | null
+}
+
+export type ComparacionServicios = {
+  mesAnterior: string
+  mesActual: string
+  servicios: ServicioComparado[]
+  totalAnterior: number
+  totalActual: number
+  diferencia: number | null
+  porcentaje: number | null
+  sinRegistrar: number
+  sinBase: number
+}
+
 export type PaginaMovimientosFinanzas = {
   movimientos: MovimientoConCuenta[]
   total: number
@@ -41,4 +61,5 @@ export type FinanzasWorkspace = {
   categorias: Array<{ nombre: string; total: number }>
   evolucion: PuntoEvolucion[]
   categoriasDisponibles: CategoriaFinanza[]
+  servicios: ComparacionServicios
 }

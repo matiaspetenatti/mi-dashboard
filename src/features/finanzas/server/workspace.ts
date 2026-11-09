@@ -1,6 +1,15 @@
 import "@tanstack/react-start/server-only"
 
-import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  lte,
+  sql,
+} from "drizzle-orm"
 
 import { fechaHoy, mesActual, sumarFecha } from "@/lib/dates"
 import { getDb } from "@/server/db/client"
@@ -9,6 +18,10 @@ import {
   cuentas,
   movimientos,
 } from "@/server/db/schema"
+import {
+  construirComparacionServicios,
+  type FilaServicioMes,
+} from "../lib/servicios"
 import type {
   CuentaConSaldo,
   FinanzasWorkspace,
@@ -157,6 +170,61 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
     fechaIter = sumarFecha(fechaIter, "dia", 1)
   }
 
+  const mesAnterior = sumarFecha(`${mes}-01`, "mes", -1).slice(0, 7)
+  const padreServicios = categoriasDisponibles.find(
+    (categoria) =>
+      categoria.tipo === "gasto" &&
+      categoria.nombre === "Servicios" &&
+      categoria.parentId === null,
+  )
+  const serviciosConfigurados = padreServicios
+    ? categoriasDisponibles
+        .filter((categoria) => categoria.parentId === padreServicios.id)
+        .map((categoria) => ({
+          nombre: categoria.nombre,
+          orden: categoria.orden,
+        }))
+    : []
+  const nombresServicios = serviciosConfigurados.map(
+    (servicio) => servicio.nombre,
+  )
+
+  const filasServicios: FilaServicioMes[] =
+    nombresServicios.length > 0
+      ? (
+          await db
+            .select({
+              categoria: movimientos.categoria,
+              mes: sql<string>`substr(${movimientos.fecha}, 1, 7)`,
+              total: sql<number>`coalesce(sum(${movimientos.monto}), 0)`,
+            })
+            .from(movimientos)
+            .where(
+              and(
+                eq(movimientos.tipo, "gasto"),
+                inArray(movimientos.categoria, nombresServicios),
+                gte(movimientos.fecha, `${mesAnterior}-01`),
+                lte(movimientos.fecha, `${mes}-31`),
+              ),
+            )
+            .groupBy(
+              movimientos.categoria,
+              sql`substr(${movimientos.fecha}, 1, 7)`,
+            )
+        ).map((fila) => ({
+          categoria: fila.categoria,
+          mes: fila.mes,
+          total: Number(fila.total),
+        }))
+      : []
+
+  const servicios = construirComparacionServicios({
+    servicios: serviciosConfigurados,
+    filas: filasServicios,
+    mesActual: mes,
+    mesAnterior,
+  })
+
   return {
     cuentas: cuentasConSaldo,
     resumen: {
@@ -173,5 +241,6 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
     })),
     evolucion,
     categoriasDisponibles,
+    servicios,
   }
 }
