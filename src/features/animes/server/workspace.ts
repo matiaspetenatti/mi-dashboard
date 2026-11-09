@@ -19,6 +19,13 @@ function contarPorEstado(animes: AnimeVisto[]) {
   }))
 }
 
+const ordenTemporadas: Record<string, number> = {
+  verano: 0,
+  otono: 1,
+  invierno: 2,
+  primavera: 3,
+}
+
 function construirMetadatos(animes: AnimeVisto[]): AnimeMetadatos {
   const tipos = new Set<string>()
   const generos = new Set<string>()
@@ -56,7 +63,7 @@ function construirMetadatos(animes: AnimeVisto[]): AnimeMetadatos {
 
   const temporadasLista = [...temporadas.values()].sort((a, b) => {
     if (a.año !== b.año) return b.año - a.año
-    return a.label.localeCompare(b.label)
+    return (ordenTemporadas[a.temporada] ?? 0) - (ordenTemporadas[b.temporada] ?? 0)
   })
 
   return {

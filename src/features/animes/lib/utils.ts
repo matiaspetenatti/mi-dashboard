@@ -1,3 +1,29 @@
+const etiquetasTemporada = {
+  verano: "Verano",
+  otono: "Otoño",
+  invierno: "Invierno",
+  primavera: "Primavera",
+} as const
+
+type TemporadaSur = keyof typeof etiquetasTemporada
+
+function crearTemporada(temporada: TemporadaSur, anio: number) {
+  return {
+    key: `${temporada}-${anio}`,
+    label: `${etiquetasTemporada[temporada]} ${anio}`,
+    temporada,
+    anio,
+  }
+}
+
+/**
+ * Temporada del hemisferio sur a partir de la fecha de emisión:
+ * diciembre-febrero verano, marzo-mayo otoño, junio-agosto invierno
+ * y septiembre-noviembre primavera.
+ *
+ * Diciembre se agrupa con el verano del año siguiente para que
+ * diciembre 2024, enero 2025 y febrero 2025 compartan "Verano 2025".
+ */
 export function obtenerTemporadaAnime(fechaEmision?: string | null) {
   if (!fechaEmision) return null
   const fecha = fechaEmision.slice(0, 10)
@@ -8,37 +34,20 @@ export function obtenerTemporadaAnime(fechaEmision?: string | null) {
   const mes = Number(partes[1])
   if (Number.isNaN(anio) || Number.isNaN(mes)) return null
 
-  if (mes >= 1 && mes <= 3) {
-    return {
-      key: `invierno-${anio}`,
-      label: `Invierno ${anio}`,
-      temporada: "invierno",
-      anio,
-    }
+  if (mes === 12) {
+    return crearTemporada("verano", anio + 1)
   }
-  if (mes >= 4 && mes <= 6) {
-    return {
-      key: `primavera-${anio}`,
-      label: `Primavera ${anio}`,
-      temporada: "primavera",
-      anio,
-    }
+  if (mes === 1 || mes === 2) {
+    return crearTemporada("verano", anio)
   }
-  if (mes >= 7 && mes <= 9) {
-    return {
-      key: `verano-${anio}`,
-      label: `Verano ${anio}`,
-      temporada: "verano",
-      anio,
-    }
+  if (mes >= 3 && mes <= 5) {
+    return crearTemporada("otono", anio)
   }
-  if (mes >= 10 && mes <= 12) {
-    return {
-      key: `otono-${anio}`,
-      label: `Otoño ${anio}`,
-      temporada: "otono",
-      anio,
-    }
+  if (mes >= 6 && mes <= 8) {
+    return crearTemporada("invierno", anio)
+  }
+  if (mes >= 9 && mes <= 11) {
+    return crearTemporada("primavera", anio)
   }
   return null
 }
