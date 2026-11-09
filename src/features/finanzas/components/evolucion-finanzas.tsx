@@ -1,12 +1,13 @@
 "use client"
 
 import { useMemo } from "react"
-import { areaY, defineChart, lineY } from "@tanstack/charts"
+import { areaY, d3Curve, defineChart, lineY } from "@tanstack/charts"
 import { Chart } from "@tanstack/charts/react"
 import { scaleLinear } from "@tanstack/charts/scales/linear"
 import { scalePoint } from "@tanstack/charts/scales/point"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
+import { curveMonotoneX } from "d3-shape"
 
 import { ChartCard } from "@/components/organisms/chart-card"
 import type { PuntoEvolucion } from "@/features/finanzas/types"
@@ -36,15 +37,16 @@ export function EvolucionFinanzas({
             x: "fecha",
             y: "saldo",
             fill: "#9fe870",
-            fillOpacity: 0.2,
+            fillOpacity: 0.18,
+            curve: d3Curve(curveMonotoneX),
           }),
           lineY(datos, {
             id: "patrimonio-linea",
             x: "fecha",
             y: "saldo",
             stroke: "#258f38",
-            strokeWidth: 2.5,
-            points: true,
+            strokeWidth: 2.25,
+            curve: d3Curve(curveMonotoneX),
           }),
         ],
         scales: {
