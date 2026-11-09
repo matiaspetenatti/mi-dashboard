@@ -12,7 +12,6 @@ import {
 import type {
   CuentaConSaldo,
   FinanzasWorkspace,
-  MovimientoConCuenta,
   PuntoEvolucion,
 } from "../types"
 
@@ -35,7 +34,6 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
     totalesPorCuenta,
     resumenMes,
     categoriasMes,
-    movimientosRecientes,
     categoriasDisponibles,
     saldoPrevio,
     cambios,
@@ -77,19 +75,6 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
       .groupBy(movimientos.categoria)
       .orderBy(desc(sql<number>`sum(${movimientos.monto})`))
       .limit(8),
-    db
-      .select({
-        movimiento: movimientos,
-        cuenta: {
-          id: cuentas.id,
-          nombre: cuentas.nombre,
-          color: cuentas.color,
-        },
-      })
-      .from(movimientos)
-      .leftJoin(cuentas, eq(movimientos.cuentaId, cuentas.id))
-      .orderBy(desc(movimientos.fecha), desc(movimientos.id))
-      .limit(40),
     db
       .select()
       .from(categoriasFinanzas)
@@ -172,13 +157,6 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
     fechaIter = sumarFecha(fechaIter, "dia", 1)
   }
 
-  const movimientosConCuenta: MovimientoConCuenta[] = movimientosRecientes.map(
-    (fila) => ({
-      ...fila.movimiento,
-      cuenta: fila.cuenta?.id ? fila.cuenta : null,
-    }),
-  )
-
   return {
     cuentas: cuentasConSaldo,
     resumen: {
@@ -193,7 +171,6 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
       nombre: fila.nombre,
       total: Number(fila.total),
     })),
-    movimientos: movimientosConCuenta,
     evolucion,
     categoriasDisponibles,
   }

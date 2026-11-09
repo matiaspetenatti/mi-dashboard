@@ -1,6 +1,8 @@
-import { queryOptions } from "@tanstack/react-query"
+import { keepPreviousData, queryOptions } from "@tanstack/react-query"
 
+import type { MovimientosFinanzasInput } from "./schemas"
 import {
+  getMovimientosFinanzas,
   getResumenFinanzas,
   getWorkspaceFinanzas,
 } from "./server/functions"
@@ -16,3 +18,11 @@ export const workspaceFinanzasQuery = queryOptions({
   queryFn: () => getWorkspaceFinanzas(),
   staleTime: 60_000,
 })
+
+export const movimientosFinanzasQuery = (input: MovimientosFinanzasInput) =>
+  queryOptions({
+    queryKey: ["finanzas", "movimientos", input],
+    queryFn: () => getMovimientosFinanzas({ data: input }),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })

@@ -2,17 +2,7 @@
 
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Landmark,
-  Plus,
-  Trash2,
-  TrendingUp,
-  Wallet,
-} from "lucide-react"
-import { format, parseISO } from "date-fns"
-import { es } from "date-fns/locale"
+import { Landmark, Plus, TrendingUp, Wallet } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -31,13 +21,13 @@ import { CategoriasFinanzasChart } from "@/features/finanzas/components/categori
 import { DialogoCuenta } from "@/features/finanzas/components/dialogo-cuenta"
 import { DialogoMovimiento } from "@/features/finanzas/components/dialogo-movimiento"
 import { EvolucionFinanzas } from "@/features/finanzas/components/evolucion-finanzas"
+import { MovimientosRecientes } from "@/features/finanzas/components/movimientos-recientes"
 import { eliminarMovimiento } from "@/features/finanzas/server/functions"
 import type {
   FinanzasWorkspace,
   MovimientoConCuenta,
 } from "@/features/finanzas/types"
 import { formatMonto } from "@/lib/format"
-import { cn } from "cn"
 
 const ETIQUETAS_CUENTA: Record<string, string> = {
   billetera: "Billetera",
@@ -194,92 +184,11 @@ export function WorkspaceFinanzas({
         <CategoriasFinanzasChart categorias={workspace.categorias} />
       </section>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-black text-heading">
-            Movimientos recientes
-          </h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 rounded-full px-3 text-[10px] font-bold"
-            onClick={() => setMovimientoOpen(true)}
-          >
-            <Plus className="size-3.5" aria-hidden="true" />
-            Agregar
-          </Button>
-        </div>
-
-        <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-card shadow-elevation-1">
-          {workspace.movimientos.length === 0 ? (
-            <p className="px-4 py-10 text-center text-xs text-muted-foreground">
-              Sin movimientos registrados.
-            </p>
-          ) : (
-            <ul className="divide-y divide-outline-variant/30">
-              {workspace.movimientos.map((movimiento) => {
-                const ingreso = movimiento.tipo === "ingreso"
-                return (
-                  <li
-                    key={movimiento.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <span
-                      className={cn(
-                        "flex size-8 shrink-0 items-center justify-center rounded-full",
-                        ingreso
-                          ? "bg-success-container text-success"
-                          : "bg-error-container text-error",
-                      )}
-                    >
-                      {ingreso ? (
-                        <ArrowUpRight className="size-3.5" aria-hidden="true" />
-                      ) : (
-                        <ArrowDownLeft className="size-3.5" aria-hidden="true" />
-                      )}
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-bold text-heading">
-                        {movimiento.descripcion || movimiento.categoria}
-                      </p>
-                      <p className="truncate text-[9px] text-muted-foreground">
-                        {format(parseISO(movimiento.fecha), "d MMM yyyy", {
-                          locale: es,
-                        })}{" "}
-                        · {movimiento.categoria}
-                        {movimiento.cuenta
-                          ? ` · ${movimiento.cuenta.nombre}`
-                          : ""}
-                      </p>
-                    </div>
-
-                    <span
-                      className={cn(
-                        "tabular shrink-0 text-xs font-black",
-                        ingreso ? "text-success" : "text-error",
-                      )}
-                    >
-                      {ingreso ? "+" : "-"}
-                      {formatMonto(movimiento.monto)}
-                    </span>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 shrink-0 text-muted-foreground hover:text-error"
-                      aria-label="Eliminar movimiento"
-                      onClick={() => setMovimientoAEliminar(movimiento)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-      </section>
+      <MovimientosRecientes
+        cuentas={workspace.cuentas}
+        onAgregar={() => setMovimientoOpen(true)}
+        onEliminar={setMovimientoAEliminar}
+      />
 
       <DialogoMovimiento
         open={movimientoOpen}

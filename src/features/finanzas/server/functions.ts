@@ -5,6 +5,7 @@ import {
   crearCuentaSchema,
   crearMovimientoSchema,
   eliminarMovimientoSchema,
+  movimientosFinanzasSchema,
 } from "../schemas"
 
 export const getResumenFinanzas = createServerFn({ method: "GET" })
@@ -19,6 +20,14 @@ export const getWorkspaceFinanzas = createServerFn({ method: "GET" })
   .handler(async () => {
     const { obtenerWorkspaceFinanzas } = await import("./workspace")
     return obtenerWorkspaceFinanzas()
+  })
+
+export const getMovimientosFinanzas = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(movimientosFinanzasSchema)
+  .handler(async ({ data }) => {
+    const { obtenerMovimientosFinanzas } = await import("./queries")
+    return obtenerMovimientosFinanzas(data)
   })
 
 export const crearMovimiento = createServerFn({ method: "POST" })

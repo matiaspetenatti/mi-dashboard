@@ -19,6 +19,15 @@ export type PuntoEvolucion = {
   saldo: number
 }
 
+export type PaginaMovimientosFinanzas = {
+  movimientos: MovimientoConCuenta[]
+  total: number
+  pagina: number
+  porPagina: number
+  totalPaginas: number
+  categorias: string[]
+}
+
 export type FinanzasWorkspace = {
   cuentas: CuentaConSaldo[]
   resumen: {
@@ -30,7 +39,6 @@ export type FinanzasWorkspace = {
     cantidadCuentas: number
   }
   categorias: Array<{ nombre: string; total: number }>
-  movimientos: MovimientoConCuenta[]
   evolucion: PuntoEvolucion[]
   categoriasDisponibles: CategoriaFinanza[]
 }

@@ -31,5 +31,21 @@ export const crearCuentaSchema = z.object({
   rendimientoAnual: z.number().min(0).max(1000).default(0),
 })
 
+export const movimientosFinanzasSchema = z.object({
+  pagina: z.number().int().positive().default(1),
+  porPagina: z.number().int().positive().max(20).default(20),
+  tipo: z.enum(["todos", "ingreso", "gasto"]).default("todos"),
+  cuentaId: z.number().int().positive().nullable().default(null),
+  categoria: z.string().trim().max(80).default(""),
+  busqueda: z.string().trim().max(100).default(""),
+  ocultarRendimientos: z.boolean().default(true),
+})
+
 export type CrearMovimientoInput = z.infer<typeof crearMovimientoSchema>
 export type CrearCuentaInput = z.infer<typeof crearCuentaSchema>
+export type MovimientosFinanzasInput = z.infer<
+  typeof movimientosFinanzasSchema
+>
+
+export const MOVIMIENTOS_FINANZAS_INICIALES =
+  movimientosFinanzasSchema.parse({})
