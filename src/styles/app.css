@@ -411,3 +411,15 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Tooltip nativo de TanStack Charts alineado a los tokens Wise. */
+.chart-tooltip {
+  --ts-chart-tooltip-font: 500 0.75rem/1.35 "Inter Variable", ui-sans-serif,
+    system-ui, sans-serif;
+  --ts-chart-tooltip-background: var(--card);
+  --ts-chart-tooltip-color: var(--card-foreground);
+  --ts-chart-tooltip-border: 1px solid var(--outline-variant);
+  --ts-chart-tooltip-border-radius: 14px;
+  --ts-chart-tooltip-padding: 0.5rem 0.7rem;
+  --ts-chart-tooltip-shadow: 0 8px 24px rgb(22 51 0 / 0.12);
+}

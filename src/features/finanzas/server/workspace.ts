@@ -28,7 +28,7 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
   const db = getDb()
   const hoy = fechaHoy()
   const mes = mesActual()
-  const inicio = sumarFecha(hoy, "dia", -89)
+  const inicio = sumarFecha(hoy, "dia", -364)
 
   const [
     listaCuentas,
@@ -151,9 +151,17 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
   const cambiosPorDia = new Map(
     cambios.map((fila) => [fila.fecha, Number(fila.neto)]),
   )
+  // Si el rango pedido arranca antes del primer movimiento registrado, no
+  // dibujamos un tramo plano en cero: el patrimonio previo es desconocido.
+  const primeraFechaConCambios = cambios.at(0)?.fecha
+  const inicioEvolucion =
+    primeraFechaConCambios && primeraFechaConCambios > inicio
+      ? primeraFechaConCambios
+      : inicio
+
   let saldoCentavos = Number(saldoPrevio.at(0)?.neto ?? 0)
   const evolucion: PuntoEvolucion[] = []
-  let fechaIter = inicio
+  let fechaIter = inicioEvolucion
 
   while (fechaIter <= hoy) {
     saldoCentavos += cambiosPorDia.get(fechaIter) ?? 0
