@@ -87,6 +87,7 @@ Componente / ruta
 - Botones y tags: pill. Cards: 10px; cards grandes: 28px.
 - Acción primaria: lima (`bg-lime-voltage text-forest-ink`).
 - No usar gradientes ni sombras decorativas.
+- Usar siempre los componentes de shadcn/ui de `components/ui` cuando exista un equivalente (`Select`, `Checkbox`, `Dialog`, `Input`, `Button`, etc.). Evitar controles nativos como `<select>` salvo que no haya un componente adecuado.
 - shadcn/ui genera las primitivas en `components/ui`. No instalar el componente `chart` de shadcn: los gráficos son **TanStack Charts** (`@tanstack/charts/react`).
 - `components.json`: `style: "base-nova"`, `rsc: false`, `css: "src/styles/app.css"`.
 
@@ -127,6 +128,7 @@ Las variables con prefijo `VITE_` son públicas. El resto es solo servidor.
 
 - Antes de terminar: `npm run typecheck`, `npm run lint`, `npm test` y `npm run build`.
 - Mantener el código y los textos en español; nombres de dominio en español.
+- Priorizar siempre los componentes de shadcn/ui de `components/ui` sobre controles nativos cuando exista un equivalente.
 - No romper el límite servidor/cliente: si aparece un error de import-protection, mover la dependencia del servidor a un `await import()` dentro del handler.
 - No exponer secretos en componentes ni en variables `VITE_`.
 - No cambiar el esquema sin backup y auditoría previa.
