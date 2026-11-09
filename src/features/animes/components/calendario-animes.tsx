@@ -114,14 +114,14 @@ export function CalendarioAnimes({ animes }: { animes: AnimeVisto[] }) {
         </Button>
       </div>
 
-      <div className="grid gap-2 overflow-x-auto pb-1 md:grid-cols-7">
+      <div className="grid auto-cols-[minmax(10.5rem,1fr)] grid-flow-col gap-2 overflow-x-auto pb-2 xl:auto-cols-auto xl:grid-flow-row xl:grid-cols-7 xl:overflow-visible">
         {data.dias.map((dia) => {
           const esHoy = dia.fecha === fechaHoy()
           return (
             <section
               key={dia.indice}
               className={cn(
-                "flex min-w-40 flex-col rounded-3xl border p-3",
+                "flex min-w-0 flex-col rounded-3xl border p-3",
                 esHoy
                   ? "border-lime-voltage bg-linen-mist/50 dark:bg-primary-container/30"
                   : "border-outline-variant/60 bg-card",

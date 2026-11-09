@@ -17,11 +17,14 @@ export const etiquetasEstadoAnime: Record<EstadoAnime, string> = {
 }
 
 export const clasesEstadoAnime: Record<EstadoAnime, string> = {
-  planeado: "bg-surface-container text-muted-foreground",
-  viendo: "bg-signal-blue/10 text-signal-blue",
-  completado: "bg-success-container text-success",
-  en_pausa: "bg-warning-container text-warning",
-  abandonado: "bg-error-container text-error",
+  planeado: "bg-surface-container-high text-heading",
+  viendo: "bg-signal-blue text-white dark:text-forest-ink",
+  completado:
+    "bg-success text-on-success dark:bg-success-container dark:text-on-success-container",
+  en_pausa:
+    "bg-warning text-on-warning dark:bg-warning-container dark:text-on-warning-container",
+  abandonado:
+    "bg-error text-on-error dark:bg-error-container dark:text-on-error-container",
 }
 
 export const opcionesOrdenAnimes = [

@@ -27,6 +27,13 @@ import {
 import { PageHeader } from "@/components/organisms/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { AnimesEstadoChart } from "@/features/animes/components/animes-estado-chart"
 import { AnimesGenerosChart } from "@/features/animes/components/animes-generos-chart"
 import { CalendarioAnimes } from "@/features/animes/components/calendario-animes"
@@ -41,6 +48,7 @@ import {
   type OrdenAnimes,
 } from "@/features/animes/constantes"
 import { puntajeMostrable } from "@/features/animes/lib/criterios"
+import { obtenerTemporadaAnime } from "@/features/animes/lib/utils"
 import {
   alternarFavoritoAnime,
   borrarAnime,
@@ -62,6 +70,7 @@ export function WorkspaceAnimes({
   const [busqueda, setBusqueda] = useState("")
   const [estado, setEstado] = useState<"todos" | EstadoAnime>("todos")
   const [genero, setGenero] = useState("todos")
+  const [temporada, setTemporada] = useState("todas")
   const [orden, setOrden] = useState<OrdenAnimes>("puntaje_desc")
   const [soloFavoritos, setSoloFavoritos] = useState(false)
   const [pagina, setPagina] = useState(1)
@@ -110,6 +119,13 @@ export function WorkspaceAnimes({
       if (genero !== "todos" && !(anime.generos ?? []).includes(genero)) {
         return false
       }
+      if (
+        temporada !== "todas" &&
+        (obtenerTemporadaAnime(anime.fechaEmision)?.key ?? "sin-temporada") !==
+          temporada
+      ) {
+        return false
+      }
       if (soloFavoritos && !anime.favorito) return false
       if (texto.length === 0) return true
 
@@ -149,7 +165,15 @@ export function WorkspaceAnimes({
           return (puntajeMostrable(b) ?? -1) - (puntajeMostrable(a) ?? -1)
       }
     })
-  }, [workspace.animes, busqueda, estado, genero, soloFavoritos, orden])
+  }, [
+    workspace.animes,
+    busqueda,
+    estado,
+    genero,
+    temporada,
+    soloFavoritos,
+    orden,
+  ])
 
   const totalPaginas = Math.max(
     1,
@@ -170,6 +194,7 @@ export function WorkspaceAnimes({
     setBusqueda("")
     setEstado("todos")
     setGenero("todos")
+    setTemporada("todas")
     setOrden("puntaje_desc")
     setSoloFavoritos(false)
     setPagina(1)
@@ -179,6 +204,7 @@ export function WorkspaceAnimes({
     busqueda.trim().length > 0 ||
     estado !== "todos" ||
     genero !== "todos" ||
+    temporada !== "todas" ||
     soloFavoritos ||
     orden !== "puntaje_desc"
 
@@ -272,54 +298,117 @@ export function WorkspaceAnimes({
                 />
               </div>
 
-              <select
+              <Select
                 value={estado}
-                onChange={(event) =>
-                  cambiarFiltro(() =>
-                    setEstado(event.target.value as "todos" | EstadoAnime),
-                  )
+                onValueChange={(valor) =>
+                  cambiarFiltro(() => setEstado(valor ?? "todos"))
                 }
-                className="h-9 rounded-xl border border-outline-variant/70 bg-card px-2 text-[10px] font-semibold text-heading outline-none focus:border-ring"
-                aria-label="Filtrar por estado"
+                items={[
+                  { value: "todos", label: "Todos los estados" },
+                  ...Object.entries(etiquetasEstadoAnime).map(
+                    ([value, label]) => ({ value, label }),
+                  ),
+                ]}
               >
-                <option value="todos">Todos los estados</option>
-                {Object.entries(etiquetasEstadoAnime).map(([valor, etiqueta]) => (
-                  <option key={valor} value={valor}>
-                    {etiqueta}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className="h-9 rounded-xl border-outline-variant/70 bg-card px-3 text-[10px] font-semibold text-heading"
+                  aria-label="Filtrar por estado"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los estados</SelectItem>
+                  {Object.entries(etiquetasEstadoAnime).map(
+                    ([valor, etiqueta]) => (
+                      <SelectItem key={valor} value={valor}>
+                        {etiqueta}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
 
-              <select
+              <Select
                 value={genero}
-                onChange={(event) =>
-                  cambiarFiltro(() => setGenero(event.target.value))
+                onValueChange={(valor) =>
+                  cambiarFiltro(() => setGenero(valor ?? "todos"))
                 }
-                className="h-9 max-w-40 rounded-xl border border-outline-variant/70 bg-card px-2 text-[10px] font-semibold text-heading outline-none focus:border-ring"
-                aria-label="Filtrar por género"
+                items={[
+                  { value: "todos", label: "Todos los géneros" },
+                  ...workspace.metadatos.generos.map((item) => ({
+                    value: item,
+                    label: item,
+                  })),
+                ]}
               >
-                <option value="todos">Todos los géneros</option>
-                {workspace.metadatos.generos.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className="h-9 max-w-44 rounded-xl border-outline-variant/70 bg-card px-3 text-[10px] font-semibold text-heading"
+                  aria-label="Filtrar por género"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los géneros</SelectItem>
+                  {workspace.metadatos.generos.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <select
-                value={orden}
-                onChange={(event) =>
-                  cambiarFiltro(() => setOrden(event.target.value as OrdenAnimes))
+              <Select
+                value={temporada}
+                onValueChange={(valor) =>
+                  cambiarFiltro(() => setTemporada(valor ?? "todas"))
                 }
-                className="h-9 rounded-xl border border-outline-variant/70 bg-card px-2 text-[10px] font-semibold text-heading outline-none focus:border-ring"
-                aria-label="Ordenar animes"
+                items={[
+                  { value: "todas", label: "Todas las temporadas" },
+                  ...workspace.metadatos.temporadas.map((item) => ({
+                    value: item.key,
+                    label: item.label,
+                  })),
+                  { value: "sin-temporada", label: "Sin temporada" },
+                ]}
               >
-                {opcionesOrdenAnimes.map((opcion) => (
-                  <option key={opcion.value} value={opcion.value}>
-                    {opcion.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className="h-9 rounded-xl border-outline-variant/70 bg-card px-3 text-[10px] font-semibold text-heading"
+                  aria-label="Filtrar por temporada"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas las temporadas</SelectItem>
+                  {workspace.metadatos.temporadas.map((item) => (
+                    <SelectItem key={item.key} value={item.key}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="sin-temporada">Sin temporada</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={orden}
+                onValueChange={(valor) =>
+                  cambiarFiltro(() => setOrden(valor ?? "puntaje_desc"))
+                }
+                items={opcionesOrdenAnimes}
+              >
+                <SelectTrigger
+                  className="h-9 rounded-xl border-outline-variant/70 bg-card px-3 text-[10px] font-semibold text-heading"
+                  aria-label="Ordenar animes"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {opcionesOrdenAnimes.map((opcion) => (
+                    <SelectItem key={opcion.value} value={opcion.value}>
+                      {opcion.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
                 type="button"
@@ -383,7 +472,7 @@ export function WorkspaceAnimes({
                 No hay animes con esos filtros
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Probá con otro estado, género o limpiá la búsqueda.
+                Probá con otro estado, género, temporada o limpiá la búsqueda.
               </p>
               <Button
                 variant="outline"

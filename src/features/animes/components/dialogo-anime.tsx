@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
+  CalendarDays,
   Check,
   Loader2,
   Plus,
   Search,
   Star,
   Tv,
+  X,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -24,6 +26,14 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
 import { kitsuBusquedaQuery } from "@/features/animes/api"
 import {
@@ -32,6 +42,7 @@ import {
   extraerPuntajes,
   type CriterioAnimeKey,
 } from "@/features/animes/lib/criterios"
+import { obtenerTemporadaAnime } from "@/features/animes/lib/utils"
 import {
   actualizarAnime,
   crearAnime,
@@ -269,6 +280,7 @@ export function DialogoAnime({
   })
 
   const guardando = crear.isPending || editar.isPending
+  const temporadaFormulario = obtenerTemporadaAnime(form.fechaEmision)
 
   const totalPuntaje = useMemo(
     () =>
@@ -632,6 +644,13 @@ export function DialogoAnime({
                       actualizar("fechaEmision", event.target.value)
                     }
                   />
+                  <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <CalendarDays className="size-3" aria-hidden="true" />
+                    Temporada:{" "}
+                    <span className="font-bold text-heading">
+                      {temporadaFormulario?.label ?? "Sin temporada"}
+                    </span>
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="anime-score">Score MAL (0-10)</Label>
@@ -716,20 +735,30 @@ export function DialogoAnime({
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="anime-estado">Estado</Label>
-                  <select
-                    id="anime-estado"
+                  <Select
                     value={form.estado}
-                    onChange={(event) =>
-                      actualizar("estado", event.target.value as EstadoAnime)
+                    onValueChange={(valor) =>
+                      actualizar("estado", valor ?? "planeado")
                     }
-                    className="h-10 w-full rounded-xl border border-outline-variant/70 bg-card px-3 text-sm text-heading outline-none focus:border-ring"
+                    items={estadosAnime.map((estado) => ({
+                      value: estado,
+                      label: etiquetasEstadoAnime[estado],
+                    }))}
                   >
-                    {estadosAnime.map((estado) => (
-                      <option key={estado} value={estado}>
-                        {etiquetasEstadoAnime[estado]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      id="anime-estado"
+                      className="h-10 w-full rounded-xl border-outline-variant/70 bg-card px-3 text-sm text-heading"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {estadosAnime.map((estado) => (
+                        <SelectItem key={estado} value={estado}>
+                          {etiquetasEstadoAnime[estado]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="anime-vistos">Episodios vistos</Label>
@@ -809,33 +838,69 @@ export function DialogoAnime({
               ) : null}
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {CRITERIOS_ANIME.map((criterio) => (
-                  <div key={criterio.key} className="space-y-1">
-                    <Label
-                      htmlFor={`puntaje-${criterio.key}`}
-                      title={criterio.descripcion}
-                      className="text-[10px]"
+                {CRITERIOS_ANIME.map((criterio) => {
+                  const valor = puntajeONull(puntajes[criterio.key])
+                  return (
+                    <div
+                      key={criterio.key}
+                      className="space-y-1.5 rounded-xl border border-outline-variant/40 bg-card/70 p-2.5"
                     >
-                      {criterio.etiqueta}
-                    </Label>
-                    <Input
-                      id={`puntaje-${criterio.key}`}
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="1"
-                      value={puntajes[criterio.key]}
-                      onChange={(event) =>
-                        setPuntajes((anterior) => ({
-                          ...anterior,
-                          [criterio.key]: event.target.value,
-                        }))
-                      }
-                      placeholder="0-10"
-                      className="h-9"
-                    />
-                  </div>
-                ))}
+                      <div className="flex items-center justify-between gap-2">
+                        <Label
+                          htmlFor={`puntaje-${criterio.key}`}
+                          title={criterio.descripcion}
+                          className="text-[10px]"
+                        >
+                          {criterio.etiqueta}
+                        </Label>
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={cn(
+                              "min-w-6 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold tabular-nums",
+                              valor !== null
+                                ? "bg-lime-voltage text-forest-ink"
+                                : "bg-surface-container text-muted-foreground",
+                            )}
+                          >
+                            {valor ?? "—"}
+                          </span>
+                          {valor !== null ? (
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-surface-container hover:text-heading"
+                              aria-label={`Quitar puntaje de ${criterio.etiqueta}`}
+                              onClick={() =>
+                                setPuntajes((anterior) => ({
+                                  ...anterior,
+                                  [criterio.key]: "",
+                                }))
+                              }
+                            >
+                              <X className="size-3" aria-hidden="true" />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                      <Slider
+                        id={`puntaje-${criterio.key}`}
+                        value={[valor ?? 0]}
+                        min={0}
+                        max={10}
+                        step={1}
+                        aria-label={criterio.etiqueta}
+                        onValueChange={(nuevo) => {
+                          const numero = Array.isArray(nuevo)
+                            ? nuevo[0]
+                            : nuevo
+                          setPuntajes((anterior) => ({
+                            ...anterior,
+                            [criterio.key]: String(numero ?? 0),
+                          }))
+                        }}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </details>
 

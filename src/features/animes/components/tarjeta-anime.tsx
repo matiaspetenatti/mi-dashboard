@@ -1,6 +1,6 @@
 "use client"
 
-import { Pencil, Star, Tv } from "lucide-react"
+import { CalendarDays, Pencil, Star, Tv } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -8,6 +8,7 @@ import {
   etiquetasEstadoAnime,
 } from "@/features/animes/constantes"
 import { puntajeMostrable } from "@/features/animes/lib/criterios"
+import { obtenerTemporadaAnime } from "@/features/animes/lib/utils"
 import type { AnimeVisto } from "@/server/db/schema"
 import { cn } from "cn"
 
@@ -30,15 +31,16 @@ export function TarjetaAnime({
   const avance =
     total && total > 0 ? Math.min(100, Math.round((vistos / total) * 100)) : 0
   const puntaje = puntajeMostrable(anime)
+  const temporada = obtenerTemporadaAnime(anime.fechaEmision)
 
   return (
-    <div className="group relative">
+    <div className="group relative h-full">
       <button
         type="button"
         onClick={onAbrir}
-        className="flex w-full flex-col overflow-hidden rounded-3xl border border-outline-variant/60 bg-card text-left shadow-elevation-1 transition-all hover:-translate-y-0.5 hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-full w-full flex-col overflow-hidden rounded-3xl border border-outline-variant/60 bg-card text-left shadow-elevation-1 transition-all hover:-translate-y-0.5 hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-container">
+        <div className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-surface-container">
           {anime.imagen ? (
             <img
               src={anime.imagen}
@@ -70,7 +72,7 @@ export function TarjetaAnime({
           <div className="absolute inset-x-2 bottom-2 flex items-end justify-between gap-2">
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-[9px] font-bold",
+                "rounded-full px-2 py-0.5 text-[9px] font-bold shadow-sm",
                 clasesEstadoAnime[anime.estado],
               )}
             >
@@ -85,37 +87,47 @@ export function TarjetaAnime({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 p-3">
-          <div className="min-w-0">
-            <h3 className="line-clamp-2 text-xs font-black leading-snug text-heading">
-              {titulo}
-            </h3>
-            <p className="mt-0.5 truncate text-[9px] text-muted-foreground">
-              {[anime.ano, anime.estudio].filter(Boolean).join(" · ") ||
-                "Sin año"}
-              {anime.scoreMal !== null
-                ? ` · MAL ${anime.scoreMal.toFixed(2)}`
-                : ""}
-            </p>
-          </div>
+        <div className="flex flex-1 flex-col gap-1.5 p-3">
+          <h3 className="line-clamp-2 min-h-[2.1rem] text-xs font-black leading-snug text-heading">
+            {titulo}
+          </h3>
 
-          {total ? (
-            <div className="mt-auto">
-              <div className="h-1.5 overflow-hidden rounded-full bg-surface-container">
-                <div
-                  className="h-full rounded-full bg-lime-voltage"
-                  style={{ width: `${Math.max(avance > 0 ? 3 : 0, avance)}%` }}
-                />
-              </div>
-              <p className="mt-1 text-right text-[9px] font-bold text-muted-foreground">
-                {vistos}/{total} · {avance}%
+          <span className="inline-flex w-fit max-w-full items-center gap-1 rounded-full bg-surface-container px-1.5 py-0.5 text-[9px] font-bold text-heading">
+            <CalendarDays className="size-2.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">
+              {temporada?.label ?? "Sin temporada"}
+            </span>
+          </span>
+
+          <p className="truncate text-[9px] text-muted-foreground">
+            {[anime.ano, anime.estudio].filter(Boolean).join(" · ") ||
+              "Sin año"}
+            {anime.scoreMal !== null
+              ? ` · MAL ${anime.scoreMal.toFixed(2)}`
+              : ""}
+          </p>
+
+          <div className="mt-auto pt-1">
+            {total ? (
+              <>
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface-container">
+                  <div
+                    className="h-full rounded-full bg-lime-voltage"
+                    style={{
+                      width: `${Math.max(avance > 0 ? 3 : 0, avance)}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-1 text-right text-[9px] font-bold text-muted-foreground">
+                  {vistos}/{total} · {avance}%
+                </p>
+              </>
+            ) : (
+              <p className="text-right text-[9px] font-bold text-muted-foreground">
+                {vistos > 0 ? `${vistos} episodios vistos` : "Sin progreso"}
               </p>
-            </div>
-          ) : (
-            <p className="mt-auto text-[9px] font-bold text-muted-foreground">
-              {vistos > 0 ? `${vistos} episodios vistos` : "Sin progreso"}
-            </p>
-          )}
+            )}
+          </div>
         </div>
       </button>
 

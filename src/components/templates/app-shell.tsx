@@ -16,7 +16,7 @@ export function AppShell({
     <SidebarProvider>
       <QuickAddProvider>
         <AppSidebar viewer={viewer} />
-        <SidebarInset>
+        <SidebarInset className="min-w-0">
           <AppTopbar />
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-4 py-6 md:px-8 md:py-8">
             {children}
