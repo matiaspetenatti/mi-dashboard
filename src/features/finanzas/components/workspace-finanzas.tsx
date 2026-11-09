@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
   SlidersHorizontal,
+  Trash2,
   TrendingUp,
   Wallet,
 } from "lucide-react"
@@ -31,7 +32,10 @@ import { DialogoCuenta } from "@/features/finanzas/components/dialogo-cuenta"
 import { DialogoMovimiento } from "@/features/finanzas/components/dialogo-movimiento"
 import { EvolucionFinanzas } from "@/features/finanzas/components/evolucion-finanzas"
 import { MovimientosRecientes } from "@/features/finanzas/components/movimientos-recientes"
-import { eliminarMovimiento } from "@/features/finanzas/server/functions"
+import {
+  eliminarCuenta,
+  eliminarMovimiento,
+} from "@/features/finanzas/server/functions"
 import type {
   CuentaConSaldo,
   FinanzasWorkspace,
@@ -59,6 +63,8 @@ export function WorkspaceFinanzas({
     useState<CuentaConSaldo | null>(null)
   const [cuentaAjustando, setCuentaAjustando] =
     useState<CuentaConSaldo | null>(null)
+  const [cuentaAEliminar, setCuentaAEliminar] =
+    useState<CuentaConSaldo | null>(null)
   const [movimientoAEliminar, setMovimientoAEliminar] =
     useState<MovimientoConCuenta | null>(null)
 
@@ -70,6 +76,16 @@ export function WorkspaceFinanzas({
       setMovimientoAEliminar(null)
     },
     onError: () => toast.error("No se pudo eliminar el movimiento"),
+  })
+
+  const borrarCuenta = useMutation({
+    mutationFn: (id: number) => eliminarCuenta({ data: { id } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["finanzas"] })
+      toast.success("Cuenta eliminada")
+      setCuentaAEliminar(null)
+    },
+    onError: () => toast.error("No se pudo eliminar la cuenta"),
   })
 
   return (
@@ -175,15 +191,26 @@ export function WorkspaceFinanzas({
                     {cuenta.nombre}
                   </h3>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 shrink-0 text-muted-foreground hover:text-heading"
-                  aria-label={`Editar ${cuenta.nombre}`}
-                  onClick={() => setCuentaEditando(cuenta)}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-muted-foreground hover:text-heading"
+                    aria-label={`Editar ${cuenta.nombre}`}
+                    onClick={() => setCuentaEditando(cuenta)}
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-muted-foreground hover:text-error"
+                    aria-label={`Eliminar ${cuenta.nombre}`}
+                    onClick={() => setCuentaAEliminar(cuenta)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
               </div>
               <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {ETIQUETAS_CUENTA[cuenta.tipo] ?? cuenta.tipo}
@@ -255,6 +282,36 @@ export function WorkspaceFinanzas({
           if (!open) setCuentaAjustando(null)
         }}
       />
+
+      <AlertDialog
+        open={Boolean(cuentaAEliminar)}
+        onOpenChange={(open) => {
+          if (!open) setCuentaAEliminar(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta cuenta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se va a borrar “{cuentaAEliminar?.nombre}” y todos sus
+              movimientos asociados. Saldo actual:{" "}
+              {cuentaAEliminar ? formatMonto(cuentaAEliminar.saldo) : ""}. No
+              se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-error text-paper hover:bg-error/90"
+              onClick={() => {
+                if (cuentaAEliminar) borrarCuenta.mutate(cuentaAEliminar.id)
+              }}
+            >
+              Eliminar cuenta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={Boolean(movimientoAEliminar)}

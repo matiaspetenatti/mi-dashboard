@@ -99,6 +99,16 @@ export async function actualizarCuentaEnDb(input: ActualizarCuentaInput) {
   return { ok: true }
 }
 
+export async function eliminarCuentaEnDb(id: number) {
+  const db = getDb()
+
+  return db.transaction(async (tx) => {
+    await tx.delete(movimientos).where(eq(movimientos.cuentaId, id))
+    await tx.delete(cuentas).where(eq(cuentas.id, id))
+    return { ok: true }
+  })
+}
+
 export async function ajustarSaldoCuentaEnDb(input: AjustarSaldoInput) {
   const db = getDb()
   const cuenta = (

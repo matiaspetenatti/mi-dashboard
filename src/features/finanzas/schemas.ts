@@ -21,6 +21,10 @@ export const eliminarMovimientoSchema = z.object({
   id: z.number().int().positive(),
 })
 
+export const eliminarCuentaSchema = z.object({
+  id: z.number().int().positive(),
+})
+
 const cuentaBaseSchema = z.object({
   nombre: z.string().trim().min(1, "Poné un nombre").max(80),
   tipo: z.enum(tiposCuenta).default("billetera"),

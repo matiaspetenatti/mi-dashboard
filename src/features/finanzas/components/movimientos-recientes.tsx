@@ -58,6 +58,15 @@ export function MovimientosRecientes({
     return () => window.clearTimeout(id)
   }, [busqueda])
 
+  useEffect(() => {
+    if (
+      filtros.cuentaId !== null &&
+      !cuentas.some((cuenta) => cuenta.id === filtros.cuentaId)
+    ) {
+      setFiltros((actuales) => ({ ...actuales, cuentaId: null, pagina: 1 }))
+    }
+  }, [cuentas, filtros.cuentaId])
+
   const { data, isPending, isError, isFetching, isPlaceholderData, refetch } =
     useQuery(movimientosFinanzasQuery(filtros))
 

@@ -6,6 +6,7 @@ import {
   ajustarSaldoSchema,
   crearCuentaSchema,
   crearMovimientoSchema,
+  eliminarCuentaSchema,
   eliminarMovimientoSchema,
   movimientosFinanzasSchema,
 } from "../schemas"
@@ -70,4 +71,12 @@ export const ajustarSaldoCuenta = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { ajustarSaldoCuentaEnDb } = await import("./mutations")
     return ajustarSaldoCuentaEnDb(data)
+  })
+
+export const eliminarCuenta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(eliminarCuentaSchema)
+  .handler(async ({ data }) => {
+    const { eliminarCuentaEnDb } = await import("./mutations")
+    return eliminarCuentaEnDb(data.id)
   })
