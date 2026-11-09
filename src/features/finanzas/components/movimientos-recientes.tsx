@@ -128,19 +128,27 @@ export function MovimientosRecientes({
       </div>
 
       <div className="rounded-3xl border border-outline-variant/60 bg-card p-4 shadow-elevation-1">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="relative sm:col-span-2 lg:col-span-1">
-            <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              value={busqueda}
-              onChange={(event) => setBusqueda(event.target.value)}
-              placeholder="Buscar descripción o categoría"
-              aria-label="Buscar movimientos"
-              className="h-9 pl-8 text-xs"
-            />
+        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
+          <div className="space-y-1 sm:col-span-3 xl:col-span-1">
+            <Label
+              htmlFor="mov-filtro-busqueda"
+              className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground"
+            >
+              Buscar
+            </Label>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                id="mov-filtro-busqueda"
+                value={busqueda}
+                onChange={(event) => setBusqueda(event.target.value)}
+                placeholder="Descripción o categoría"
+                className="h-9 pl-8 text-xs"
+              />
+            </div>
           </div>
 
           <div className="space-y-1">
