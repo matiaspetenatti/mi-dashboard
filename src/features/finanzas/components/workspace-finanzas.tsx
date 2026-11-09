@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Landmark, Plus, TrendingUp, Wallet } from "lucide-react"
+import {
+  Landmark,
+  Pencil,
+  Plus,
+  SlidersHorizontal,
+  TrendingUp,
+  Wallet,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -19,16 +26,18 @@ import { PageHeader } from "@/components/organisms/page-header"
 import { Button } from "@/components/ui/button"
 import { CategoriasFinanzasChart } from "@/features/finanzas/components/categorias-finanzas-chart"
 import { ComparadorServicios } from "@/features/finanzas/components/comparador-servicios"
+import { DialogoAjustarSaldo } from "@/features/finanzas/components/dialogo-ajustar-saldo"
 import { DialogoCuenta } from "@/features/finanzas/components/dialogo-cuenta"
 import { DialogoMovimiento } from "@/features/finanzas/components/dialogo-movimiento"
 import { EvolucionFinanzas } from "@/features/finanzas/components/evolucion-finanzas"
 import { MovimientosRecientes } from "@/features/finanzas/components/movimientos-recientes"
 import { eliminarMovimiento } from "@/features/finanzas/server/functions"
 import type {
+  CuentaConSaldo,
   FinanzasWorkspace,
   MovimientoConCuenta,
 } from "@/features/finanzas/types"
-import { formatMonto } from "@/lib/format"
+import { formatMonto, formatNota } from "@/lib/format"
 
 const ETIQUETAS_CUENTA: Record<string, string> = {
   billetera: "Billetera",
@@ -46,6 +55,10 @@ export function WorkspaceFinanzas({
   const queryClient = useQueryClient()
   const [movimientoOpen, setMovimientoOpen] = useState(false)
   const [cuentaOpen, setCuentaOpen] = useState(false)
+  const [cuentaEditando, setCuentaEditando] =
+    useState<CuentaConSaldo | null>(null)
+  const [cuentaAjustando, setCuentaAjustando] =
+    useState<CuentaConSaldo | null>(null)
   const [movimientoAEliminar, setMovimientoAEliminar] =
     useState<MovimientoConCuenta | null>(null)
 
@@ -71,7 +84,10 @@ export function WorkspaceFinanzas({
             <Button
               variant="outline"
               className="h-10 rounded-full px-4 text-xs font-bold"
-              onClick={() => setCuentaOpen(true)}
+              onClick={() => {
+                setCuentaEditando(null)
+                setCuentaOpen(true)
+              }}
             >
               <Landmark className="size-4" aria-hidden="true" />
               Nueva cuenta
@@ -149,14 +165,25 @@ export function WorkspaceFinanzas({
               key={cuenta.id}
               className="rounded-3xl border border-outline-variant/60 bg-card p-4 shadow-elevation-1"
             >
-              <div className="flex items-center gap-2">
-                <span
-                  className="size-2.5 rounded-full"
-                  style={{ backgroundColor: cuenta.color }}
-                />
-                <h3 className="truncate text-xs font-black text-heading">
-                  {cuenta.nombre}
-                </h3>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: cuenta.color }}
+                  />
+                  <h3 className="truncate text-xs font-black text-heading">
+                    {cuenta.nombre}
+                  </h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 shrink-0 text-muted-foreground hover:text-heading"
+                  aria-label={`Editar ${cuenta.nombre}`}
+                  onClick={() => setCuentaEditando(cuenta)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
               </div>
               <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {ETIQUETAS_CUENTA[cuenta.tipo] ?? cuenta.tipo}
@@ -166,9 +193,18 @@ export function WorkspaceFinanzas({
               </p>
               <p className="mt-2 text-[9px] font-semibold text-muted-foreground">
                 {cuenta.rendimientoAnual > 0
-                  ? `+${formatMonto(cuenta.estimadoDiario)}/día · ${cuenta.rendimientoAnual}% TNA`
+                  ? `+${formatMonto(cuenta.estimadoDiario)}/día · ${formatNota(cuenta.rendimientoAnual)}% TNA`
                   : "Sin rendimiento"}
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 h-7 w-full rounded-full px-3 text-[9px] font-bold"
+                onClick={() => setCuentaAjustando(cuenta)}
+              >
+                <SlidersHorizontal className="size-3" aria-hidden="true" />
+                Ajustar saldo
+              </Button>
             </article>
           ))}
 
@@ -200,7 +236,25 @@ export function WorkspaceFinanzas({
         categorias={workspace.categoriasDisponibles}
       />
 
-      <DialogoCuenta open={cuentaOpen} onOpenChange={setCuentaOpen} />
+      <DialogoCuenta
+        key={cuentaEditando?.id ?? "nueva"}
+        open={cuentaOpen || Boolean(cuentaEditando)}
+        cuenta={cuentaEditando}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCuentaOpen(false)
+            setCuentaEditando(null)
+          }
+        }}
+      />
+
+      <DialogoAjustarSaldo
+        cuenta={cuentaAjustando}
+        open={Boolean(cuentaAjustando)}
+        onOpenChange={(open) => {
+          if (!open) setCuentaAjustando(null)
+        }}
+      />
 
       <AlertDialog
         open={Boolean(movimientoAEliminar)}

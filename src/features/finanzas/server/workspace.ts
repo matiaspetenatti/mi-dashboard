@@ -19,6 +19,10 @@ import {
   movimientos,
 } from "@/server/db/schema"
 import {
+  CATEGORIA_AJUSTE,
+  calcularRendimientoDiarioCentavos,
+} from "../lib/cuentas"
+import {
   construirComparacionServicios,
   type FilaServicioMes,
 } from "../lib/servicios"
@@ -28,19 +32,12 @@ import type {
   PuntoEvolucion,
 } from "../types"
 
-function calcularRendimientoDiario(
-  saldoCentavos: number,
-  tnaPorcentaje: number,
-): number {
-  if (saldoCentavos <= 0 || tnaPorcentaje <= 0) return 0
-  return Math.round((saldoCentavos * (tnaPorcentaje / 100)) / 365)
-}
-
 export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
   const db = getDb()
   const hoy = fechaHoy()
   const mes = mesActual()
   const inicio = sumarFecha(hoy, "dia", -364)
+  const sinAjustes = sql`lower(${movimientos.categoria}) <> ${CATEGORIA_AJUSTE.toLowerCase()}`
 
   const [
     listaCuentas,
@@ -70,6 +67,7 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
         and(
           gte(movimientos.fecha, `${mes}-01`),
           lte(movimientos.fecha, `${mes}-31`),
+          sinAjustes,
         ),
       ),
     db
@@ -83,6 +81,7 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
           eq(movimientos.tipo, "gasto"),
           gte(movimientos.fecha, `${mes}-01`),
           lte(movimientos.fecha, `${mes}-31`),
+          sinAjustes,
         ),
       )
       .groupBy(movimientos.categoria)
@@ -125,7 +124,7 @@ export async function obtenerWorkspaceFinanzas(): Promise<FinanzasWorkspace> {
   const cuentasConSaldo: CuentaConSaldo[] = listaCuentas.map((cuenta) => {
     const fila = totales.get(cuenta.id)
     const saldo = (fila?.ingresos ?? 0) - (fila?.gastos ?? 0)
-    const estimadoDiario = calcularRendimientoDiario(
+    const estimadoDiario = calcularRendimientoDiarioCentavos(
       saldo,
       Number(cuenta.rendimientoAnual),
     )

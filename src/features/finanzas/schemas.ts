@@ -21,7 +21,7 @@ export const eliminarMovimientoSchema = z.object({
   id: z.number().int().positive(),
 })
 
-export const crearCuentaSchema = z.object({
+const cuentaBaseSchema = z.object({
   nombre: z.string().trim().min(1, "Poné un nombre").max(80),
   tipo: z.enum(tiposCuenta).default("billetera"),
   color: z
@@ -29,6 +29,24 @@ export const crearCuentaSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Color inválido")
     .default("#163300"),
   rendimientoAnual: z.number().min(0).max(1000).default(0),
+})
+
+export const crearCuentaSchema = cuentaBaseSchema.extend({
+  saldoInicialCentavos: z.number().int().default(0),
+})
+
+export const actualizarCuentaSchema = cuentaBaseSchema.extend({
+  id: z.number().int().positive(),
+})
+
+export const ajustarSaldoSchema = z.object({
+  cuentaId: z.number().int().positive(),
+  nuevoSaldoCentavos: z.number().int(),
+  fecha: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida")
+    .optional(),
+  descripcion: z.string().trim().max(200).nullable().optional(),
 })
 
 export const movimientosFinanzasSchema = z.object({
@@ -43,6 +61,8 @@ export const movimientosFinanzasSchema = z.object({
 
 export type CrearMovimientoInput = z.infer<typeof crearMovimientoSchema>
 export type CrearCuentaInput = z.infer<typeof crearCuentaSchema>
+export type ActualizarCuentaInput = z.infer<typeof actualizarCuentaSchema>
+export type AjustarSaldoInput = z.infer<typeof ajustarSaldoSchema>
 export type MovimientosFinanzasInput = z.infer<
   typeof movimientosFinanzasSchema
 >

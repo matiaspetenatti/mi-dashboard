@@ -16,6 +16,7 @@ import {
 import { mesActual } from "@/lib/dates"
 import { getDb } from "@/server/db/client"
 import { cuentas, movimientos } from "@/server/db/schema"
+import { CATEGORIA_AJUSTE } from "../lib/cuentas"
 import type { MovimientosFinanzasInput } from "../schemas"
 import type {
   MovimientoConCuenta,
@@ -33,6 +34,7 @@ export type ResumenFinanzas = {
 export async function obtenerResumenFinanzas(): Promise<ResumenFinanzas> {
   const db = getDb()
   const mes = mesActual()
+  const sinAjustes = sql`lower(${movimientos.categoria}) <> ${CATEGORIA_AJUSTE.toLowerCase()}`
 
   const [cuentasConSaldo, resumenMes] = await Promise.all([
     db
@@ -55,6 +57,7 @@ export async function obtenerResumenFinanzas(): Promise<ResumenFinanzas> {
         and(
           gte(movimientos.fecha, `${mes}-01`),
           lte(movimientos.fecha, `${mes}-31`),
+          sinAjustes,
         ),
       ),
   ])

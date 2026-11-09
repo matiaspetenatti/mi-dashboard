@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start"
 
 import { authMiddleware } from "@/server/auth/middleware"
 import {
+  actualizarCuentaSchema,
+  ajustarSaldoSchema,
   crearCuentaSchema,
   crearMovimientoSchema,
   eliminarMovimientoSchema,
@@ -52,4 +54,20 @@ export const crearCuenta = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { crearCuentaEnDb } = await import("./mutations")
     return crearCuentaEnDb(data)
+  })
+
+export const actualizarCuenta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(actualizarCuentaSchema)
+  .handler(async ({ data }) => {
+    const { actualizarCuentaEnDb } = await import("./mutations")
+    return actualizarCuentaEnDb(data)
+  })
+
+export const ajustarSaldoCuenta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(ajustarSaldoSchema)
+  .handler(async ({ data }) => {
+    const { ajustarSaldoCuentaEnDb } = await import("./mutations")
+    return ajustarSaldoCuentaEnDb(data)
   })
