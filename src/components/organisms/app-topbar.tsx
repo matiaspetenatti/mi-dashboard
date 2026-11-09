@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { UserButton } from "@clerk/tanstack-react-start"
 import { Plus, Search } from "lucide-react"
 
 import { CommandPalette } from "@/components/organisms/command-palette"
@@ -67,14 +66,6 @@ export function AppTopbar() {
             Nueva tarea
           </Button>
         </div>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "size-8",
-              userButtonPopoverCard: "shadow-elevation-2",
-            },
-          }}
-        />
       </div>
 
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />

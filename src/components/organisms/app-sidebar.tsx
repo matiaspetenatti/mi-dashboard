@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router"
-import { ChevronDown, Settings, Sparkles } from "lucide-react"
+import { Settings, Sparkles } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -68,21 +68,6 @@ export function AppSidebar({ viewer }: { viewer: SidebarViewer }) {
                   Tu día, en orden
                 </span>
               </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              variant="outline"
-              tooltip="Personal"
-              className="rounded-full"
-            >
-              <span className="size-2 rounded-full bg-lime-voltage" />
-              <span className="truncate">Personal</span>
-              <ChevronDown
-                className="ml-auto size-3.5 text-muted-foreground"
-                aria-hidden="true"
-              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
