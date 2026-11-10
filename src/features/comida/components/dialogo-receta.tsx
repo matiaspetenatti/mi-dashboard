@@ -17,6 +17,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { NutricionEditor } from "@/features/comida/components/nutricion-editor"
+import {
+  nutricionDesdeForm,
+  nutricionFormDesde,
+  nutricionFormVacia,
+  type CampoNutricion,
+  type NutricionForm,
+} from "@/features/comida/lib/nutricion"
 import {
   TIPOS_RECETA,
   TONOS,
@@ -93,7 +101,9 @@ export function DialogoReceta({
   const [herramientas, setHerramientas] = useState("")
   const [vaso, setVaso] = useState("")
   const [tecnica, setTecnica] = useState("")
-  const [nutricion, setNutricion] = useState<RecetaComida["nutricion"]>(null)
+  const [nutricionActiva, setNutricionActiva] = useState(false)
+  const [nutricion, setNutricion] =
+    useState<NutricionForm>(nutricionFormVacia)
 
   useEffect(() => {
     if (!open) return
@@ -108,7 +118,8 @@ export function DialogoReceta({
     setHerramientas((receta?.herramientas ?? []).join(", "))
     setVaso(receta?.vaso ?? "")
     setTecnica(receta?.tecnica ?? "")
-    setNutricion(receta?.nutricion ?? null)
+    setNutricionActiva(Boolean(receta?.nutricion))
+    setNutricion(nutricionFormDesde(receta?.nutricion))
   }, [open, receta?.id])
 
   const crear = useMutation({
@@ -187,7 +198,7 @@ export function DialogoReceta({
       ingredientes,
       pasos: pasosLista,
       tips: tips.trim() || null,
-      nutricion,
+      nutricion: nutricionActiva ? nutricionDesdeForm(nutricion) : null,
       herramientas: herramientas
         .split(",")
         .map((item) => item.trim())
@@ -394,6 +405,16 @@ export function DialogoReceta({
               placeholder={"Calentar el aceite.\nAgregar el arroz.\n..."}
             />
           </div>
+
+          <NutricionEditor
+            idPrefix="receta"
+            activa={nutricionActiva}
+            onActivaChange={setNutricionActiva}
+            valores={nutricion}
+            onChange={(campo: CampoNutricion, valor: string) =>
+              setNutricion((anterior) => ({ ...anterior, [campo]: valor }))
+            }
+          />
 
           <div className="space-y-2">
             <Label htmlFor="receta-tips">Tips</Label>

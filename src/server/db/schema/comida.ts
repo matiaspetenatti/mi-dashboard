@@ -145,7 +145,7 @@ export const comidaRecetas = sqliteTable(
 );
 
 /**
- * Planificación semanal: un renglón por día y momento.
+ * Planificación semanal: varios platos por día y momento.
  * `dia` es la fecha local `YYYY-MM-DD`; la semana se arma por rango.
  */
 export const comidaMenu = sqliteTable(
@@ -165,6 +165,7 @@ export const comidaMenu = sqliteTable(
       .notNull()
       .default([]),
     minutos: integer("minutos"),
+    nutricion: text("nutricion", { mode: "json" }).$type<NutricionReceta | null>(),
     reutiliza: text("reutiliza"),
     hecho: integer("hecho", { mode: "boolean" }).notNull().default(false),
     creadoEn: text("creado_en")
@@ -173,7 +174,7 @@ export const comidaMenu = sqliteTable(
     actualizadoEn: text("actualizado_en"),
   },
   (tabla) => [
-    uniqueIndex("comida_menu_dia_momento_unico").on(tabla.dia, tabla.momento),
+    index("comida_menu_dia_momento_idx").on(tabla.dia, tabla.momento),
     index("comida_menu_dia_idx").on(tabla.dia),
   ],
 );

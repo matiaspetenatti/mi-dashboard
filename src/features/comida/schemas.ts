@@ -139,12 +139,14 @@ export const favoritaRecetaSchema = z.object({
 
 export const slotMenuSchema = z
   .object({
+    id: z.number().int().positive().optional(),
     dia: z.string().regex(REGEX_FECHA, "Fecha inválida"),
     momento: z.enum(momentos),
     recetaId: z.number().int().positive().nullable(),
     titulo: z.string().trim().max(160).nullable(),
     minutos: z.number().int().min(1).max(600).nullable(),
     ingredientes: z.array(z.string().trim().min(1)).max(40),
+    nutricion: nutricionSchema.nullable().optional(),
     reutiliza: z.string().max(200).nullable(),
   })
   .refine(
@@ -156,14 +158,12 @@ export const slotMenuSchema = z
   )
 
 export const alternarSlotSchema = z.object({
-  dia: z.string().regex(REGEX_FECHA, "Fecha inválida"),
-  momento: z.enum(momentos),
+  id: z.number().int().positive(),
   hecho: z.boolean(),
 })
 
-export const slotDiaMomentoSchema = z.object({
-  dia: z.string().regex(REGEX_FECHA, "Fecha inválida"),
-  momento: z.enum(momentos),
+export const idSlotMenuSchema = z.object({
+  id: z.number().int().positive(),
 })
 
 export const limpiarSemanaSchema = z.object({

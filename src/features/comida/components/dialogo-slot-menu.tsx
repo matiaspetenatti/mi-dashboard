@@ -16,7 +16,22 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { NutricionEditor } from "@/features/comida/components/nutricion-editor"
+import {
+  nutricionDesdeForm,
+  nutricionFormDesde,
+  nutricionFormVacia,
+  type CampoNutricion,
+  type NutricionForm,
+} from "@/features/comida/lib/nutricion"
 import { etiquetaDiaLargo } from "@/features/comida/lib/semana"
 import { etiquetaMomento } from "@/features/comida/constantes"
 import {
@@ -51,6 +66,9 @@ export function DialogoSlotMenu({
   const [minutos, setMinutos] = useState("")
   const [ingredientes, setIngredientes] = useState("")
   const [reutiliza, setReutiliza] = useState("")
+  const [nutricionActiva, setNutricionActiva] = useState(false)
+  const [nutricion, setNutricion] =
+    useState<NutricionForm>(nutricionFormVacia)
 
   useEffect(() => {
     if (!open) return
@@ -59,6 +77,8 @@ export function DialogoSlotMenu({
     setMinutos(slot?.minutos !== null && slot?.minutos !== undefined ? String(slot.minutos) : "")
     setIngredientes((slot?.ingredientes ?? []).join("\n"))
     setReutiliza(slot?.reutiliza ?? "")
+    setNutricionActiva(Boolean(slot?.nutricion))
+    setNutricion(nutricionFormDesde(slot?.nutricion))
   }, [open, dia, momento, slot?.id])
 
   const recetaSeleccionada = useMemo(
@@ -84,7 +104,10 @@ export function DialogoSlotMenu({
   })
 
   const eliminar = useMutation({
-    mutationFn: () => eliminarSlotMenu({ data: { dia, momento } }),
+    mutationFn: () => {
+      if (!slot) throw new Error("No hay un plato para quitar")
+      return eliminarSlotMenu({ data: { id: slot.id } })
+    },
     onSuccess: () => {
       invalidar()
       toast.success("Plato quitado del menú")
@@ -101,6 +124,7 @@ export function DialogoSlotMenu({
     }
 
     guardar.mutate({
+      id: slot?.id,
       dia,
       momento,
       recetaId: id,
@@ -110,6 +134,11 @@ export function DialogoSlotMenu({
         .split("\n")
         .map((linea) => linea.trim())
         .filter(Boolean),
+      nutricion: recetaSeleccionada
+        ? recetaSeleccionada.nutricion
+        : nutricionActiva
+          ? nutricionDesdeForm(nutricion)
+          : null,
       reutiliza: reutiliza.trim() || null,
     })
   }
@@ -119,6 +148,7 @@ export function DialogoSlotMenu({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-lg font-black tracking-tight">
+            {slot ? "Editar plato" : "Agregar plato"} ·{" "}
             {etiquetaMomento(momento)}
           </DialogTitle>
           <DialogDescription className="flex items-center gap-1">
@@ -136,19 +166,32 @@ export function DialogoSlotMenu({
         >
           <div className="space-y-2">
             <Label htmlFor="slot-receta">Receta del recetario</Label>
-            <select
-              id="slot-receta"
+            <Select
               value={recetaId}
-              onChange={(event) => setRecetaId(event.target.value)}
-              className="h-10 w-full rounded-xl border border-outline-variant/70 bg-card px-3 text-sm text-heading outline-none focus:border-ring"
+              onValueChange={(valor) => setRecetaId(valor ?? "0")}
+              items={[
+                { value: "0", label: "Plato libre" },
+                ...recetas.map((receta) => ({
+                  value: String(receta.id),
+                  label: receta.titulo,
+                })),
+              ]}
             >
-              <option value="0">Plato libre</option>
-              {recetas.map((receta) => (
-                <option key={receta.id} value={receta.id}>
-                  {receta.titulo}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="slot-receta"
+                className="h-10 w-full rounded-xl border-outline-variant/70 bg-card px-3 text-sm text-heading"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Plato libre</SelectItem>
+                {recetas.map((receta) => (
+                  <SelectItem key={receta.id} value={String(receta.id)}>
+                    {receta.titulo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {recetaSeleccionada ? (
@@ -195,6 +238,33 @@ export function DialogoSlotMenu({
                 />
               </div>
             </>
+          )}
+
+          {recetaSeleccionada ? (
+            <p className="rounded-2xl bg-surface-container-low px-3 py-2 text-[10px] text-muted-foreground">
+              {recetaSeleccionada.nutricion
+                ? `Nutrición de la receta: ${Math.round(
+                    recetaSeleccionada.nutricion.kcal,
+                  )} kcal · ${Math.round(
+                    recetaSeleccionada.nutricion.proteinas,
+                  )} g proteínas · ${Math.round(
+                    recetaSeleccionada.nutricion.carbos,
+                  )} g carbos · ${Math.round(
+                    recetaSeleccionada.nutricion.grasas,
+                  )} g grasas.`
+                : "La receta no tiene datos nutricionales cargados."}
+            </p>
+          ) : (
+            <NutricionEditor
+              idPrefix="slot"
+              activa={nutricionActiva}
+              onActivaChange={setNutricionActiva}
+              valores={nutricion}
+              onChange={(campo: CampoNutricion, valor: string) =>
+                setNutricion((anterior) => ({ ...anterior, [campo]: valor }))
+              }
+              descripcion="Opcional. Se suma al total diario y semanal."
+            />
           )}
 
           <div className="space-y-2">

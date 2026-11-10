@@ -8,7 +8,6 @@ import {
   comidaLista,
   comidaMenu,
   comidaRecetas,
-  type MomentoMenu,
   type OrigenLista,
 } from "@/server/db/schema"
 import {
@@ -270,6 +269,7 @@ export async function guardarSlotEnDb(input: SlotMenuInput) {
   let titulo = input.titulo?.trim() || null
   let minutos = input.minutos
   let ingredientes = input.ingredientes
+  let nutricion = input.nutricion ?? null
 
   if (input.recetaId) {
     const receta = (
@@ -288,6 +288,7 @@ export async function guardarSlotEnDb(input: SlotMenuInput) {
         ? ingrediente.nombre
         : `${ingrediente.cantidad} ${ingrediente.unidad} de ${ingrediente.nombre}`,
     )
+    nutricion = receta.nutricion
   }
 
   if (!titulo) throw new Error("Elegí una receta o escribí un título")
@@ -299,38 +300,34 @@ export async function guardarSlotEnDb(input: SlotMenuInput) {
     titulo,
     minutos,
     ingredientes,
+    nutricion,
     reutiliza: input.reutiliza?.trim() || null,
   }
 
-  await db
-    .insert(comidaMenu)
-    .values({ ...valores, creadoEn: ahora })
-    .onConflictDoUpdate({
-      target: [comidaMenu.dia, comidaMenu.momento],
-      set: { ...valores, actualizadoEn: ahora },
-    })
+  if (input.id) {
+    await db
+      .update(comidaMenu)
+      .set({ ...valores, actualizadoEn: ahora })
+      .where(eq(comidaMenu.id, input.id))
+  } else {
+    await db.insert(comidaMenu).values({ ...valores, creadoEn: ahora })
+  }
 
   return { ok: true }
 }
 
-export async function alternarSlotHechoEnDb(
-  dia: string,
-  momento: MomentoMenu,
-  hecho: boolean,
-) {
+export async function alternarSlotHechoEnDb(id: number, hecho: boolean) {
   const db = getDb()
   await db
     .update(comidaMenu)
     .set({ hecho, actualizadoEn: ahoraIso() })
-    .where(and(eq(comidaMenu.dia, dia), eq(comidaMenu.momento, momento)))
+    .where(eq(comidaMenu.id, id))
   return { ok: true }
 }
 
-export async function eliminarSlotEnDb(dia: string, momento: MomentoMenu) {
+export async function eliminarSlotEnDb(id: number) {
   const db = getDb()
-  await db
-    .delete(comidaMenu)
-    .where(and(eq(comidaMenu.dia, dia), eq(comidaMenu.momento, momento)))
+  await db.delete(comidaMenu).where(eq(comidaMenu.id, id))
   return { ok: true }
 }
 

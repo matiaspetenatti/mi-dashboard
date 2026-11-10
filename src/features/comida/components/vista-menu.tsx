@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Check,
@@ -25,16 +25,17 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { DialogoSlotMenu } from "@/features/comida/components/dialogo-slot-menu"
-import {
-  MOMENTOS,
-  etiquetaMomento,
-} from "@/features/comida/constantes"
+import { MOMENTOS } from "@/features/comida/constantes"
 import {
   etiquetaDiaCorto,
   esHoy,
   rangoSemana,
   tituloSemana,
 } from "@/features/comida/lib/semana"
+import {
+  CAMPOS_NUTRICION,
+  sumarNutricion,
+} from "@/features/comida/lib/nutricion"
 import {
   agregarFaltantesMenu,
   alternarSlotHecho,
@@ -67,6 +68,7 @@ export function VistaMenu({
   const [slotEditando, setSlotEditando] = useState<{
     dia: string
     momento: MomentoMenu
+    slotId: number | null
   } | null>(null)
   const [limpiarOpen, setLimpiarOpen] = useState(false)
 
@@ -78,8 +80,7 @@ export function VistaMenu({
     mutationFn: (slot: SlotMenuComida) =>
       alternarSlotHecho({
         data: {
-          dia: slot.dia,
-          momento: slot.momento,
+          id: slot.id,
           hecho: !slot.hecho,
         },
       }),
@@ -113,13 +114,29 @@ export function VistaMenu({
     onError: () => toast.error("No se pudo limpiar la semana"),
   })
 
-  const slotActual = slotEditando
-    ? (menu.find(
-        (slot) =>
-          slot.dia === slotEditando.dia &&
-          slot.momento === slotEditando.momento,
-      ) ?? null)
+  const slotActual = slotEditando?.slotId
+    ? (menu.find((slot) => slot.id === slotEditando.slotId) ?? null)
     : null
+
+  const nutricionPorDia = useMemo(
+    () =>
+      new Map(
+        dias.map((dia) => [
+          dia,
+          sumarNutricion(
+            menu
+              .filter((slot) => slot.dia === dia)
+              .map((slot) => slot.nutricion),
+          ),
+        ]),
+      ),
+    [dias, menu],
+  )
+
+  const nutricionSemanal = useMemo(
+    () => sumarNutricion(menu.map((slot) => slot.nutricion)),
+    [menu],
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -217,92 +234,177 @@ export function VistaMenu({
                     HOY
                   </span>
                 ) : null}
+                <p className="mt-1 text-[8px] font-semibold text-muted-foreground">
+                  {Math.round(nutricionPorDia.get(dia)?.kcal ?? 0)} kcal
+                </p>
               </div>
 
               {MOMENTOS.map((momento) => {
-                const slot = menu.find(
+                const slots = menu.filter(
                   (item) =>
                     item.dia === dia && item.momento === momento.valor,
                 )
 
-                if (!slot) {
-                  return (
-                    <button
-                      key={momento.valor}
-                      type="button"
-                      onClick={() =>
-                        setSlotEditando({ dia, momento: momento.valor })
-                      }
-                      className="m-1 flex min-h-20 items-center justify-center rounded-2xl border border-dashed border-outline-variant/60 text-muted-foreground transition-colors hover:border-lime-voltage hover:bg-linen-mist/40 hover:text-heading dark:hover:bg-primary-container/20"
-                      aria-label={`Agregar ${momento.corto} del ${dia}`}
-                    >
-                      <Plus className="size-4" />
-                    </button>
-                  )
-                }
-
                 return (
                   <div
                     key={momento.valor}
-                    className="m-1 flex min-h-20 flex-col rounded-2xl border border-outline-variant/50 bg-surface-container-low/50 p-2"
+                    className="m-1 flex min-h-20 flex-col gap-1"
                   >
+                    {slots.map((slot) => (
+                      <div
+                        key={slot.id}
+                        className="flex flex-col rounded-2xl border border-outline-variant/50 bg-surface-container-low/50 p-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSlotEditando({
+                              dia,
+                              momento: momento.valor,
+                              slotId: slot.id,
+                            })
+                          }
+                          className="text-left"
+                        >
+                          <p
+                            className={cn(
+                              "line-clamp-2 text-[10px] font-bold leading-tight text-heading",
+                              slot.hecho && "line-through opacity-60",
+                            )}
+                          >
+                            {slot.titulo}
+                          </p>
+                          <p className="mt-0.5 text-[8px] text-muted-foreground">
+                            {[
+                              slot.minutos ? `${slot.minutos} min` : null,
+                              slot.nutricion
+                                ? `${Math.round(slot.nutricion.kcal)} kcal`
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || "Sin datos"}
+                          </p>
+                        </button>
+
+                        <div className="mt-1 flex items-center justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "size-6",
+                              slot.hecho
+                                ? "text-success"
+                                : "text-muted-foreground hover:text-success",
+                            )}
+                            aria-label={
+                              slot.hecho
+                                ? `Marcar ${slot.titulo} pendiente`
+                                : `Marcar ${slot.titulo} hecho`
+                            }
+                            onClick={() => toggleHecho.mutate(slot)}
+                          >
+                            <Check className="size-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
                     <button
                       type="button"
                       onClick={() =>
-                        setSlotEditando({ dia, momento: momento.valor })
+                        setSlotEditando({
+                          dia,
+                          momento: momento.valor,
+                          slotId: null,
+                        })
                       }
-                      className="flex-1 text-left"
+                      className={cn(
+                        "flex items-center justify-center rounded-2xl border border-dashed border-outline-variant/60 text-muted-foreground transition-colors hover:border-lime-voltage hover:bg-linen-mist/40 hover:text-heading dark:hover:bg-primary-container/20",
+                        slots.length === 0 ? "min-h-20 flex-1" : "h-7",
+                      )}
+                      aria-label={`Agregar ${momento.corto} del ${dia}`}
                     >
-                      <p
-                        className={cn(
-                          "line-clamp-2 text-[10px] font-bold leading-tight text-heading",
-                          slot.hecho && "line-through opacity-60",
-                        )}
-                      >
-                        {slot.titulo}
-                      </p>
-                      {slot.minutos ? (
-                        <p className="mt-0.5 text-[8px] text-muted-foreground">
-                          {slot.minutos} min
-                        </p>
+                      <Plus className="size-3.5" />
+                      {slots.length > 0 ? (
+                        <span className="ml-1 text-[8px] font-bold">
+                          Agregar otro
+                        </span>
                       ) : null}
                     </button>
-
-                    <div className="mt-1 flex items-center justify-between">
-                      <span
-                        className={cn(
-                          "rounded-full px-1.5 py-0.5 text-[7px] font-bold uppercase",
-                          slot.hecho
-                            ? "bg-success-container text-success"
-                            : "bg-surface-container text-muted-foreground",
-                        )}
-                      >
-                        {etiquetaMomento(slot.momento)}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "size-6",
-                          slot.hecho
-                            ? "text-success"
-                            : "text-muted-foreground hover:text-success",
-                        )}
-                        aria-label={
-                          slot.hecho ? "Marcar pendiente" : "Marcar hecho"
-                        }
-                        onClick={() => toggleHecho.mutate(slot)}
-                      >
-                        <Check className="size-3" />
-                      </Button>
-                    </div>
                   </div>
                 )
               })}
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-3xl border border-outline-variant/60 bg-card shadow-elevation-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-1 border-b border-outline-variant/40 bg-surface-container-low px-4 py-3">
+          <h3 className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            Valor nutricional
+          </h3>
+          <p className="text-[9px] text-muted-foreground">
+            Suma de los platos con datos cargados
+          </p>
+        </div>
+        <table className="w-full min-w-[640px] border-collapse text-[10px]">
+          <thead>
+            <tr className="border-b border-outline-variant/40">
+              <th className="px-3 py-2 text-left text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Nutriente
+              </th>
+              {dias.map((dia) => (
+                <th
+                  key={dia}
+                  className={cn(
+                    "px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground",
+                    esHoy(dia, hoy) && "text-heading",
+                  )}
+                >
+                  {etiquetaDiaCorto(dia)}
+                </th>
+              ))}
+              <th className="px-3 py-2 text-right text-[9px] font-black uppercase tracking-[0.08em] text-heading">
+                Semana
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {CAMPOS_NUTRICION.map((campo) => (
+              <tr
+                key={campo.key}
+                className="border-b border-outline-variant/20 last:border-b-0"
+              >
+                <th className="px-3 py-1.5 text-left font-semibold text-heading">
+                  {campo.label}
+                  <span className="ml-1 text-[9px] font-normal text-muted-foreground">
+                    {campo.unidad}
+                  </span>
+                </th>
+                {dias.map((dia) => {
+                  const total = nutricionPorDia.get(dia)?.[campo.key] ?? 0
+                  return (
+                    <td
+                      key={dia}
+                      className={cn(
+                        "px-2 py-1.5 text-right tabular-nums",
+                        total > 0 ? "text-heading" : "text-muted-foreground/60",
+                        esHoy(dia, hoy) && "bg-linen-mist/40 dark:bg-primary-container/20",
+                      )}
+                    >
+                      {Math.round(total)}
+                    </td>
+                  )
+                })}
+                <td className="px-3 py-1.5 text-right font-bold tabular-nums text-heading">
+                  {Math.round(nutricionSemanal[campo.key])}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <p className="flex items-center gap-1.5 px-1 text-[10px] text-muted-foreground">

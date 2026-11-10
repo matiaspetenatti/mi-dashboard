@@ -14,10 +14,10 @@ import {
   faltantesRecetaSchema,
   favoritaRecetaSchema,
   idComidaSchema,
+  idSlotMenuSchema,
   itemComidaSchema,
   itemListaSchema,
   limpiarSemanaSchema,
-  slotDiaMomentoSchema,
   slotMenuSchema,
   workspaceComidaSchema,
 } from "../schemas"
@@ -122,15 +122,15 @@ export const alternarSlotHecho = createServerFn({ method: "POST" })
   .validator(alternarSlotSchema)
   .handler(async ({ data }) => {
     const { alternarSlotHechoEnDb } = await import("./mutations")
-    return alternarSlotHechoEnDb(data.dia, data.momento, data.hecho)
+    return alternarSlotHechoEnDb(data.id, data.hecho)
   })
 
 export const eliminarSlotMenu = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(slotDiaMomentoSchema)
+  .validator(idSlotMenuSchema)
   .handler(async ({ data }) => {
     const { eliminarSlotEnDb } = await import("./mutations")
-    return eliminarSlotEnDb(data.dia, data.momento)
+    return eliminarSlotEnDb(data.id)
   })
 
 export const limpiarSemanaComida = createServerFn({ method: "POST" })
