@@ -4,6 +4,8 @@ import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Clock3,
+  Minus,
+  Pencil,
   Plus,
   RotateCcw,
   Search,
@@ -26,6 +28,16 @@ import {
 } from "@/components/ui/alert-dialog"
 import { PageHeader } from "@/components/organisms/page-header"
 import { Button } from "@/components/ui/button"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -50,6 +62,7 @@ import {
 import { puntajeMostrable } from "@/features/animes/lib/criterios"
 import { obtenerTemporadaAnime } from "@/features/animes/lib/utils"
 import {
+  actualizarProgresoAnime,
   alternarFavoritoAnime,
   borrarAnime,
 } from "@/features/animes/server/functions"
@@ -111,6 +124,42 @@ export function WorkspaceAnimes({
     },
     onError: () => toast.error("No se pudo eliminar el anime"),
   })
+
+  const progreso = useMutation({
+    mutationFn: ({
+      id,
+      episodiosVistos,
+    }: {
+      id: number
+      episodiosVistos: number
+      delta: number
+    }) => actualizarProgresoAnime({ data: { id, episodiosVistos } }),
+    onSuccess: (_resultado, variables) => {
+      invalidar()
+      toast.success(
+        variables.delta > 0 ? "Capítulo sumado" : "Capítulo restado",
+      )
+    },
+    onError: () => toast.error("No se pudo actualizar el progreso"),
+  })
+
+  function cambiarCapitulo(
+    anime: AnimesWorkspace["animes"][number],
+    delta: number,
+  ) {
+    const total = anime.episodios ?? null
+    const siguiente = Math.max(
+      0,
+      Math.min(anime.episodiosVistos + delta, total ?? Number.MAX_SAFE_INTEGER),
+    )
+    if (siguiente === anime.episodiosVistos) return
+
+    progreso.mutate({
+      id: anime.id,
+      episodiosVistos: siguiente,
+      delta,
+    })
+  }
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -486,18 +535,83 @@ export function WorkspaceAnimes({
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {visibles.map((anime) => (
-                  <TarjetaAnime
-                    key={anime.id}
-                    anime={anime}
-                    favoritoPendiente={
-                      favorito.isPending && favorito.variables === anime.id
-                    }
-                    onAbrir={() => setAnimeAbiertoId(anime.id)}
-                    onEditar={() => setAnimeEditandoId(anime.id)}
-                    onAlternarFavorito={() => favorito.mutate(anime.id)}
-                  />
-                ))}
+                {visibles.map((anime) => {
+                  const total = anime.episodios ?? null
+                  const titulo = anime.tituloIngles || anime.titulo
+                  const puedeSumar =
+                    total === null || anime.episodiosVistos < total
+                  const puedeRestar = anime.episodiosVistos > 0
+                  const progresoPendiente =
+                    progreso.isPending && progreso.variables.id === anime.id
+
+                  return (
+                    <ContextMenu key={anime.id}>
+                      <ContextMenuTrigger className="h-full">
+                        <TarjetaAnime
+                          anime={anime}
+                          favoritoPendiente={
+                            favorito.isPending &&
+                            favorito.variables === anime.id
+                          }
+                          onAbrir={() => setAnimeAbiertoId(anime.id)}
+                          onEditar={() => setAnimeEditandoId(anime.id)}
+                          onAlternarFavorito={() => favorito.mutate(anime.id)}
+                        />
+                      </ContextMenuTrigger>
+
+                      <ContextMenuContent className="w-60">
+                        <ContextMenuGroup>
+                          <ContextMenuLabel className="space-y-0.5">
+                            <span className="block truncate text-xs font-bold text-heading">
+                              {titulo}
+                            </span>
+                            <span className="block text-[10px] font-medium text-muted-foreground">
+                              {anime.episodiosVistos} de {total ?? "?"}{" "}
+                              episodios vistos
+                            </span>
+                          </ContextMenuLabel>
+
+                          <ContextMenuSeparator />
+
+                          <ContextMenuItem
+                            onClick={() => setAnimeEditandoId(anime.id)}
+                          >
+                            <Pencil aria-hidden="true" />
+                            Editar
+                          </ContextMenuItem>
+
+                          <ContextMenuSeparator />
+
+                          <ContextMenuItem
+                            disabled={!puedeSumar || progresoPendiente}
+                            onClick={() => cambiarCapitulo(anime, 1)}
+                          >
+                            <Plus aria-hidden="true" />
+                            Sumar capítulo visto
+                            <ContextMenuShortcut>
+                              {puedeSumar
+                                ? `Ep. ${anime.episodiosVistos + 1}`
+                                : "Completo"}
+                            </ContextMenuShortcut>
+                          </ContextMenuItem>
+
+                          <ContextMenuItem
+                            disabled={!puedeRestar || progresoPendiente}
+                            onClick={() => cambiarCapitulo(anime, -1)}
+                          >
+                            <Minus aria-hidden="true" />
+                            Restar capítulo visto
+                            <ContextMenuShortcut>
+                              {puedeRestar
+                                ? `Ep. ${anime.episodiosVistos - 1}`
+                                : "Sin progreso"}
+                            </ContextMenuShortcut>
+                          </ContextMenuItem>
+                        </ContextMenuGroup>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  )
+                })}
               </div>
 
               {totalPaginas > 1 ? (
