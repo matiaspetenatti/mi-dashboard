@@ -19,6 +19,7 @@ export type ClimaActual = {
   codigo: number
   descripcion: string
   icono: IconoClima
+  actualizadoEn: string
 }
 
 export type DiaClima = {
@@ -37,6 +38,7 @@ export type DiaClima = {
 export type HoraClima = {
   hora: string
   temperatura: number
+  sensacion: number
   probLluvia: number
   codigo: number
   descripcion: string

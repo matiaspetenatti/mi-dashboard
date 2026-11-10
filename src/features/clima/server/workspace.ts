@@ -15,6 +15,7 @@ import type {
 
 type OpenMeteoResponse = {
   current?: {
+    time?: string
     temperature_2m?: number
     relative_humidity_2m?: number
     apparent_temperature?: number
@@ -37,6 +38,7 @@ type OpenMeteoResponse = {
   hourly?: {
     time?: string[]
     temperature_2m?: number[]
+    apparent_temperature?: number[]
     precipitation_probability?: number[]
     weather_code?: number[]
     wind_speed_10m?: number[]
@@ -47,6 +49,10 @@ type OpenMeteoResponse = {
 
 const cache = new Map<string, { expiresAt: number; data: WorkspaceClima }>()
 const TTL = 10 * 60 * 1000
+
+export function limpiarCacheClima() {
+  cache.clear()
+}
 
 function aUbicacion(
   fila: typeof climaUbicacion.$inferSelect,
@@ -60,7 +66,9 @@ function aUbicacion(
   }
 }
 
-export async function obtenerWorkspaceClima(): Promise<WorkspaceClima> {
+export async function obtenerWorkspaceClima(
+  forzar = false,
+): Promise<WorkspaceClima> {
   const db = getDb()
   const filas = await db
     .select()
@@ -75,8 +83,10 @@ export async function obtenerWorkspaceClima(): Promise<WorkspaceClima> {
   }
 
   const cacheKey = `${activa.id}:${activa.latitud}:${activa.longitud}`
-  const cached = cache.get(cacheKey)
-  if (cached && cached.expiresAt > Date.now()) return cached.data
+  if (!forzar) {
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) return cached.data
+  }
 
   const params = new URLSearchParams({
     latitude: String(activa.latitud),
@@ -86,7 +96,7 @@ export async function obtenerWorkspaceClima(): Promise<WorkspaceClima> {
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset",
     hourly:
-      "temperature_2m,precipitation_probability,weather_code,wind_speed_10m,relative_humidity_2m,is_day",
+      "temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m,relative_humidity_2m,is_day",
     timezone: "auto",
     forecast_days: "14",
   })
@@ -122,6 +132,7 @@ export async function obtenerWorkspaceClima(): Promise<WorkspaceClima> {
     codigo: codigoActual,
     descripcion: descripcionActual.label,
     icono: descripcionActual.icono,
+    actualizadoEn: current.time ?? new Date().toISOString(),
   }
 
   const dias: DiaClima[] = (daily?.time ?? []).map((fecha, indice) => {
@@ -149,6 +160,11 @@ export async function obtenerWorkspaceClima(): Promise<WorkspaceClima> {
     return {
       hora,
       temperatura: Math.round(hourly?.temperature_2m?.[indice] ?? 0),
+      sensacion: Math.round(
+        hourly?.apparent_temperature?.[indice] ??
+          hourly?.temperature_2m?.[indice] ??
+          0,
+      ),
       probLluvia: Math.round(
         hourly?.precipitation_probability?.[indice] ?? 0,
       ),

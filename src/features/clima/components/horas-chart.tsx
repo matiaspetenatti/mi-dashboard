@@ -19,6 +19,7 @@ export function HorasClimaChart({ horas }: { horas: HoraClima[] }) {
       horas.map((hora) => ({
         hora: format(parseISO(hora.hora), "HH:mm"),
         temperatura: hora.temperatura,
+        sensacion: hora.sensacion,
         lluvia: hora.probLluvia,
       })),
     [horas],
@@ -36,6 +37,15 @@ export function HorasClimaChart({ horas }: { horas: HoraClima[] }) {
             fill: "#38bdf8",
             fillOpacity: 0.22,
             maxThickness: 14,
+          }),
+          lineY(datos, {
+            id: "sensacion-hora",
+            x: "hora",
+            y: "sensacion",
+            stroke: "#d97706",
+            strokeWidth: 2,
+            strokeDasharray: "5 4",
+            curve: curvaSuave,
           }),
           lineY(datos, {
             id: "temperatura-hora",
@@ -80,10 +90,24 @@ export function HorasClimaChart({ horas }: { horas: HoraClima[] }) {
   )
 
   return (
-    <ChartCard title="Detalle por hora" subtitle="Temperatura y probabilidad de lluvia">
+    <ChartCard
+      title="Detalle por hora"
+      subtitle="Temperatura, sensación térmica y probabilidad de lluvia"
+    >
+      <div className="mb-2 flex flex-wrap items-center gap-4 text-[10px] font-semibold text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[#258f38]" /> Temperatura
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[#d97706]" /> Sensación
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[#38bdf8]" /> Lluvia
+        </span>
+      </div>
       <Chart
         definition={definition}
-        ariaLabel="Temperatura y probabilidad de lluvia por hora"
+        ariaLabel="Temperatura, sensación térmica y probabilidad de lluvia por hora"
         initialWidth={760}
         height={240}
       />

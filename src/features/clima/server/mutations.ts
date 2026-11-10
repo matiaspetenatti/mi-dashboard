@@ -4,10 +4,12 @@ import { asc, eq } from "drizzle-orm"
 
 import { getDb } from "@/server/db/client"
 import { climaUbicacion } from "@/server/db/schema"
-import type { CrearUbicacionInput } from "../schemas"
+import type {
+  ActualizarUbicacionInput,
+  CrearUbicacionInput,
+} from "../schemas"
 
-export async function crearUbicacionEnDb(input: CrearUbicacionInput) {
-  const db = getDb()
+export async function crearUbicacionEnDb(input: CrearUbicacionInput) {  const db = getDb()
   await db.update(climaUbicacion).set({ esActiva: false })
 
   const ubicacion = (
@@ -24,6 +26,22 @@ export async function crearUbicacionEnDb(input: CrearUbicacionInput) {
 
   if (!ubicacion) throw new Error("No se pudo guardar la ubicación")
   return { id: ubicacion.id }
+}
+
+export async function actualizarUbicacionEnDb(
+  input: ActualizarUbicacionInput,
+) {
+  const db = getDb()
+  await db
+    .update(climaUbicacion)
+    .set({
+      etiqueta: input.etiqueta,
+      latitud: input.latitud,
+      longitud: input.longitud,
+    })
+    .where(eq(climaUbicacion.id, input.id))
+
+  return { ok: true }
 }
 
 export async function seleccionarUbicacionEnDb(id: number) {

@@ -17,10 +17,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
+  actualizarUbicacion,
   buscarUbicaciones,
   crearUbicacion,
 } from "@/features/clima/server/functions"
-import type { ResultadoGeocoding } from "@/features/clima/types"
+import type {
+  ResultadoGeocoding,
+  UbicacionClima,
+} from "@/features/clima/types"
 import { cn } from "cn"
 
 type ModoUbicacion = "buscar" | "coordenadas"
@@ -28,9 +32,11 @@ type ModoUbicacion = "buscar" | "coordenadas"
 export function DialogoUbicacion({
   open,
   onOpenChange,
+  ubicacion = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  ubicacion?: UbicacionClima | null
 }) {
   const queryClient = useQueryClient()
   const [modo, setModo] = useState<ModoUbicacion>("buscar")
@@ -45,6 +51,19 @@ export function DialogoUbicacion({
 
   useEffect(() => {
     if (!open) return
+
+    if (ubicacion) {
+      setModo("coordenadas")
+      setQuery("")
+      setResultados([])
+      setSeleccionada(null)
+      setEtiqueta("")
+      setLatitud(String(ubicacion.latitud))
+      setLongitud(String(ubicacion.longitud))
+      setEtiquetaCoordenadas(ubicacion.etiqueta)
+      return
+    }
+
     setModo("buscar")
     setQuery("")
     setResultados([])
@@ -53,7 +72,7 @@ export function DialogoUbicacion({
     setLatitud("")
     setLongitud("")
     setEtiquetaCoordenadas("")
-  }, [open])
+  }, [open, ubicacion?.id])
 
   const latitudNumero = Number(latitud)
   const longitudNumero = Number(longitud)
@@ -84,34 +103,41 @@ export function DialogoUbicacion({
   })
 
   const guardar = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (modo === "coordenadas") {
         if (!coordenadasValidas) {
           throw new Error("Ingresá coordenadas válidas")
         }
-        return crearUbicacion({
-          data: {
-            etiqueta:
-              etiquetaCoordenadas.trim() ||
-              `${latitudNumero.toFixed(4)}, ${longitudNumero.toFixed(4)}`,
-            latitud: latitudNumero,
-            longitud: longitudNumero,
-          },
-        })
+        const datos = {
+          etiqueta:
+            etiquetaCoordenadas.trim() ||
+            `${latitudNumero.toFixed(4)}, ${longitudNumero.toFixed(4)}`,
+          latitud: latitudNumero,
+          longitud: longitudNumero,
+        }
+        if (ubicacion) {
+          await actualizarUbicacion({ data: { id: ubicacion.id, ...datos } })
+          return
+        }
+        await crearUbicacion({ data: datos })
+        return
       }
 
       if (!seleccionada) throw new Error("Elegí una ubicación")
-      return crearUbicacion({
-        data: {
-          etiqueta: etiqueta.trim() || seleccionada.nombre,
-          latitud: seleccionada.latitud,
-          longitud: seleccionada.longitud,
-        },
-      })
+      const datos = {
+        etiqueta: etiqueta.trim() || seleccionada.nombre,
+        latitud: seleccionada.latitud,
+        longitud: seleccionada.longitud,
+      }
+      if (ubicacion) {
+        await actualizarUbicacion({ data: { id: ubicacion.id, ...datos } })
+        return
+      }
+      await crearUbicacion({ data: datos })
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["clima"] })
-      toast.success("Ubicación guardada")
+      toast.success(ubicacion ? "Ubicación actualizada" : "Ubicación guardada")
       onOpenChange(false)
     },
     onError: (error) => {
@@ -126,10 +152,12 @@ export function DialogoUbicacion({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-black tracking-tight">
-            Agregar ubicación
+            {ubicacion ? "Editar ubicación" : "Agregar ubicación"}
           </DialogTitle>
           <DialogDescription>
-            Buscá una ciudad o guardá una ubicación por sus coordenadas.
+            {ubicacion
+              ? "Actualizá el nombre o las coordenadas de esta ubicación."
+              : "Buscá una ciudad o guardá una ubicación por sus coordenadas."}
           </DialogDescription>
         </DialogHeader>
 
@@ -317,7 +345,11 @@ export function DialogoUbicacion({
             onClick={() => guardar.mutate()}
           >
             <Plus className="size-4" aria-hidden="true" />
-            {guardar.isPending ? "Guardando..." : "Guardar ubicación"}
+            {guardar.isPending
+              ? "Guardando..."
+              : ubicacion
+                ? "Guardar cambios"
+                : "Guardar ubicación"}
           </Button>
         </DialogFooter>
       </DialogContent>

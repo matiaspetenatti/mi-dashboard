@@ -6,7 +6,9 @@ import {
   Droplets,
   Gauge,
   MapPin,
+  Pencil,
   Plus,
+  RefreshCw,
   Sun,
   Sunrise,
   Sunset,
@@ -30,12 +32,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { PageHeader } from "@/components/organisms/page-header"
 import { Button } from "@/components/ui/button"
+import { workspaceClimaQuery } from "@/features/clima/api"
 import { DialogoUbicacion } from "@/features/clima/components/dialogo-ubicacion"
 import { HorasClimaChart } from "@/features/clima/components/horas-chart"
 import { IconoDelClima } from "@/features/clima/components/icono-clima"
 import { Pronostico14Chart } from "@/features/clima/components/pronostico-14-chart"
 import {
   eliminarUbicacion,
+  refrescarClima,
   seleccionarUbicacion,
 } from "@/features/clima/server/functions"
 import type {
@@ -52,6 +56,8 @@ export function WorkspaceClima({
 }) {
   const queryClient = useQueryClient()
   const [ubicacionOpen, setUbicacionOpen] = useState(false)
+  const [ubicacionEditando, setUbicacionEditando] =
+    useState<UbicacionClima | null>(null)
   const [ubicacionAEliminar, setUbicacionAEliminar] =
     useState<UbicacionClima | null>(null)
   const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null)
@@ -69,6 +75,16 @@ export function WorkspaceClima({
 
   const invalidar = () => {
     void queryClient.invalidateQueries({ queryKey: ["clima"] })
+  }
+
+  function abrirNuevaUbicacion() {
+    setUbicacionEditando(null)
+    setUbicacionOpen(true)
+  }
+
+  function abrirEdicionUbicacion(ubicacion: UbicacionClima) {
+    setUbicacionEditando(ubicacion)
+    setUbicacionOpen(true)
   }
 
   const seleccionar = useMutation({
@@ -91,6 +107,15 @@ export function WorkspaceClima({
     onError: () => toast.error("No se pudo eliminar la ubicación"),
   })
 
+  const actualizarClima = useMutation({
+    mutationFn: () => refrescarClima(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(workspaceClimaQuery.queryKey, data)
+      toast.success("Clima actualizado")
+    },
+    onError: () => toast.error("No se pudo actualizar el clima"),
+  })
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -99,7 +124,7 @@ export function WorkspaceClima({
         description="El clima actual y los próximos 14 días en tus lugares guardados."
         meta={activa?.etiqueta ?? "Sin ubicación"}
         actions={
-          <Button onClick={() => setUbicacionOpen(true)}>
+          <Button onClick={abrirNuevaUbicacion}>
             <Plus className="size-4" aria-hidden="true" />
             Agregar ubicación
           </Button>
@@ -130,6 +155,19 @@ export function WorkspaceClima({
                 </button>
                 <button
                   type="button"
+                  aria-label={`Editar ${ubicacion.etiqueta}`}
+                  onClick={() => abrirEdicionUbicacion(ubicacion)}
+                  className={cn(
+                    "flex size-5 items-center justify-center rounded-full opacity-60 hover:opacity-100",
+                    activaActual
+                      ? "hover:bg-white/15"
+                      : "hover:bg-muted hover:text-heading",
+                  )}
+                >
+                  <Pencil className="size-3" />
+                </button>
+                <button
+                  type="button"
                   aria-label={`Eliminar ${ubicacion.etiqueta}`}
                   onClick={() => setUbicacionAEliminar(ubicacion)}
                   className={cn(
@@ -148,7 +186,7 @@ export function WorkspaceClima({
             variant="outline"
             size="sm"
             className="h-7 rounded-full px-3 text-[10px] font-bold"
-            onClick={() => setUbicacionOpen(true)}
+            onClick={abrirNuevaUbicacion}
           >
             <Plus className="size-3" aria-hidden="true" />
             Agregar
@@ -169,7 +207,7 @@ export function WorkspaceClima({
               Buscá una ciudad y guardala para tener el pronóstico a mano.
             </p>
           </div>
-          <Button onClick={() => setUbicacionOpen(true)}>
+          <Button onClick={abrirNuevaUbicacion}>
             <Plus className="size-4" aria-hidden="true" />
             Agregar ubicación
           </Button>
@@ -216,8 +254,28 @@ export function WorkspaceClima({
                     ? format(parseISO(diaActivo.atardecer), "HH:mm")
                     : "—"}
                 </span>
-                <span className="ml-auto rounded-full bg-surface-container px-2 py-1 text-[9px] font-bold">
-                  Actualizado ahora
+                <span className="ml-auto flex items-center gap-2 font-bold">
+                  <span className="rounded-full bg-surface-container px-2 py-1 text-[9px]">
+                    {actual.actualizadoEn
+                      ? `Datos de ${format(parseISO(actual.actualizadoEn), "HH:mm")}`
+                      : "Datos actualizados"}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 rounded-full px-3 text-[10px] font-bold"
+                    disabled={actualizarClima.isPending}
+                    onClick={() => actualizarClima.mutate()}
+                  >
+                    <RefreshCw
+                      className={cn(
+                        "size-3",
+                        actualizarClima.isPending && "animate-spin",
+                      )}
+                      aria-hidden="true"
+                    />
+                    Actualizar
+                  </Button>
                 </span>
               </div>
             </div>
@@ -321,6 +379,9 @@ export function WorkspaceClima({
                       <span className="tabular text-[11px] font-black text-heading">
                         {hora.temperatura}°
                       </span>
+                      <span className="text-[8px] font-semibold text-[#d97706]">
+                        Sens. {hora.sensacion}°
+                      </span>
                       <span className="text-[8px] font-semibold text-signal-blue">
                         {hora.probLluvia}%
                       </span>
@@ -337,7 +398,10 @@ export function WorkspaceClima({
 
       <DialogoUbicacion
         open={ubicacionOpen}
-        onOpenChange={setUbicacionOpen}
+        onOpenChange={(open) => {
+          setUbicacionOpen(open)
+        }}
+        ubicacion={ubicacionEditando}
       />
 
       <AlertDialog
