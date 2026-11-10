@@ -362,35 +362,6 @@ export function WorkspaceClima({
               </div>
 
               <HorasClimaChart horas={horasDia} />
-
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {horasDia.map((hora) => (
-                    <div
-                      key={hora.hora}
-                      className="flex w-20 shrink-0 flex-col items-center gap-1 rounded-2xl border border-outline-variant/50 bg-card p-2 text-center"
-                    >
-                      <span className="tabular text-[9px] font-bold text-muted-foreground">
-                        {format(parseISO(hora.hora), "HH:mm")}
-                      </span>
-                      <IconoDelClima
-                        icono={hora.icono}
-                        className="size-4 text-secondary"
-                      />
-                      <span className="tabular text-[11px] font-black text-heading">
-                        {hora.temperatura}°
-                      </span>
-                      <span className="text-[8px] font-semibold text-[#d97706]">
-                        Sens. {hora.sensacion}°
-                      </span>
-                      <span className="text-[8px] font-semibold text-signal-blue">
-                        {hora.probLluvia}%
-                      </span>
-                      <span className="text-[8px] text-muted-foreground">
-                        {hora.viento} km/h
-                      </span>
-                    </div>
-                  ))}
-              </div>
             </>
           ) : null}
         </>
