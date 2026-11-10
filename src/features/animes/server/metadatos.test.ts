@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  extraerEstudioAniList,
+  extraerEpisodiosJustWatch,
   extraerEstudioKitsu,
+  extraerMetadatosAniList,
   normalizarEstudio,
-} from "./estudios"
+  slugJustWatch,
+} from "./metadatos"
 
 describe("normalizarEstudio", () => {
   it("unifica alias conocidos", () => {
@@ -103,13 +105,15 @@ describe("extraerEstudioKitsu", () => {
   })
 })
 
-describe("extraerEstudioAniList", () => {
+describe("extraerMetadatosAniList", () => {
   const payload = {
     data: {
       Page: {
         media: [
           {
             seasonYear: 2021,
+            episodes: 11,
+            title: { english: "Mushoku Tensei: Jobless Reincarnation Part 2" },
             studios: {
               edges: [
                 { isMain: false, node: { name: "Toho" } },
@@ -119,6 +123,8 @@ describe("extraerEstudioAniList", () => {
           },
           {
             seasonYear: 2026,
+            episodes: 12,
+            title: { english: "Tokyo Revengers: War of the Three Titans Arc" },
             studios: {
               edges: [{ isMain: true, node: { name: "LIDENFILMS" } }],
             },
@@ -129,21 +135,35 @@ describe("extraerEstudioAniList", () => {
   }
 
   it("prefiere el resultado del año pedido", () => {
-    expect(extraerEstudioAniList(payload, 2026)).toBe("LIDENFILMS")
+    expect(extraerMetadatosAniList(payload, 2026)).toEqual({
+      estudio: "LIDENFILMS",
+      episodios: 12,
+      tituloIngles: "Tokyo Revengers: War of the Three Titans Arc",
+    })
   })
 
   it("usa el primer resultado si el año no coincide", () => {
-    expect(extraerEstudioAniList(payload, 1999)).toBe("Studio Bind")
-    expect(extraerEstudioAniList(payload)).toBe("Studio Bind")
+    expect(extraerMetadatosAniList(payload, 1999)).toEqual({
+      estudio: "Studio Bind",
+      episodios: 11,
+      tituloIngles: "Mushoku Tensei: Jobless Reincarnation Part 2",
+    })
+    expect(extraerMetadatosAniList(payload)).toEqual({
+      estudio: "Studio Bind",
+      episodios: 11,
+      tituloIngles: "Mushoku Tensei: Jobless Reincarnation Part 2",
+    })
   })
 
-  it("toma el estudio principal", () => {
+  it("toma el estudio principal y la cantidad de episodios", () => {
     const unico = {
       data: {
         Page: {
           media: [
             {
               seasonYear: 2024,
+              episodes: 24,
+              title: { english: "Chainsaw Man" },
               studios: {
                 edges: [
                   { isMain: false, node: { name: "Toho" } },
@@ -156,14 +176,70 @@ describe("extraerEstudioAniList", () => {
       },
     }
 
-    expect(extraerEstudioAniList(unico, 2024)).toBe("MAPPA")
+    expect(extraerMetadatosAniList(unico, 2024)).toEqual({
+      estudio: "MAPPA",
+      episodios: 24,
+      tituloIngles: "Chainsaw Man",
+    })
   })
 
   it("devuelve null sin resultados", () => {
-    expect(extraerEstudioAniList(null)).toBeNull()
-    expect(extraerEstudioAniList({ data: { Page: { media: [] } } })).toBeNull()
+    expect(extraerMetadatosAniList(null)).toEqual({
+      estudio: null,
+      episodios: null,
+      tituloIngles: null,
+    })
     expect(
-      extraerEstudioAniList({ data: { Page: { media: [{ studios: null }] } } }),
-    ).toBeNull()
+      extraerMetadatosAniList({ data: { Page: { media: [] } } }),
+    ).toEqual({ estudio: null, episodios: null, tituloIngles: null })
+    expect(
+      extraerMetadatosAniList({
+        data: { Page: { media: [{ studios: null }] } },
+      }),
+    ).toEqual({ estudio: null, episodios: null, tituloIngles: null })
+  })
+
+  it("ignora episodios desconocidos o inválidos", () => {
+    expect(
+      extraerMetadatosAniList({
+        data: {
+          Page: {
+            media: [
+              { seasonYear: 2026, episodes: null, studios: { edges: [] } },
+              { seasonYear: 2025, episodes: 0, studios: { edges: [] } },
+            ],
+          },
+        },
+      }),
+    ).toEqual({ estudio: null, episodios: null, tituloIngles: null })
+  })
+})
+
+describe("slugJustWatch", () => {
+  it("genera slugs parecidos a los de JustWatch", () => {
+    expect(
+      slugJustWatch(
+        "The Laid-Off Cheat-Granting Mage Enjoys a Second Lease on Life",
+      ),
+    ).toBe("the-laid-off-cheat-granting-mage-enjoys-a-second-lease-on-life")
+
+    expect(
+      slugJustWatch("So What's Wrong with Getting Reborn as a Goblin?"),
+    ).toBe("so-whats-wrong-with-getting-reborn-as-a-goblin")
+
+    expect(slugJustWatch("Fate & Order: Café")).toBe("fate-and-order-cafe")
+  })
+})
+
+describe("extraerEpisodiosJustWatch", () => {
+  it("lee la cantidad de episodios de la tarjeta de temporada", () => {
+    const html =
+      '<div class="season-info"><div class="season-info__text episodes-number" data-v-x>12 Episodes</div></div>'
+
+    expect(extraerEpisodiosJustWatch(html)).toBe(12)
+  })
+
+  it("devuelve null cuando no hay datos", () => {
+    expect(extraerEpisodiosJustWatch("<div>Sin episodios</div>")).toBeNull()
   })
 })

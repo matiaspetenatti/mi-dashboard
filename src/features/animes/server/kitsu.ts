@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only"
 
 import type { KitsuAnime } from "../types"
-import { obtenerEstudio } from "./estudios"
+import { obtenerMetadatos } from "./metadatos"
 
 const KITSU_API = "https://kitsu.io/api/edge"
 const HEADERS = {
@@ -178,12 +178,17 @@ export async function obtenerAnimeKitsu(
       attrs?.titles?.en_jp,
     ].filter((titulo): titulo is string => Boolean(titulo?.trim()))
 
-    const estudio = await obtenerEstudio({
+    const metadatos = await obtenerMetadatos({
       kitsuId,
       titulos,
       anio: anime.ano,
+      episodiosKitsu: anime.episodios,
     })
-    const resultado: KitsuAnime = { ...anime, estudio }
+    const resultado: KitsuAnime = {
+      ...anime,
+      estudio: metadatos.estudio,
+      episodios: metadatos.episodios ?? anime.episodios,
+    }
 
     cacheDetalle.set(kitsuId, {
       expiresAt: Date.now() + TTL_DETALLE,

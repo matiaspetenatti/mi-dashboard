@@ -1,7 +1,10 @@
 import { createClient } from "@libsql/client"
 import { config } from "dotenv"
 
-import { obtenerEstudio, normalizarEstudio } from "../src/features/animes/server/estudios"
+import {
+  normalizarEstudio,
+  obtenerMetadatos,
+} from "../src/features/animes/server/metadatos"
 
 config({ path: [".env.local", ".env"] })
 
@@ -18,10 +21,13 @@ const esperar = (ms: number) =>
 
 try {
   const pendientes = await client.execute(
-    "select id, kitsu_id, titulo, titulo_ingles, ano from animes_vistos where estudio is null or trim(estudio) = '' order by id",
+    `select id, kitsu_id, titulo, titulo_ingles, ano, estudio, episodios
+     from animes_vistos
+     where estudio is null or trim(estudio) = '' or episodios is null
+     order by id`,
   )
 
-  console.log(`Animes sin estudio: ${pendientes.rows.length}`)
+  console.log(`Animes con metadatos incompletos: ${pendientes.rows.length}`)
 
   let actualizados = 0
   const sinDato: string[] = []
@@ -32,23 +38,50 @@ try {
       ? String(row.titulo_ingles)
       : null
     const anio = row.ano !== null ? Number(row.ano) : null
+    const estudioActual = String(row.estudio ?? "").trim()
+    const episodiosActuales =
+      row.episodios !== null ? Number(row.episodios) : null
 
-    const estudio = await obtenerEstudio({
+    const metadatos = await obtenerMetadatos({
       kitsuId: Number(row.kitsu_id),
       titulos: [tituloIngles ?? "", titulo],
       anio,
+      episodiosKitsu: episodiosActuales,
     })
 
-    if (!estudio) {
-      sinDato.push(titulo)
-      console.log(`- ${titulo}: sin dato`)
-    } else {
+    const asignaciones: string[] = []
+    const valores: Array<string | number> = []
+
+    if (!estudioActual && metadatos.estudio) {
+      asignaciones.push("estudio = ?")
+      valores.push(metadatos.estudio)
+    }
+    if (episodiosActuales === null && metadatos.episodios) {
+      asignaciones.push("episodios = ?")
+      valores.push(metadatos.episodios)
+    }
+
+    if (asignaciones.length > 0) {
       await client.execute({
-        sql: "update animes_vistos set estudio = ? where id = ?",
-        args: [estudio, Number(row.id)],
+        sql: `update animes_vistos set ${asignaciones.join(", ")} where id = ?`,
+        args: [...valores, Number(row.id)],
       })
       actualizados += 1
-      console.log(`✓ ${titulo} -> ${estudio}`)
+      console.log(
+        `✓ ${titulo} -> ${[
+          !estudioActual && metadatos.estudio
+            ? `estudio: ${metadatos.estudio}`
+            : null,
+          episodiosActuales === null && metadatos.episodios
+            ? `episodios: ${metadatos.episodios}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(", ")}`,
+      )
+    } else {
+      sinDato.push(titulo)
+      console.log(`- ${titulo}: sin datos nuevos`)
     }
 
     await esperar(400)
@@ -56,7 +89,7 @@ try {
 
   console.log(`\nActualizados: ${actualizados}/${pendientes.rows.length}`)
   if (sinDato.length > 0) {
-    console.log("Sin dato:", sinDato)
+    console.log("Sin datos nuevos:", sinDato)
   }
 
   const conEstudio = await client.execute(

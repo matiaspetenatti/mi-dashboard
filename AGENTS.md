@@ -105,7 +105,7 @@ npm run db:migrate   # aplicar migraciones
 npm run db:studio    # Drizzle Studio
 npm run db:audit     # auditoría read-only de Turso
 npm run db:backup    # backup JSON en backups/
-npm run db:backfill-estudios  # completa estudios faltantes desde Kitsu/AniList
+npm run db:backfill-metadatos  # completa estudios y episodios faltantes desde Kitsu/AniList/JustWatch
 ```
 
 ## Variables de entorno
