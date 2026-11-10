@@ -273,20 +273,31 @@ export function nivelDolor(intensidad: number) {
   if (intensidad <= 3) {
     return {
       label: "Leve",
-      clase: "bg-success-container text-success",
+      tono: "verde" as const,
+      clase:
+        "bg-success text-on-success dark:bg-success-container dark:text-on-success-container",
     }
   }
   if (intensidad <= 6) {
     return {
       label: "Moderada",
-      clase: "bg-warning-container text-warning",
+      tono: "ambar" as const,
+      clase:
+        "bg-warning text-on-warning dark:bg-warning-container dark:text-on-warning-container",
     }
   }
   if (intensidad <= 8) {
     return {
       label: "Severa",
-      clase: "bg-error-container text-error",
+      tono: "rojo" as const,
+      clase:
+        "bg-error text-on-error dark:bg-error-container dark:text-on-error-container",
     }
   }
-  return { label: "Muy severa", clase: "bg-error text-paper" }
+  return {
+    label: "Muy severa",
+    tono: "rojo" as const,
+    clase:
+      "bg-error text-on-error ring-2 ring-inset ring-white/25 dark:bg-error-container dark:text-on-error-container",
+  }
 }

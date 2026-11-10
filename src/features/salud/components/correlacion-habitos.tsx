@@ -36,13 +36,13 @@ export function CorrelacionHabitosCard({
       ) : (
         <>
           <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-semibold text-muted-foreground">
-            <span className="rounded-full bg-surface-container px-2.5 py-1">
+            <span className="rounded-full bg-surface-container-high px-2.5 py-1 text-heading">
               {correlacion.registros} registros
             </span>
-            <span className="rounded-full bg-error-container px-2.5 py-1 text-error">
+            <span className="rounded-full bg-error px-2.5 py-1 text-on-error dark:bg-error-container dark:text-on-error-container">
               {correlacion.registrosConCrisis} con crisis
             </span>
-            <span className="rounded-full bg-success-container px-2.5 py-1 text-success">
+            <span className="rounded-full bg-success px-2.5 py-1 text-on-success dark:bg-success-container dark:text-on-success-container">
               {correlacion.registrosSinCrisis} sin crisis
             </span>
           </div>

@@ -189,6 +189,7 @@ export function VistaMigrana({
               : "Sin episodios cerrados este mes"
           }
           badge={nivel?.label}
+          badgeClase={nivel?.clase}
         />
         <Metrica
           icon={Pill}
@@ -228,6 +229,7 @@ function Metrica({
   value,
   detalle,
   badge,
+  badgeClase,
   tendencia,
 }: {
   icon: typeof Activity
@@ -235,6 +237,7 @@ function Metrica({
   value: string
   detalle: string
   badge?: string
+  badgeClase?: string
   tendencia?: number
 }) {
   const TendenciaIcono =
@@ -260,7 +263,12 @@ function Metrica({
           </p>
         </div>
         {badge ? (
-          <span className="rounded-full bg-surface-container px-2 py-0.5 text-[8px] font-bold text-muted-foreground">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[8px] font-bold",
+              badgeClase ?? "bg-surface-container text-muted-foreground",
+            )}
+          >
             {badge}
           </span>
         ) : null}

@@ -183,7 +183,7 @@ export function DiarioBienestar({
         <p className="mt-2 text-[11px] font-medium text-muted-foreground">
           {diaTexto}
           {registroActual ? (
-            <span className="ml-2 rounded-full bg-success-container px-2 py-0.5 text-[9px] font-bold text-success">
+            <span className="ml-2 rounded-full bg-success px-2 py-0.5 text-[9px] font-bold text-on-success dark:bg-success-container dark:text-on-success-container">
               Registro cargado
             </span>
           ) : null}

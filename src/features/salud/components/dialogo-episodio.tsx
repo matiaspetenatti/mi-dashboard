@@ -22,6 +22,15 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
   ALIVIOS,
@@ -73,9 +82,6 @@ type Valores = {
   alivio: string
   notas: string
 }
-
-const CAMPO =
-  "h-10 w-full rounded-xl border border-outline-variant/70 bg-card px-3 text-sm text-heading outline-none focus:border-ring"
 
 function valoresDesde(
   episodio: EpisodioConFactores | null | undefined,
@@ -364,16 +370,17 @@ export function DialogoEpisodio({
                 {valores.intensidad}/10 · {nivel.label}
               </span>
             </div>
-            <input
-              type="range"
+            <Slider
               min={1}
               max={10}
               step={1}
-              value={valores.intensidad}
-              onChange={(event) =>
-                actualizar("intensidad", Number(event.target.value))
+              value={[valores.intensidad]}
+              onValueChange={(nuevo) =>
+                actualizar(
+                  "intensidad",
+                  Array.isArray(nuevo) ? nuevo[0] : nuevo,
+                )
               }
-              className="h-2 w-full cursor-pointer accent-lime-voltage"
               aria-label="Intensidad del dolor"
             />
             <div className="flex justify-between text-[9px] font-semibold text-muted-foreground">
@@ -458,42 +465,56 @@ export function DialogoEpisodio({
             </div>
           </section>
 
-          <section className="grid gap-3 border-t border-outline-variant/40 pt-4 sm:grid-cols-2">
+          <section className="grid gap-4 border-t border-outline-variant/40 pt-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="episodio-patron">Patrón del dolor</Label>
-              <select
-                id="episodio-patron"
-                value={valores.patron}
-                onChange={(event) =>
-                  actualizar("patron", event.target.value)
-                }
-                className={CAMPO}
-              >
-                <option value="">Sin especificar</option>
+              <Label>Patrón del dolor</Label>
+              <div className="flex flex-wrap gap-1.5">
+                <Chip
+                  activo={valores.patron === ""}
+                  onClick={() => actualizar("patron", "")}
+                >
+                  Sin especificar
+                </Chip>
                 {PATRONES.map((patron) => (
-                  <option key={patron.valor} value={patron.valor}>
+                  <Chip
+                    key={patron.valor}
+                    activo={valores.patron === patron.valor}
+                    onClick={() =>
+                      actualizar(
+                        "patron",
+                        valores.patron === patron.valor ? "" : patron.valor,
+                      )
+                    }
+                  >
                     {patron.label}
-                  </option>
+                  </Chip>
                 ))}
-              </select>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="episodio-lateralidad">Lateralidad</Label>
-              <select
-                id="episodio-lateralidad"
-                value={valores.lateralidad}
-                onChange={(event) =>
-                  actualizar("lateralidad", event.target.value)
-                }
-                className={CAMPO}
-              >
-                <option value="">Sin especificar</option>
+              <Label>Lateralidad</Label>
+              <div className="flex flex-wrap gap-1.5">
+                <Chip
+                  activo={valores.lateralidad === ""}
+                  onClick={() => actualizar("lateralidad", "")}
+                >
+                  Sin especificar
+                </Chip>
                 {LATERALIDADES.map((lado) => (
-                  <option key={lado.valor} value={lado.valor}>
+                  <Chip
+                    key={lado.valor}
+                    activo={valores.lateralidad === lado.valor}
+                    onClick={() =>
+                      actualizar(
+                        "lateralidad",
+                        valores.lateralidad === lado.valor ? "" : lado.valor,
+                      )
+                    }
+                  >
                     {lado.label}
-                  </option>
+                  </Chip>
                 ))}
-              </select>
+              </div>
             </div>
           </section>
 
@@ -503,18 +524,19 @@ export function DialogoEpisodio({
                 <Sparkles className="size-3" aria-hidden="true" />
                 Aura
               </h3>
-              <button
-                type="button"
-                onClick={() => actualizar("aura", !valores.aura)}
-                className={cn(
-                  "rounded-full px-3 py-1 text-[10px] font-bold transition-colors",
-                  valores.aura
-                    ? "bg-forest-ink text-paper dark:bg-lime-voltage dark:text-forest-ink"
-                    : "bg-surface-container text-muted-foreground",
-                )}
-              >
-                {valores.aura ? "Con aura" : "Sin aura"}
-              </button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="episodio-aura"
+                  checked={valores.aura}
+                  onCheckedChange={(checked) => actualizar("aura", checked)}
+                />
+                <Label
+                  htmlFor="episodio-aura"
+                  className="text-[10px] font-bold"
+                >
+                  {valores.aura ? "Con aura" : "Sin aura"}
+                </Label>
+              </div>
             </div>
             {valores.aura ? (
               <div className="flex flex-wrap gap-1.5">
@@ -592,20 +614,21 @@ export function DialogoEpisodio({
                 <Pill className="size-3" aria-hidden="true" />
                 Tetralgin
               </h3>
-              <button
-                type="button"
-                onClick={() =>
-                  actualizar("tomoTetralgin", !valores.tomoTetralgin)
-                }
-                className={cn(
-                  "rounded-full px-3 py-1 text-[10px] font-bold transition-colors",
-                  valores.tomoTetralgin
-                    ? "bg-forest-ink text-paper dark:bg-lime-voltage dark:text-forest-ink"
-                    : "bg-surface-container text-muted-foreground",
-                )}
-              >
-                {valores.tomoTetralgin ? "Tomó" : "No tomó"}
-              </button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="episodio-tetralgin"
+                  checked={valores.tomoTetralgin}
+                  onCheckedChange={(checked) =>
+                    actualizar("tomoTetralgin", checked)
+                  }
+                />
+                <Label
+                  htmlFor="episodio-tetralgin"
+                  className="text-[10px] font-bold"
+                >
+                  {valores.tomoTetralgin ? "Tomó" : "No tomó"}
+                </Label>
+              </div>
             </div>
 
             {valores.tomoTetralgin ? (
@@ -651,21 +674,42 @@ export function DialogoEpisodio({
             {valores.tomoTetralgin ? (
               <div className="space-y-2">
                 <Label htmlFor="episodio-alivio">Respuesta</Label>
-                <select
-                  id="episodio-alivio"
-                  value={valores.alivio}
-                  onChange={(event) =>
-                    actualizar("alivio", event.target.value)
+                <Select
+                  value={valores.alivio || "sin-registro"}
+                  onValueChange={(valor) =>
+                    actualizar(
+                      "alivio",
+                      valor === "sin-registro" ? "" : (valor ?? ""),
+                    )
                   }
-                  className={CAMPO}
+                  items={[
+                    {
+                      value: "sin-registro",
+                      label: "Sin respuesta registrada",
+                    },
+                    ...ALIVIOS.map((alivio) => ({
+                      value: alivio.valor,
+                      label: alivio.label,
+                    })),
+                  ]}
                 >
-                  <option value="">Sin respuesta registrada</option>
-                  {ALIVIOS.map((alivio) => (
-                    <option key={alivio.valor} value={alivio.valor}>
-                      {alivio.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    id="episodio-alivio"
+                    className="h-10 w-full rounded-xl border-outline-variant/70 bg-card px-3 text-sm text-heading"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sin-registro">
+                      Sin respuesta registrada
+                    </SelectItem>
+                    {ALIVIOS.map((alivio) => (
+                      <SelectItem key={alivio.valor} value={alivio.valor}>
+                        {alivio.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ) : null}
           </section>

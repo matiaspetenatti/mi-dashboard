@@ -209,7 +209,7 @@ export function BitacoraEpisodios({
                     </div>
 
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Chip>{nivel.label}</Chip>
+                      <Chip tono={nivel.tono}>{nivel.label}</Chip>
                       {!episodio.finEn ? (
                         <Chip tono="verde">En curso</Chip>
                       ) : null}
@@ -221,7 +221,15 @@ export function BitacoraEpisodios({
                         </Chip>
                       ) : null}
                       {alivio ? (
-                        <Chip tono={alivio === "Completo" ? "verde" : "neutro"}>
+                        <Chip
+                          tono={
+                            alivio === "Completo"
+                              ? "verde"
+                              : alivio === "Parcial"
+                                ? "ambar"
+                                : "rojo"
+                          }
+                        >
                           <Pill className="size-2.5" aria-hidden="true" />
                           {alivio}
                         </Chip>
@@ -368,12 +376,16 @@ function Chip({
   tono = "neutro",
 }: {
   children: ReactNode
-  tono?: "neutro" | "verde" | "ambar"
+  tono?: "neutro" | "verde" | "ambar" | "rojo"
 }) {
   const tonos = {
-    neutro: "bg-surface-container text-muted-foreground",
-    verde: "bg-success-container text-success",
-    ambar: "bg-warning-container text-warning",
+    neutro: "bg-surface-container-high text-heading",
+    verde:
+      "bg-success text-on-success dark:bg-success-container dark:text-on-success-container",
+    ambar:
+      "bg-warning text-on-warning dark:bg-warning-container dark:text-on-warning-container",
+    rojo:
+      "bg-error text-on-error dark:bg-error-container dark:text-on-error-container",
   } as const
 
   return (

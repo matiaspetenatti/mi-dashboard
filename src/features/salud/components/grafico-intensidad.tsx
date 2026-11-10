@@ -10,7 +10,7 @@ import { ChartCard } from "@/components/organisms/chart-card"
 import type { PuntoSerie } from "@/features/salud/types"
 import { cn } from "cn"
 
-const RANGOS = [30, 90] as const
+const RANGOS = [7, 30, 90] as const
 type Rango = (typeof RANGOS)[number]
 
 export function GraficoIntensidad({ serie }: { serie: PuntoSerie[] }) {
