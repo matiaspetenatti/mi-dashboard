@@ -1,6 +1,7 @@
 import "@tanstack/react-start/server-only"
 
 import type { KitsuAnime } from "../types"
+import { obtenerEstudio } from "./estudios"
 
 const KITSU_API = "https://kitsu.io/api/edge"
 const HEADERS = {
@@ -66,7 +67,6 @@ function leerCategorias(included: KitsuResponse["included"]): Map<string, string
 function normalizarAnime(
   item: KitsuItem,
   categorias: Map<string, string>,
-  estudio: string | null = null,
 ): KitsuAnime | null {
   const attrs = item.attributes
   const kitsuId = Number(item.id)
@@ -105,48 +105,7 @@ function normalizarAnime(
     scoreMal: attrs.averageRating
       ? Number((Number(attrs.averageRating) / 10).toFixed(2))
       : null,
-    estudio,
-  }
-}
-
-async function obtenerEstudio(kitsuId: number): Promise<string | null> {
-  try {
-    const respuesta = await fetch(
-      `${KITSU_API}/anime/${kitsuId}/media-productions?include=producer`,
-      { headers: HEADERS, signal: AbortSignal.timeout(8000) },
-    )
-    if (!respuesta.ok) return null
-
-    const json = (await respuesta.json()) as {
-      data?: Array<{
-        attributes?: { role?: string }
-        relationships?: { producer?: { data?: { id?: string } } }
-      }>
-      included?: Array<{
-        id?: string
-        type?: string
-        attributes?: { name?: string }
-      }>
-    }
-
-    const productores = new Map<string, string>()
-    for (const item of json.included ?? []) {
-      if (item.type !== "producers") continue
-      if (item.id && item.attributes?.name) {
-        productores.set(item.id, item.attributes.name)
-      }
-    }
-
-    for (const item of json.data ?? []) {
-      if (item.attributes?.role !== "studio") continue
-      const id = item.relationships?.producer?.data?.id
-      if (!id) continue
-      const nombre = productores.get(id)
-      if (nombre) return nombre
-    }
-    return null
-  } catch {
-    return null
+    estudio: null,
   }
 }
 
@@ -209,14 +168,28 @@ export async function obtenerAnimeKitsu(
     if (!json.data || Array.isArray(json.data)) return null
 
     const categorias = leerCategorias(json.included)
-    const studio = await obtenerEstudio(kitsuId)
-    const anime = normalizarAnime(json.data, categorias, studio)
+    const anime = normalizarAnime(json.data, categorias)
+    if (!anime) return null
+
+    const attrs = json.data.attributes
+    const titulos = [
+      attrs?.titles?.en,
+      attrs?.canonicalTitle,
+      attrs?.titles?.en_jp,
+    ].filter((titulo): titulo is string => Boolean(titulo?.trim()))
+
+    const estudio = await obtenerEstudio({
+      kitsuId,
+      titulos,
+      anio: anime.ano,
+    })
+    const resultado: KitsuAnime = { ...anime, estudio }
 
     cacheDetalle.set(kitsuId, {
       expiresAt: Date.now() + TTL_DETALLE,
-      data: anime,
+      data: resultado,
     })
-    return anime
+    return resultado
   } catch {
     return null
   }

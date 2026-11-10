@@ -21,7 +21,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:audit": "tsx scripts/db-audit.ts",
-    "db:backup": "tsx scripts/db-backup.ts"
+    "db:backup": "tsx scripts/db-backup.ts",
+    "db:backfill-estudios": "tsx scripts/backfill-estudios.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
