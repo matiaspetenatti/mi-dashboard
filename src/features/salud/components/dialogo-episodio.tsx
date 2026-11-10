@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { DatePicker } from "@/components/molecules/date-picker"
+import { TimePicker } from "@/components/molecules/time-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -245,6 +247,26 @@ export function DialogoEpisodio({
     })
   }
 
+  function cambiarFinFecha(fecha: string) {
+    if (!fecha) {
+      setValores((anterior) => ({
+        ...anterior,
+        finFecha: "",
+        finHora: "",
+      }))
+      return
+    }
+    actualizar("finFecha", fecha)
+  }
+
+  function cambiarTetralginFecha(fecha: string) {
+    setValores((anterior) => ({
+      ...anterior,
+      tetralginFecha: fecha,
+      tetralginHora: fecha ? anterior.tetralginHora : "",
+    }))
+  }
+
   function cerrarAhora() {
     const actual = fechaHoraAhora()
     const { fecha, hora } = partirEnFechaHora(actual)
@@ -399,44 +421,38 @@ export function DialogoEpisodio({
               <div className="grid grid-cols-[1.2fr_0.8fr] gap-2">
                 <div className="space-y-2">
                   <Label htmlFor="episodio-inicio-fecha">Inicio</Label>
-                  <Input
+                  <DatePicker
                     id="episodio-inicio-fecha"
-                    type="date"
                     value={valores.inicioFecha}
-                    onChange={(event) => cambiarInicioFecha(event.target.value)}
+                    onChange={cambiarInicioFecha}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="episodio-inicio-hora">Hora</Label>
-                  <Input
+                  <TimePicker
                     id="episodio-inicio-hora"
-                    type="time"
                     value={valores.inicioHora}
-                    onChange={(event) =>
-                      actualizar("inicioHora", event.target.value)
-                    }
+                    onChange={(hora) => actualizar("inicioHora", hora)}
                   />
                 </div>
               </div>
               <div className="grid grid-cols-[1.2fr_0.8fr] gap-2">
                 <div className="space-y-2">
                   <Label htmlFor="episodio-fin-fecha">Fin</Label>
-                  <Input
+                  <DatePicker
                     id="episodio-fin-fecha"
-                    type="date"
                     value={valores.finFecha}
-                    onChange={(event) =>
-                      actualizar("finFecha", event.target.value)
-                    }
+                    onChange={cambiarFinFecha}
+                    clearable
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="episodio-fin-hora">Hora</Label>
-                  <Input
+                  <TimePicker
                     id="episodio-fin-hora"
-                    type="time"
                     value={valores.finHora}
-                    onChange={(event) => cambiarFinHora(event.target.value)}
+                    onChange={cambiarFinHora}
+                    clearable
                   />
                 </div>
               </div>
@@ -648,24 +664,20 @@ export function DialogoEpisodio({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="episodio-tetralgin-fecha">Fecha</Label>
-                  <Input
+                  <DatePicker
                     id="episodio-tetralgin-fecha"
-                    type="date"
                     value={valores.tetralginFecha}
-                    onChange={(event) =>
-                      actualizar("tetralginFecha", event.target.value)
-                    }
+                    onChange={cambiarTetralginFecha}
+                    clearable
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="episodio-tetralgin-hora">Hora</Label>
-                  <Input
+                  <TimePicker
                     id="episodio-tetralgin-hora"
-                    type="time"
                     value={valores.tetralginHora}
-                    onChange={(event) =>
-                      actualizar("tetralginHora", event.target.value)
-                    }
+                    onChange={(hora) => actualizar("tetralginHora", hora)}
+                    clearable
                   />
                 </div>
               </div>
