@@ -1,15 +1,18 @@
 "use client"
 
 import { useMemo } from "react"
-import { barY, defineChart, lineY } from "@tanstack/charts"
+import { areaY, barY, d3Curve, defineChart, lineY } from "@tanstack/charts"
 import { Chart } from "@tanstack/charts/react"
 import { scaleBand } from "@tanstack/charts/scales/band"
 import { scaleLinear } from "@tanstack/charts/scales/linear"
+import { curveMonotoneX } from "d3-shape"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 
 import { ChartCard } from "@/components/organisms/chart-card"
 import type { DiaClima } from "@/features/clima/types"
+
+const curvaSuave = d3Curve(curveMonotoneX)
 
 export function Pronostico14Chart({ dias }: { dias: DiaClima[] }) {
   const datos = useMemo(
@@ -27,6 +30,15 @@ export function Pronostico14Chart({ dias }: { dias: DiaClima[] }) {
     () =>
       defineChart({
         marks: [
+          areaY(datos, {
+            id: "amplitud",
+            x: "dia",
+            y: "max",
+            y1: "min",
+            fill: "#cb272f",
+            fillOpacity: 0.1,
+            curve: curvaSuave,
+          }),
           barY(datos, {
             id: "lluvia",
             x: "dia",
@@ -43,6 +55,7 @@ export function Pronostico14Chart({ dias }: { dias: DiaClima[] }) {
             stroke: "#cb272f",
             strokeWidth: 2.5,
             points: true,
+            curve: curvaSuave,
           }),
           lineY(datos, {
             id: "minima",
@@ -51,6 +64,7 @@ export function Pronostico14Chart({ dias }: { dias: DiaClima[] }) {
             stroke: "#0b4c72",
             strokeWidth: 2.5,
             points: true,
+            curve: curvaSuave,
           }),
         ],
         scales: {
@@ -85,7 +99,7 @@ export function Pronostico14Chart({ dias }: { dias: DiaClima[] }) {
   return (
     <ChartCard
       title="Pronóstico de 14 días"
-      subtitle="Máximas, mínimas y probabilidad de lluvia"
+      subtitle="Máximas, mínimas, amplitud y probabilidad de lluvia"
     >
       <div className="mb-2 flex flex-wrap items-center gap-4 text-[10px] font-semibold text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -93,6 +107,9 @@ export function Pronostico14Chart({ dias }: { dias: DiaClima[] }) {
         </span>
         <span className="flex items-center gap-1.5">
           <span className="size-1.5 rounded-full bg-[#0b4c72]" /> Mínima
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-3 rounded-sm bg-[#cb272f]/15" /> Amplitud
         </span>
         <span className="flex items-center gap-1.5">
           <span className="size-1.5 rounded-full bg-[#38bdf8]" /> Lluvia

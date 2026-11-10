@@ -1,25 +1,26 @@
 "use client"
 
 import { useMemo } from "react"
-import { barY, defineChart, lineY } from "@tanstack/charts"
+import { barY, d3Curve, defineChart, lineY } from "@tanstack/charts"
 import { Chart } from "@tanstack/charts/react"
 import { scaleBand } from "@tanstack/charts/scales/band"
 import { scaleLinear } from "@tanstack/charts/scales/linear"
+import { curveMonotoneX } from "d3-shape"
 import { format, parseISO } from "date-fns"
 
 import { ChartCard } from "@/components/organisms/chart-card"
 import type { HoraClima } from "@/features/clima/types"
 
+const curvaSuave = d3Curve(curveMonotoneX)
+
 export function HorasClimaChart({ horas }: { horas: HoraClima[] }) {
   const datos = useMemo(
     () =>
-      horas
-        .filter((_, indice) => indice % 2 === 0)
-        .map((hora) => ({
-          hora: format(parseISO(hora.hora), "HH:mm"),
-          temperatura: hora.temperatura,
-          lluvia: hora.probLluvia,
-        })),
+      horas.map((hora) => ({
+        hora: format(parseISO(hora.hora), "HH:mm"),
+        temperatura: hora.temperatura,
+        lluvia: hora.probLluvia,
+      })),
     [horas],
   )
 
@@ -43,13 +44,17 @@ export function HorasClimaChart({ horas }: { horas: HoraClima[] }) {
             stroke: "#258f38",
             strokeWidth: 2.5,
             points: true,
+            curve: curvaSuave,
           }),
         ],
         scales: {
           x: {
             scale: () =>
               scaleBand<string>().paddingInner(0.25).paddingOuter(0.1),
-            axis: { label: "Hora" },
+            axis: {
+              label: "Hora",
+              tickLabels: { thin: { minGap: 24 } },
+            },
           },
           y: {
             scale: scaleLinear,

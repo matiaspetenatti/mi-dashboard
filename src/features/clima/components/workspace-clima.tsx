@@ -306,9 +306,7 @@ export function WorkspaceClima({
               <HorasClimaChart horas={horasDia} />
 
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {horasDia
-                  .filter((_, indice) => indice % 2 === 0)
-                  .map((hora) => (
+                {horasDia.map((hora) => (
                     <div
                       key={hora.hora}
                       className="flex w-20 shrink-0 flex-col items-center gap-1 rounded-2xl border border-outline-variant/50 bg-card p-2 text-center"
