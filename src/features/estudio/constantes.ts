@@ -8,7 +8,7 @@ import type {
   TipoSesion,
 } from "@/server/db/schema"
 
-export const notasAprobado = 4
+export const notasAprobado = 6
 
 export const paletaCarreras = [
   "#8b4a2b",

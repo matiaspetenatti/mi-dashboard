@@ -44,11 +44,14 @@ import {
 import {
   etiquetasCuatrimestre,
   etiquetasEstadoCarrera,
-  etiquetasEstadoExamen,
-  etiquetasEstadoMateria,
   etiquetasResultadoExamen,
   etiquetasTipoExamen,
 } from "@/features/estudio/constantes"
+import {
+  claseNota,
+  estadoVisualExamen,
+  estadoVisualMateria,
+} from "@/features/estudio/lib/estados"
 import type {
   EstudioWorkspace,
   ExamenConContexto,
@@ -62,20 +65,6 @@ import type {
 import { diasHasta } from "@/lib/dates"
 import { formatNota, formatearFecha } from "@/lib/format"
 import { cn } from "cn"
-
-const clasesEstadoMateria: Record<EstadoMateria, string> = {
-  pendiente: "bg-surface-container text-muted-foreground",
-  cursando: "bg-signal-blue/10 text-signal-blue",
-  regular: "bg-warning-container text-warning",
-  aprobada: "bg-success-container text-success",
-  libre: "bg-error-container text-error",
-}
-
-const clasesEstadoExamen: Record<string, string> = {
-  programado: "bg-signal-blue/10 text-signal-blue",
-  rendido: "bg-success-container text-success",
-  ausente: "bg-warning-container text-warning",
-}
 
 type ObjetivoEliminar =
   | { tipo: "carrera"; carrera: Carrera }
@@ -432,7 +421,9 @@ export function WorkspaceEstudio({
                           </h3>
                           <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-card shadow-elevation-1">
                             <ul className="divide-y divide-outline-variant/30">
-                              {materias.map((materia) => (
+                              {materias.map((materia) => {
+                                const estado = estadoVisualMateria(materia)
+                                return (
                                 <li
                                   key={materia.id}
                                   className="flex items-center gap-3 px-4 py-3"
@@ -440,7 +431,7 @@ export function WorkspaceEstudio({
                                   <span
                                     className={cn(
                                       "flex size-8 shrink-0 items-center justify-center rounded-full",
-                                      clasesEstadoMateria[materia.estado],
+                                      estado.clase,
                                     )}
                                   >
                                     <BookOpen
@@ -473,13 +464,18 @@ export function WorkspaceEstudio({
                                   <span
                                     className={cn(
                                       "shrink-0 rounded-full px-2.5 py-1 text-[9px] font-bold",
-                                      clasesEstadoMateria[materia.estado],
+                                      estado.clase,
                                     )}
                                   >
-                                    {etiquetasEstadoMateria[materia.estado]}
+                                    {estado.etiqueta}
                                   </span>
 
-                                  <span className="tabular w-9 shrink-0 text-right text-xs font-black text-heading">
+                                  <span
+                                    className={cn(
+                                      "tabular w-9 shrink-0 text-right text-xs font-black",
+                                      claseNota(materia.notaFinal),
+                                    )}
+                                  >
                                     {materia.notaFinal != null
                                       ? formatNota(materia.notaFinal)
                                       : "—"}
@@ -514,7 +510,8 @@ export function WorkspaceEstudio({
                                     </Button>
                                   </div>
                                 </li>
-                              ))}
+                                )
+                              })}
                             </ul>
                           </div>
                         </div>
@@ -567,6 +564,7 @@ export function WorkspaceEstudio({
                           const proximo =
                             examen.estado === "programado" &&
                             examen.fecha >= workspace.hoy
+                          const estadoVisual = estadoVisualExamen(examen)
                           return (
                             <li
                               key={examen.id}
@@ -576,7 +574,7 @@ export function WorkspaceEstudio({
                                 <span
                                   className={cn(
                                     "flex size-7 shrink-0 items-center justify-center rounded-full",
-                                    clasesEstadoExamen[examen.estado],
+                                    estadoVisual.clase,
                                   )}
                                 >
                                   <CalendarClock
@@ -630,13 +628,24 @@ export function WorkspaceEstudio({
                                 <span
                                   className={cn(
                                     "rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em]",
-                                    clasesEstadoExamen[examen.estado],
+                                    estadoVisual.clase,
                                   )}
                                 >
-                                  {etiquetasEstadoExamen[examen.estado]}
+                                  {estadoVisual.etiqueta}
                                 </span>
 
-                                <span className="text-[9px] font-bold text-muted-foreground">
+                                <span
+                                  className={cn(
+                                    "text-[9px] font-bold",
+                                    examen.nota !== null
+                                      ? claseNota(examen.nota)
+                                      : examen.resultado === "aprobado"
+                                        ? "text-success"
+                                        : examen.resultado === "desaprobado"
+                                          ? "text-error"
+                                          : "text-muted-foreground",
+                                  )}
+                                >
                                   {examen.nota != null
                                     ? `Nota ${formatNota(examen.nota)}`
                                     : examen.resultado
