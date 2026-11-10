@@ -84,13 +84,13 @@ const ingredienteRecetaSchema = z.object({
 })
 
 const nutricionSchema = z.object({
-  kcal: z.number().min(0).max(5000),
-  proteinas: z.number().min(0).max(500),
-  carbos: z.number().min(0).max(500),
-  grasas: z.number().min(0).max(500),
-  fibra: z.number().min(0).max(100),
-  azucares: z.number().min(0).max(100),
-  sodio: z.number().min(0).max(5000),
+  kcal: z.number().min(0).max(5000).default(0),
+  proteinas: z.number().min(0).max(500).default(0),
+  carbos: z.number().min(0).max(500).default(0),
+  grasas: z.number().min(0).max(500).default(0),
+  fibra: z.number().min(0).max(100).default(0),
+  azucares: z.number().min(0).max(100).default(0),
+  sodio: z.number().min(0).max(5000).default(0),
 })
 
 const recetaShape = {

@@ -22,6 +22,7 @@ import {
   parsearIngredienteTexto,
   sumarCantidades,
 } from "../lib/cantidades"
+import { normalizarNutricion } from "../lib/nutricion"
 import { diasDeSemana, inicioSemana } from "../lib/semana"
 import type {
   ActualizarItemComidaInput,
@@ -269,7 +270,7 @@ export async function guardarSlotEnDb(input: SlotMenuInput) {
   let titulo = input.titulo?.trim() || null
   let minutos = input.minutos
   let ingredientes = input.ingredientes
-  let nutricion = input.nutricion ?? null
+  let nutricion = normalizarNutricion(input.nutricion)
 
   if (input.recetaId) {
     const receta = (
@@ -288,7 +289,7 @@ export async function guardarSlotEnDb(input: SlotMenuInput) {
         ? ingrediente.nombre
         : `${ingrediente.cantidad} ${ingrediente.unidad} de ${ingrediente.nombre}`,
     )
-    nutricion = receta.nutricion
+    nutricion = normalizarNutricion(receta.nutricion)
   }
 
   if (!titulo) throw new Error("Elegí una receta o escribí un título")

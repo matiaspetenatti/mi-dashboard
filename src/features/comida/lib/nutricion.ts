@@ -23,6 +23,23 @@ export const NUTRICION_VACIA: NutricionReceta = {
   sodio: 0,
 }
 
+/**
+ * Completa los campos faltantes de una nutrición guardada antes de que
+ * existieran todos los nutrientes. Devuelve `null` si no hay datos.
+ */
+export function normalizarNutricion(
+  nutricion: Partial<NutricionReceta> | null | undefined,
+): NutricionReceta | null {
+  if (!nutricion) return null
+  const total = { ...NUTRICION_VACIA }
+  for (const campo of CAMPOS_NUTRICION) {
+    const valor = nutricion[campo.key]
+    total[campo.key] =
+      typeof valor === "number" && Number.isFinite(valor) ? valor : 0
+  }
+  return total
+}
+
 export function nutricionFormVacia(): NutricionForm {
   return Object.fromEntries(
     CAMPOS_NUTRICION.map((campo) => [campo.key, ""]),
@@ -30,7 +47,7 @@ export function nutricionFormVacia(): NutricionForm {
 }
 
 export function nutricionFormDesde(
-  nutricion: NutricionReceta | null | undefined,
+  nutricion: Partial<NutricionReceta> | null | undefined,
 ): NutricionForm {
   if (!nutricion) return nutricionFormVacia()
   return Object.fromEntries(
@@ -51,7 +68,7 @@ export function nutricionDesdeForm(form: NutricionForm): NutricionReceta {
 }
 
 export function sumarNutricion(
-  lista: Array<NutricionReceta | null | undefined>,
+  lista: Array<Partial<NutricionReceta> | null | undefined>,
 ): NutricionReceta {
   const total = { ...NUTRICION_VACIA }
   for (const nutricion of lista) {

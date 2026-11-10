@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { NutricionEditor } from "@/features/comida/components/nutricion-editor"
 import {
+  normalizarNutricion,
   nutricionDesdeForm,
   nutricionFormDesde,
   nutricionFormVacia,
@@ -86,6 +87,8 @@ export function DialogoSlotMenu({
     [recetas, recetaId],
   )
 
+  const nutricionReceta = normalizarNutricion(recetaSeleccionada?.nutricion)
+
   const invalidar = () => {
     void queryClient.invalidateQueries({ queryKey: ["comida"] })
   }
@@ -135,7 +138,7 @@ export function DialogoSlotMenu({
         .map((linea) => linea.trim())
         .filter(Boolean),
       nutricion: recetaSeleccionada
-        ? recetaSeleccionada.nutricion
+        ? nutricionReceta
         : nutricionActiva
           ? nutricionDesdeForm(nutricion)
           : null,
@@ -242,15 +245,15 @@ export function DialogoSlotMenu({
 
           {recetaSeleccionada ? (
             <p className="rounded-2xl bg-surface-container-low px-3 py-2 text-[10px] text-muted-foreground">
-              {recetaSeleccionada.nutricion
+              {nutricionReceta
                 ? `Nutrición de la receta: ${Math.round(
-                    recetaSeleccionada.nutricion.kcal,
+                    nutricionReceta.kcal,
                   )} kcal · ${Math.round(
-                    recetaSeleccionada.nutricion.proteinas,
+                    nutricionReceta.proteinas,
                   )} g proteínas · ${Math.round(
-                    recetaSeleccionada.nutricion.carbos,
+                    nutricionReceta.carbos,
                   )} g carbos · ${Math.round(
-                    recetaSeleccionada.nutricion.grasas,
+                    nutricionReceta.grasas,
                   )} g grasas.`
                 : "La receta no tiene datos nutricionales cargados."}
             </p>

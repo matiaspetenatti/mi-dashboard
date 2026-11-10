@@ -14,6 +14,7 @@ import {
   stockBajo,
   vencimientoDe,
 } from "./inventario"
+import { normalizarNutricion, sumarNutricion } from "./nutricion"
 import { diasDeSemana, inicioSemana, tituloSemana } from "./semana"
 import type { IngredienteReceta, ItemComida } from "@/server/db/schema"
 
@@ -139,5 +140,36 @@ describe("semana", () => {
   it("etiqueta la semana actual y la siguiente", () => {
     expect(tituloSemana("2026-11-02", "2026-11-08")).toBe("Esta semana")
     expect(tituloSemana("2026-11-09", "2026-11-08")).toBe("Próxima semana")
+  })
+})
+
+describe("nutrición", () => {
+  it("completa los nutrientes faltantes de recetas viejas", () => {
+    expect(
+      normalizarNutricion({ kcal: 190, proteinas: 0, carbos: 15, grasas: 0 }),
+    ).toEqual({
+      kcal: 190,
+      proteinas: 0,
+      carbos: 15,
+      grasas: 0,
+      fibra: 0,
+      azucares: 0,
+      sodio: 0,
+    })
+  })
+
+  it("devuelve null cuando no hay datos", () => {
+    expect(normalizarNutricion(null)).toBeNull()
+    expect(normalizarNutricion(undefined)).toBeNull()
+  })
+
+  it("suma nutrientes ignorando valores faltantes", () => {
+    expect(
+      sumarNutricion([
+        { kcal: 90, proteinas: 3 },
+        { kcal: 150, carbos: 20 },
+        null,
+      ]),
+    ).toMatchObject({ kcal: 240, proteinas: 3, carbos: 20, grasas: 0 })
   })
 })
